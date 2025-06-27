@@ -1,81 +1,92 @@
-import React, { useState } from "react"
-import { Outlet, NavLink, useLocation, useNavigate } from "react-router-dom"
-import { IoIosHome, IoIosSettings, IoIosArrowBack } from "react-icons/io"
-import type { sortName, filterName } from "src/types/menu"
+import React from "react"
+import { Outlet, NavLink, useLocation } from "react-router-dom"
+import { FiMenu } from "react-icons/fi"
+import { IoIosHome, IoIosSettings } from "react-icons/io"
 
-export default function MainLayout(): React.ReactElement {
+export default function MainLayout(): React.JSX.Element {
   const location = useLocation()
-  const navigate = useNavigate()
   const isHome = location.pathname === "/"
   const isSettings = location.pathname === "/settings"
 
-  // Home ページでだけ使う sort/filter state
-  const [sort, setSort] = useState<sortName>("title")
-  const [filter, setFilter] = useState<filterName>("all")
-
   return (
-    <div className="min-h-screen bg-base-200 flex flex-col">
-      {/* ヘッダー */}
-      <header className="flex items-center justify-between p-4 bg-base-100 shadow">
-        <div className="flex items-center space-x-2">
-          {/* Home 以外なら戻るボタン */}
-          {!(isHome || isSettings) && (
-            <button onClick={() => navigate(-1)} className="btn btn-ghost btn-circle p-2">
-              <IoIosArrowBack size={20} />
-            </button>
-          )}
+    <div className="drawer drawer-mobile min-h-screen bg-base-200">
+      <input id="main-drawer" type="checkbox" className="drawer-toggle" />
 
-          {/* 共通のナビアイコン */}
-          <NavLink
-            to="/"
-            className={({ isActive }) =>
-              `btn btn-ghost btn-circle p-2 ${isActive ? "text-primary" : ""}`
-            }
-          >
-            <IoIosHome size={20} />
-          </NavLink>
-          <NavLink
-            to="/settings"
-            className={({ isActive }) =>
-              `btn btn-ghost btn-circle p-2 ${isActive ? "text-primary" : ""}`
-            }
-          >
-            <IoIosSettings size={20} />
-          </NavLink>
-        </div>
+      {/* サイドバー */}
+      <div className="drawer-side">
+        <label htmlFor="main-drawer" className="drawer-overlay bg-[rgba(0,0,0,0.15)] z-40" />
 
-        {/* Home だけに出る select フィルタ */}
-        {isHome && (
-          <div className="flex space-x-4">
-            <select
-              value={sort}
-              onChange={(e) => setSort(e.target.value as sortName)}
-              className="select select-bordered w-48"
-            >
-              <option value="title">タイトル順</option>
-              <option value="recentlyPlayed">最近プレイした順</option>
-              <option value="longestPlayed">プレイ時間が長い順</option>
-              <option value="newestRelease">発売日が新しい順</option>
-              <option value="recentlyRegistered">最近登録した順</option>
-            </select>
-            <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value as filterName)}
-              className="select select-bordered w-32"
-            >
-              <option value="all">すべて</option>
-              <option value="unplayed">未プレイ</option>
-              <option value="playing">プレイ中</option>
-              <option value="played">プレイ済み</option>
-            </select>
+        <aside
+          className="
+          fixed left-0 z-50
+          h-full w-56
+          bg-white
+          border-r border-gray-200
+          pt-14 pb-2 px-2
+          rounded-tr-lg rounded-br-lg
+          shadow-lg
+          transform transition-transform duration-200 ease-out
+        "
+        >
+          <div className="flex flex-col h-full">
+            {/* 上部メニュー */}
+            <ul className="space-y-2">
+              <li>
+                <NavLink
+                  to="/"
+                  className={({ isActive }) =>
+                    `flex items-center w-full p-3 rounded-md ${
+                      isActive ? "bg-gray-100 font-medium" : "hover:bg-gray-50"
+                    }`
+                  }
+                  onClick={() => {}}
+                >
+                  <IoIosHome className="mr-2 text-lg" />
+                  <span className="flex-1">ホーム</span>
+                </NavLink>
+              </li>
+            </ul>
+
+            {/* 下部メニューは mt-auto で下端へ */}
+            <ul className="space-y-2 mt-auto">
+              <li>
+                <NavLink
+                  to="/settings"
+                  className={({ isActive }) =>
+                    `flex items-center w-full p-3 rounded-md ${
+                      isActive ? "bg-gray-100 font-medium" : "hover:bg-gray-50"
+                    }`
+                  }
+                  onClick={() => {}}
+                >
+                  <IoIosSettings className="mr-2 text-lg" />
+                  <span className="flex-1">設定</span>
+                </NavLink>
+              </li>
+            </ul>
           </div>
-        )}
-      </header>
+        </aside>
+      </div>
 
-      {/* 各ページの中身 */}
-      <main className="flex-1 p-6">
-        <Outlet context={{ sort, filter }} />
-      </main>
+      {/* メイン */}
+      <div className="drawer-content flex flex-col">
+        <header className="flex items-center justify-between h-14 px-6 bg-base-100 shadow">
+          <label
+            htmlFor="main-drawer"
+            className="btn btn-ghost btn-circle h-10 w-10 p-0 focus:outline-none"
+          >
+            <FiMenu size={24} />
+          </label>
+          <h1 className="flex-1 text-center text-lg font-medium leading-none">
+            {isHome ? "ホーム" : isSettings ? "設定" : ""}
+          </h1>
+        </header>
+
+        {/* ページ固有部分をここに描画 */}
+        <main className="flex-1 p-6">
+          <Outlet />
+        </main>
+      </div>
     </div>
   )
 }
