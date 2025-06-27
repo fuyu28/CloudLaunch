@@ -1,6 +1,7 @@
 // src/pages/Home.tsx
-import { useState } from "react"
-import { Link } from "react-router-dom"
+import { Link, useOutletContext } from "react-router-dom"
+import { IoIosAdd } from "react-icons/io"
+import type { sortName, filterName } from "src/types/menu"
 
 type Game = {
   id: string
@@ -48,50 +49,15 @@ const sampleGames: Game[] = [
   }
 ]
 
-type sortName =
-  | "title"
-  | "recentlyPlayed"
-  | "longestPlayTime"
-  | "newestRelease"
-  | "recentlyRegistered"
-  | "brandAsc"
-
-type filterName = "all" | "unplayed" | "playing" | "played"
+type OutletContext = {
+  sort: sortName
+  filter: filterName
+}
 
 export default function Home(): React.JSX.Element {
-  const [sort, setSort] = useState<sortName>("title")
-  const [filter, setFilter] = useState<filterName>("all")
-
+  const { sort, filter } = useOutletContext<OutletContext>()
   return (
     <div className="min-h-screen bg-base-200 p-6">
-      {/* ヘッダー */}
-      <div className="flex flex-wrap items-center justify-between mb-6">
-        <button className="btn btn-primary">＋ ゲームを登録</button>
-        <div className="flex space-x-4">
-          <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value as sortName)}
-            className="select select-bordered w-50"
-          >
-            <option value="title">タイトル順</option>
-            <option value="recentlyPlayed">最近プレイした順</option>
-            <option value="longestPlayed">プレイ時間が長い順</option>
-            <option value="newestRelease">発売日が新しい順</option>
-            <option value="recentlyRegistered">最近登録した順</option>
-          </select>
-          <select
-            value={filter}
-            onChange={(e) => setFilter(e.target.value as filterName)}
-            className="select select-bordered"
-          >
-            <option value="all">すべて</option>
-            <option value="unplayed">未プレイ</option>
-            <option value="playing">プレイ中</option>
-            <option value="played">プレイ済み</option>
-          </select>
-        </div>
-      </div>
-
       {/* グリッド */}
       <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
         {sampleGames.map((game) => (
@@ -110,6 +76,12 @@ export default function Home(): React.JSX.Element {
           </Link>
         ))}
       </div>
+      <button
+        className="btn btn-primary btn-circle fixed bottom-6 right-6 shadow-lg h-15 w-15"
+        aria-label="New"
+      >
+        <IoIosAdd className="p-2 w-full h-full" />
+      </button>
     </div>
   )
 }
