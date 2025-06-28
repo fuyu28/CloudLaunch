@@ -1,60 +1,80 @@
 // src/pages/Home.tsx
-import React, { useState } from "react"
-import { Link } from "react-router-dom"
-import { IoIosAdd, IoIosPlay } from "react-icons/io"
+import React, { useState, useMemo } from "react"
+import { CiSearch } from "react-icons/ci"
+import { IoIosAdd } from "react-icons/io"
 import type { sortName, filterName } from "src/types/menu"
-
-type Game = {
-  id: string
-  title: string
-  subtitle: string
-  coverUrl: string
-}
+import type { Game } from "src/types/game"
+import GameCard from "@renderer/components/GameCard"
 
 const sampleGames: Game[] = [
   {
     id: "1",
     title: "サクラノ刻 -櫻の森の下を歩む-",
-    subtitle: "枕",
+    publisher: "枕",
     coverUrl: "/assets/covers/1.jpg"
   },
-  { id: "2", title: "2", subtitle: "2", coverUrl: "/assets/covers/2.jpg" },
-  { id: "3", title: "3", subtitle: "3", coverUrl: "/assets/covers/3.jpg" },
-  { id: "4", title: "4", subtitle: "4", coverUrl: "/assets/covers/4.jpg" },
-  { id: "5", title: "5", subtitle: "5", coverUrl: "/assets/covers/5.jpg" },
-  { id: "6", title: "6", subtitle: "6", coverUrl: "/assets/covers/6.jpg" }
+  {
+    id: "2",
+    title: "WHITE ALBUM2 EXTENDED EDITION",
+    publisher: "Leaf",
+    coverUrl: "/assets/covers/2.jpg"
+  },
+  {
+    id: "3",
+    title: "Summer Pockets REFLECTION BLUE",
+    publisher: "Key",
+    coverUrl: "/assets/covers/3.jpg"
+  },
+  {
+    id: "4",
+    title: "ATRI -My Dear Moments-",
+    publisher: "ANIPLEX.EXE",
+    coverUrl: "/assets/covers/4.jpg"
+  },
+  { id: "5", title: "STEINS;GATE 0", publisher: "ホビボックス", coverUrl: "/assets/covers/5.jpg" },
+  {
+    id: "6",
+    title: "グリムガーデンの少女 -witch in gleamgarden",
+    publisher: "COSMIC CUTE",
+    coverUrl: "/assets/covers/6.jpg"
+  }
 ]
 
 export default function Home(): React.ReactElement {
   const [sort, setSort] = useState<sortName>("title")
   const [filter, setFilter] = useState<filterName>("all")
 
-  const visibleGames = sampleGames
-    .filter((g) => {
-      if (filter === "all") return true
-      // filter が "unplayed"/"playing"/"played" の判定を追加
-      return true
-    })
-    .sort((a, b) => {
-      switch (sort) {
-        case "title":
-          return a.title.localeCompare(b.title)
-        case "recentlyPlayed":
-          return b.id.localeCompare(a.id) // ダミーデータ
-        case "longestPlayed":
-        case "newestRelease":
-        case "recentlyRegistered":
-        default:
-          return 0
-      }
-    })
+  const visibleGames = useMemo(() => {
+    return sampleGames
+      .filter((g) => {
+        if (filter === "all") return true
+        // filter が "unplayed"/"playing"/"played" の判定を追加
+        return true
+      })
+      .sort((a, b) => {
+        switch (sort) {
+          case "title":
+            return a.title.localeCompare(b.title)
+          case "recentlyPlayed":
+            return b.id.localeCompare(a.id)
+          case "longestPlayed":
+          case "newestRelease":
+          case "recentlyRegistered":
+          default:
+            return 0
+        }
+      })
+  }, [sort, filter])
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      {/* フィルタ＋グリッドをまとめてスクロール */}
-      <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-transparent min-h-0">
-        {/* Home 固有のフィルタ */}
-        <div className="flex flex-wrap items-center justify-end gap-4 mb-6 left-6 pt-1">
+      {/* Home 固有のフィルタ */}
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-4 pt-1">
+        <label htmlFor="game-search" className="input w-70 left-6">
+          <CiSearch />
+          <input id="game-search" type="search" className="glow" placeholder="検索" />
+        </label>
+        <div className="flex items-center gap-3 px-6">
           <span className="text-sm leading-tight">ソート順 :</span>
           <select
             value={sort}
@@ -67,7 +87,7 @@ export default function Home(): React.ReactElement {
             <option value="newestRelease">発売日が新しい順</option>
             <option value="recentlyRegistered">最近登録した順</option>
           </select>
-          <span className="text-sm leading-tight">フィルター :</span>
+          <span className="text-sm leading-tight">プレイ状況 :</span>
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value as filterName)}
@@ -79,39 +99,16 @@ export default function Home(): React.ReactElement {
             <option value="played">プレイ済み</option>
           </select>
         </div>
+      </div>
 
+      <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-transparent min-h-0 right-0">
         {/* ゲーム一覧グリッド */}
         <div
-          className="grid gap-6 justify-center px-6 pb-6"
+          className="grid gap-4 justify-center px-6 pb-6"
           style={{ gridTemplateColumns: "repeat(auto-fill, 220px)" }}
         >
           {visibleGames.map((game) => (
-            <Link
-              key={game.id}
-              to={`/games/${game.id}`}
-              className="
-                bg-base-100 rounded-xl overflow-hidden
-                shadow-lg transform transition
-                hover:scale-105 hover:shadow-2xl
-              "
-            >
-              <div className="relative h-40 w-full">
-                <img src={game.coverUrl} alt={game.title} className="h-full w-full object-cover" />
-                <div
-                  className="
-                  absolute inset-0 bg-black bg-opacity-30
-                  flex items-center justify-center
-                  opacity-0 hover:opacity-100 transition
-                "
-                >
-                  <IoIosPlay size={40} className="text-white" />
-                </div>
-              </div>
-              <div className="p-4">
-                <h3 className="text-base font-semibold truncate">{game.title}</h3>
-                <p className="text-sm text-gray-500 truncate">{game.subtitle}</p>
-              </div>
-            </Link>
+            <GameCard key={game.id} game={game} />
           ))}
         </div>
       </div>

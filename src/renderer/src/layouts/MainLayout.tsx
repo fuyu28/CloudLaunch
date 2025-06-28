@@ -85,7 +85,7 @@ export default function MainLayout(): React.JSX.Element {
         </header>
 
         {/* ページ固有部分をここに描画 */}
-        <main className="flex-1 p-4 overflow-hidden min-h-0">
+        <main className="flex-1 pt-4 overflow-hidden min-h-0">
           <Outlet />
         </main>
       </div>
