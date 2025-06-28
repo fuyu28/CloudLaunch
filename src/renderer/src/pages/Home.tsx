@@ -50,16 +50,16 @@ export default function Home(): React.ReactElement {
     })
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full min-h-0">
       {/* フィルタ＋グリッドをまとめてスクロール */}
-      <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-transparent">
+      <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-transparent min-h-0">
         {/* Home 固有のフィルタ */}
-        <div className="flex flex-wrap items-center gap-4 mb-6 px-6 pt-6">
-          <span className="text-sm leading-tight">ソート順:</span>
+        <div className="flex flex-wrap items-center justify-end gap-4 mb-6 left-6 pt-1">
+          <span className="text-sm leading-tight">ソート順 :</span>
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value as sortName)}
-            className="select select-bordered text-sm"
+            className="select select-bordered text-sm w-40 h-9"
           >
             <option value="title">タイトル順</option>
             <option value="recentlyPlayed">最近プレイした順</option>
@@ -67,11 +67,11 @@ export default function Home(): React.ReactElement {
             <option value="newestRelease">発売日が新しい順</option>
             <option value="recentlyRegistered">最近登録した順</option>
           </select>
-          <span className="text-sm leading-tight">フィルター:</span>
+          <span className="text-sm leading-tight">フィルター :</span>
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value as filterName)}
-            className="select select-bordered text-sm"
+            className="select select-bordered text-sm w-30 h-9"
           >
             <option value="all">すべて</option>
             <option value="unplayed">未プレイ</option>
