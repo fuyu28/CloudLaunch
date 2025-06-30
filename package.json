@@ -39,6 +39,7 @@
     "@electron-toolkit/eslint-config-prettier": "^3.0.0",
     "@electron-toolkit/eslint-config-ts": "^3.0.0",
     "@electron-toolkit/tsconfig": "^1.0.1",
+    "@faker-js/faker": "^9.8.0",
     "@tailwindcss/vite": "^4.1.10",
     "@types/node": "^22.15.32",
     "@types/react": "^19.1.1",
@@ -56,7 +57,11 @@
     "prisma": "^6.10.1",
     "tailwind-scrollbar": "^4.0.2",
     "tailwindcss": "^4.1.10",
+    "ts-node": "^10.9.2",
     "typescript": "^5.8.3",
     "vite": "^6.2.6"
+  },
+  "prisma": {
+    "seed": "node -r ts-node/register prisma/seed.ts"
   }
 }

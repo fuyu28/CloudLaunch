@@ -1,6 +1,8 @@
-export type Game = {
+export type GameType = {
   id: string
   title: string
   publisher: string
-  coverUrl: string
+  folderPath: string
+  exePath: string
+  imagePath: string
 }

@@ -2,11 +2,11 @@
 import React, { useState, useMemo } from "react"
 import { CiSearch } from "react-icons/ci"
 import { IoIosAdd } from "react-icons/io"
-import type { sortName, filterName } from "src/types/menu"
-import type { Game } from "src/types/game"
+import type { SortName, FilterName } from "src/types/menu"
+import type { GameType } from "src/types/game"
 import GameCard from "@renderer/components/GameCard"
 
-const sampleGames: Game[] = [
+const sampleGames: GameType[] = [
   {
     id: "1",
     title: "サクラノ刻 -櫻の森の下を歩む-",
@@ -41,8 +41,8 @@ const sampleGames: Game[] = [
 ]
 
 export default function Home(): React.ReactElement {
-  const [sort, setSort] = useState<sortName>("title")
-  const [filter, setFilter] = useState<filterName>("all")
+  const [sort, setSort] = useState<SortName>("title")
+  const [filter, setFilter] = useState<FilterName>("all")
 
   const visibleGames = useMemo(() => {
     return sampleGames
@@ -58,7 +58,6 @@ export default function Home(): React.ReactElement {
           case "recentlyPlayed":
             return b.id.localeCompare(a.id)
           case "longestPlayed":
-          case "newestRelease":
           case "recentlyRegistered":
           default:
             return 0
@@ -78,7 +77,7 @@ export default function Home(): React.ReactElement {
           <span className="text-sm leading-tight">ソート順 :</span>
           <select
             value={sort}
-            onChange={(e) => setSort(e.target.value as sortName)}
+            onChange={(e) => setSort(e.target.value as SortName)}
             className="select select-bordered text-sm w-40 h-9"
           >
             <option value="title">タイトル順</option>
@@ -90,7 +89,7 @@ export default function Home(): React.ReactElement {
           <span className="text-sm leading-tight">プレイ状況 :</span>
           <select
             value={filter}
-            onChange={(e) => setFilter(e.target.value as filterName)}
+            onChange={(e) => setFilter(e.target.value as FilterName)}
             className="select select-bordered text-sm w-30 h-9"
           >
             <option value="all">すべて</option>

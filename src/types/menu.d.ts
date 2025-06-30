@@ -1,8 +1,3 @@
-export type sortName =
-  | "title"
-  | "recentlyPlayed"
-  | "longestPlayed"
-  | "newestRelease"
-  | "recentlyRegistered"
+export type SortName = "title" | "recentlyPlayed" | "longestPlayed" | "recentlyRegistered"
 
-export type filterName = "all" | "unplayed" | "playing" | "played"
+export type FilterName = "all" | "unplayed" | "playing" | "played"
