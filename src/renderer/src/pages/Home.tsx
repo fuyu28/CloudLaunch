@@ -4,6 +4,8 @@ import { CiSearch } from "react-icons/ci"
 import { IoIosAdd } from "react-icons/io"
 import type { SortName, FilterName } from "src/types/menu"
 import GameCard from "@renderer/components/GameCard"
+import GameFormModal from "@renderer/components/AddModal"
+import { GameType } from "src/types/game"
 
 export default function Home(): React.ReactElement {
   const [searchWord, setSearchWord] = useState<string>("")
@@ -11,6 +13,7 @@ export default function Home(): React.ReactElement {
   const [sort, setSort] = useState<SortName>("title")
   const [visibleGames, setVisibleGames] = useState<Game[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false)
 
   useEffect(() => {
     let cancelled = false
@@ -33,6 +36,20 @@ export default function Home(): React.ReactElement {
       cancelled = true
     }
   }, [searchWord, filter, sort])
+
+  const handleOpenModal = (): void => setIsModalOpen(true)
+  const handleCloseModal = (): void => setIsModalOpen(false)
+
+  const handleAddGame = async (values: GameType): Promise<void> => {
+    const result = await window.api.database.addGame(values)
+    if (result.success) {
+      const games = await window.api.database.getGameList(searchWord, filter, sort)
+      setVisibleGames(games)
+      handleCloseModal()
+    } else {
+      setError(result.message ?? "ゲームの追加に失敗しました")
+    }
+  }
 
   return (
     <div className="flex flex-col h-full min-h-0 relative">
@@ -59,7 +76,6 @@ export default function Home(): React.ReactElement {
             <option value="title">タイトル順</option>
             <option value="recentlyPlayed">最近プレイした順</option>
             <option value="longestPlayed">プレイ時間が長い順</option>
-            <option value="newestRelease">発売日が新しい順</option>
             <option value="recentlyRegistered">最近登録した順</option>
           </select>
           <span className="text-sm leading-tight">プレイ状況 :</span>
@@ -97,9 +113,13 @@ export default function Home(): React.ReactElement {
       <button
         className="btn btn-primary btn-circle fixed bottom-6 right-6 shadow-lg h-14 w-14 flex items-center justify-center"
         aria-label="ゲームを追加"
+        onClick={handleOpenModal}
       >
         <IoIosAdd size={28} />
       </button>
+
+      {/* ゲーム登録モーダル */}
+      <GameFormModal isOpen={isModalOpen} onClose={handleCloseModal} onSubmit={handleAddGame} />
     </div>
   )
 }
