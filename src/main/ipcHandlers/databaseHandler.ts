@@ -4,6 +4,7 @@ import { prisma } from "../db"
 import type { Prisma } from "@prisma/client"
 import type { FilterName, SortName } from "../../types/menu"
 import type { GameType } from "../../types/game"
+import { ApiResult } from "../../types/result"
 
 const filterMap: Record<FilterName, Prisma.GameWhereInput> = {
   all: {},
@@ -14,7 +15,7 @@ const filterMap: Record<FilterName, Prisma.GameWhereInput> = {
 const sortMap: Record<SortName, { [key: string]: "asc" | "desc" }> = {
   title: { title: "asc" },
   recentlyPlayed: { lastPlayed: "asc" },
-  longestPlayed: { longestPlayed: "desc" },
+  longestPlayed: { totalPlayTime: "desc" },
   recentlyRegistered: { createdAt: "desc" }
 }
 
@@ -44,17 +45,32 @@ export function registerDatabaseHandler(): void {
     }
   )
 
+  ipcMain.handle("add-game", async (_event, game: GameType): Promise<ApiResult> => {
+    try {
+      await prisma.game.create({
+        data: {
+          title: game.title,
+          publisher: game.publisher,
+          folderPath: game.folderPath,
+          exePath: game.exePath,
+          imagePath: game.imagePath
+        }
+      })
+      return { success: true }
+    } catch (e) {
+      console.error(e)
+      return { success: false, message: `${e}` }
+    }
+  })
+
   ipcMain.handle(
-    "add-game",
-    async (_event, game: GameType): Promise<{ success: boolean; message?: string }> => {
+    "add-session",
+    async (_event, duration: number, gameId: number): Promise<ApiResult> => {
       try {
-        await prisma.game.create({
+        await prisma.playSession.create({
           data: {
-            title: game.title,
-            publisher: game.publisher,
-            folderPath: game.folderPath,
-            exePath: game.exePath,
-            imagePath: game.imagePath
+            duration,
+            gameId
           }
         })
         return { success: true }

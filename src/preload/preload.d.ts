@@ -1,5 +1,9 @@
+import { Game } from "@prisma/client"
 import type { Creds } from "../types/creds"
 import { AwsSdkError } from "../types/error"
+import { FilterName, SortName } from "../types/menu"
+import { GameType } from "../types/game"
+import { ApiResult } from "../types/result"
 
 export interface FileDialogAPI {
   selectExe(): Promise<string | null>
@@ -24,10 +28,17 @@ export interface CredentialAPI {
   testCredential(creds: Creds): Promise<{ success: boolean; err?: AwsSdkError }>
 }
 
+export interface DatabaseAPI {
+  getGameList(searchWord: string, filter: FilterName, sort: SortName): Promise<Game[]>
+  addGame(game: GameType): Promise<ApiResult>
+  addSession(duration: number, gameId: number): Promise<ApiResult>
+}
+
 export interface API {
   fileDialog: FileDialogAPI
   upload: UploadAPI
   getR2FolderList: GetR2ListAPI
   download: DownloadAPI
   credential: CredentialAPI
+  database: DatabaseAPI
 }

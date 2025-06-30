@@ -3,15 +3,29 @@ import { faker } from "@faker-js/faker"
 
 const prisma = new PrismaClient()
 
+type DummyType = {
+  title: string
+  publisher: string
+}
+
+const DUMMY_DATA: DummyType[] = [
+  { title: "WHITE ALBUM2", publisher: "Leaf" },
+  { title: "Summer Pockets REFLECTION BLUE", publisher: "Key" },
+  { title: "オトメ＊ドメイン", publisher: "ぱれっとクトリア" },
+  { title: "きまぐれテンプテーション2 ゆうやみ廻奇譚", publisher: "シルキーズプラスWASABI" },
+  { title: "9-nine- ここのつここのかここのいろ", publisher: "ぱれっと" }
+]
+
 async function main(): Promise<void> {
   for (let i = 0; i < 5; i++) {
+    const dummy = DUMMY_DATA[i]
     const game = await prisma.game.create({
       data: {
-        title: faker.lorem.words(3),
-        publisher: faker.company.name(),
-        folderPath: faker.system.directoryPath(),
-        exePath: faker.system.filePath(),
-        imagePath: faker.system.filePath()
+        title: dummy.title,
+        publisher: dummy.publisher,
+        folderPath: `D:\\game\\Novel\\${i}`,
+        exePath: `D:\\game\\Novel\\${i}\\game.exe`,
+        imagePath: `D:\\game\\Novel\\${i}\\image.png`
       }
     })
 
@@ -21,7 +35,7 @@ async function main(): Promise<void> {
         data: {
           gameId: game.id,
           playedAt: faker.date.past(),
-          duration: faker.number.int({ min: 10, max: 150 })
+          duration: faker.number.int({ min: 600, max: 1000 })
         }
       })
     }
