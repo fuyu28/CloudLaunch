@@ -1,0 +1,42 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum PlayStatus {
+  unplayed
+  playing
+  played
+}
+
+model Game {
+  id             Int           @id @default(autoincrement())
+  title          String
+  publisher      String
+  saveFolderPath String
+  exePath        String
+  imagePath      String?
+  createdAt      DateTime      @default(now())
+  playStatus     PlayStatus    @default(unplayed)
+  totalPlayTime  Int           @default(0)
+  lastPlayed     DateTime?
+  sessions       PlaySession[]
+}
+
+model PlaySession {
+  id       Int      @id @default(autoincrement())
+  gameId   Int
+  game     Game     @relation(fields: [gameId], references: [id])
+  playedAt DateTime @default(now())
+  duration Int
+}

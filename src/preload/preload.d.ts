@@ -1,5 +1,9 @@
+import { Game } from "@prisma/client"
 import type { Creds } from "../types/creds"
 import { AwsSdkError } from "../types/error"
+import { FilterName, SortName } from "../types/menu"
+import { InputGameData } from "../types/game"
+import { ApiResult } from "../types/result"
 
 export interface FileDialogAPI {
   selectExe(): Promise<string | null>
@@ -7,7 +11,10 @@ export interface FileDialogAPI {
 }
 
 export interface UploadAPI {
-  uploadFolder(localFolderPath: string, r2DestinationPath: string): Promise<{ success: boolean }>
+  uploadFolder(
+    localSaveFolderPath: string,
+    r2DestinationPath: string
+  ): Promise<{ success: boolean }>
 }
 
 export interface GetR2ListAPI {
@@ -15,7 +22,10 @@ export interface GetR2ListAPI {
 }
 
 export interface DownloadAPI {
-  downloadFolder(localFolderPath: string, r2DestinationPath: string): Promise<{ success: boolean }>
+  downloadFolder(
+    localSaveFolderPath: string,
+    r2DestinationPath: string
+  ): Promise<{ success: boolean }>
 }
 
 export interface CredentialAPI {
@@ -24,10 +34,20 @@ export interface CredentialAPI {
   testCredential(creds: Creds): Promise<{ success: boolean; err?: AwsSdkError }>
 }
 
+export interface DatabaseAPI {
+  listGames(searchWord: string, filter: FilterName, sort: SortName): Promise<Game[]>
+  getGameById(game: InputGameData): Promise<Game | null>
+  createGame(game: InputGameData): Promise<ApiResult>
+  updateGame(id: number, game: InputGameData): Promise<ApiResult>
+  deleteGame(id: number): Promise<ApiResult>
+  createSession(duration: number, gameId: number): Promise<ApiResult>
+}
+
 export interface API {
   fileDialog: FileDialogAPI
   upload: UploadAPI
   getR2FolderList: GetR2ListAPI
   download: DownloadAPI
   credential: CredentialAPI
+  database: DatabaseAPI
 }

@@ -24,6 +24,7 @@
     "@aws-sdk/client-s3": "^3.828.0",
     "@electron-toolkit/preload": "^3.0.1",
     "@electron-toolkit/utils": "^4.0.0",
+    "@prisma/client": "^6.10.1",
     "electron-store": "^10.1.0",
     "electron-updater": "^6.3.9",
     "keytar": "^7.9.0",
@@ -31,12 +32,14 @@
     "react-dom": "^19.1.0",
     "react-icons": "^5.5.0",
     "react-router": "^7.6.2",
-    "react-router-dom": "^7.6.2"
+    "react-router-dom": "^7.6.2",
+    "sqlite3": "^5.1.7"
   },
   "devDependencies": {
     "@electron-toolkit/eslint-config-prettier": "^3.0.0",
     "@electron-toolkit/eslint-config-ts": "^3.0.0",
     "@electron-toolkit/tsconfig": "^1.0.1",
+    "@faker-js/faker": "^9.8.0",
     "@tailwindcss/vite": "^4.1.10",
     "@types/node": "^22.15.32",
     "@types/react": "^19.1.1",
@@ -51,9 +54,14 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.19",
     "prettier": "^3.5.3",
+    "prisma": "^6.10.1",
     "tailwind-scrollbar": "^4.0.2",
     "tailwindcss": "^4.1.10",
+    "ts-node": "^10.9.2",
     "typescript": "^5.8.3",
     "vite": "^6.2.6"
+  },
+  "prisma": {
+    "seed": "node -r ts-node/register prisma/seed.ts"
   }
 }

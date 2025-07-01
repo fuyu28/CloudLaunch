@@ -2,8 +2,8 @@ import { ipcRenderer } from "electron"
 
 export const downloadAPI = {
   downloadFolder: (
-    localFolderPath: string,
+    localSaveFolderPath: string,
     r2DestinationPath: string
   ): Promise<{ success: boolean }> =>
-    ipcRenderer.invoke("download-folder", localFolderPath, r2DestinationPath)
+    ipcRenderer.invoke("download-folder", localSaveFolderPath, r2DestinationPath)
 }

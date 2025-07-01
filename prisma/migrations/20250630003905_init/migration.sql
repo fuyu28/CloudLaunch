@@ -1,0 +1,19 @@
+-- CreateTable
+CREATE TABLE "Game" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "title" TEXT NOT NULL,
+    "publisher" TEXT NOT NULL,
+    "folderPath" TEXT NOT NULL,
+    "exePath" TEXT NOT NULL,
+    "imagePath" TEXT NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- CreateTable
+CREATE TABLE "PlaySession" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "gameId" INTEGER NOT NULL,
+    "playedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "duration" INTEGER NOT NULL,
+    CONSTRAINT "PlaySession_gameId_fkey" FOREIGN KEY ("gameId") REFERENCES "Game" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);

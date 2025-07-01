@@ -10,7 +10,7 @@ export function registerUploadHandlers(): void {
     "upload-folder",
     async (
       _event,
-      localFolderPath: string,
+      localSaveFolderPath: string,
       r2DestinationPath: string
     ): Promise<{ success: boolean }> => {
       try {
@@ -19,9 +19,9 @@ export function registerUploadHandlers(): void {
         if (!creds) {
           throw new Error("R2/S3 クレデンシャルが設定されていません")
         }
-        const files = await readdir(localFolderPath)
+        const files = await readdir(localSaveFolderPath)
         for (const file of files) {
-          const fullPath = join(localFolderPath, file)
+          const fullPath = join(localSaveFolderPath, file)
           const fileBody = await readFile(fullPath)
 
           const cmd = new PutObjectCommand({

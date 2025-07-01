@@ -7,13 +7,15 @@ import { uploadAPI } from "./api/uploadPreload"
 import { getR2FolderListAPI } from "./api/r2ListPreload"
 import { downloadAPI } from "./api/downloadPreload"
 import { credentialAPI } from "./api/credentialPreload"
+import { databaseAPI } from "./api/databasePreload"
 
 const api = {
   fileDialog: fileDialogAPI,
   upload: uploadAPI,
   getR2FolderList: getR2FolderListAPI,
   download: downloadAPI,
-  credential: credentialAPI
+  credential: credentialAPI,
+  database: databaseAPI
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

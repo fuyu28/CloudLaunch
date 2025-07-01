@@ -1,4 +1,5 @@
 import { registerCredentialHandler } from "./ipcHandlers/credentialHandler"
+import { registerDatabaseHandler } from "./ipcHandlers/databaseHandler"
 import { registerDownloadHandlers } from "./ipcHandlers/downloadHandler"
 import { registerFileDialogHandler } from "./ipcHandlers/fileDialogHandlers"
 import { registerGetR2FolderListHandler } from "./ipcHandlers/getR2FolderListHandler"
@@ -10,4 +11,5 @@ export function registerAllHandlers(): void {
   registerDownloadHandlers()
   registerGetR2FolderListHandler()
   registerCredentialHandler()
+  registerDatabaseHandler()
 }

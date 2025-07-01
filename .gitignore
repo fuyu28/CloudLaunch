@@ -6,3 +6,4 @@ out
 *.log*
 .env
 public/test_cover
+dev.db
