@@ -7,7 +7,7 @@ import { getCredential } from "../service/credentialService"
 
 export function registerDownloadHandlers(): void {
   ipcMain.handle(
-    "download-folder",
+    "download-save-data",
     async (
       _event,
       localSaveFolderPath: string,

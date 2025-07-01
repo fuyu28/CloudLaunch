@@ -4,7 +4,7 @@ import { createR2Client } from "../r2Client"
 import { getCredential } from "../service/credentialService"
 
 export function registerGetR2FolderListHandler(): void {
-  ipcMain.handle("get-r2-folder-list", async (): Promise<string[] | null> => {
+  ipcMain.handle("list-remote-save-data-folders", async (): Promise<string[] | null> => {
     try {
       const r2Client = await createR2Client()
       const creds = await getCredential()

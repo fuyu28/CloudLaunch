@@ -7,7 +7,7 @@ import { getCredential } from "../service/credentialService"
 
 export function registerUploadHandlers(): void {
   ipcMain.handle(
-    "upload-folder",
+    "upload-save-data-folder",
     async (
       _event,
       localSaveFolderPath: string,

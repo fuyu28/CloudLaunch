@@ -1,6 +1,6 @@
 import { ipcRenderer } from "electron"
 
 export const fileDialogAPI = {
-  selectExe: (): Promise<string | null> => ipcRenderer.invoke("select-exe"),
-  selectFolder: (): Promise<string | null> => ipcRenderer.invoke("select-folder")
+  selectAppExe: (): Promise<string | null> => ipcRenderer.invoke("select-app-exe"),
+  selectSaveDataFolder: (): Promise<string | null> => ipcRenderer.invoke("select-save-data-folder")
 }

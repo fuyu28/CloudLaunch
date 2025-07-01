@@ -6,10 +6,13 @@ import { handleAwsSdkError } from "../utils/awsSdkErrorHandler"
 import { AwsSdkError } from "../../types/error"
 
 export function registerCredentialHandler(): void {
-  ipcMain.handle("set-credential", async (_event, creds: Creds): Promise<{ success: boolean }> => {
-    const res = await setCredential(creds)
-    return res
-  })
+  ipcMain.handle(
+    "upsert-credential",
+    async (_event, creds: Creds): Promise<{ success: boolean }> => {
+      const res = await setCredential(creds)
+      return res
+    }
+  )
 
   ipcMain.handle("get-credential", async (): Promise<Creds | null> => {
     const res = await getCredential()
@@ -17,7 +20,7 @@ export function registerCredentialHandler(): void {
   })
 
   ipcMain.handle(
-    "test-credential",
+    "validate-credential",
     async (_event, creds: Creds): Promise<{ success: boolean; err?: AwsSdkError }> => {
       try {
         const r2Client = new S3Client({
