@@ -14,7 +14,7 @@ const filterMap: Record<FilterName, Prisma.GameWhereInput> = {
 }
 const sortMap: Record<SortName, { [key: string]: "asc" | "desc" }> = {
   title: { title: "asc" },
-  recentlyPlayed: { lastPlayed: "asc" },
+  recentlyPlayed: { lastPlayed: "desc" },
   longestPlayed: { totalPlayTime: "desc" },
   recentlyRegistered: { createdAt: "desc" }
 }
@@ -114,6 +114,20 @@ export function registerDatabaseHandler(): void {
             gameId
           }
         })
+
+        const game = await prisma.game.findFirst({
+          where: { id: gameId }
+        })
+
+        if (game) {
+          await prisma.game.update({
+            where: { id: gameId },
+            data: {
+              totalPlayTime: game.totalPlayTime + duration,
+              lastPlayed: new Date()
+            }
+          })
+        }
         return { success: true }
       } catch (e) {
         console.error(e)
