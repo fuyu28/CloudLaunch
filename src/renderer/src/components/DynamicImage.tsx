@@ -12,25 +12,34 @@ export default function DynamicImage({
   const [src, setSrc] = useState<string>("")
 
   useEffect(() => {
-    // file:// か絶対パスならローカル読み込み
-    const isLocal =
-      originalSrc.startsWith("file://") ||
-      /^[A-Za-z]:\\/.test(originalSrc) ||
-      originalSrc.startsWith("/")
-
-    if (isLocal) {
-      // ローカルの場合fsを使ってバックからロード
-      window.api.loadImage.loadImage(originalSrc.replace(/^file:\/\//, "")).then((dataUrl) => {
-        if (dataUrl) setSrc(dataUrl)
-        else {
-          console.warn("画像読み込み失敗:", originalSrc)
+    const loadImage = async (): Promise<void> => {
+      // file:// か絶対パスならローカル読み込み
+      const isLocal =
+        originalSrc.startsWith("file://") ||
+        /^[A-Za-z]:\\/.test(originalSrc) ||
+        originalSrc.startsWith("/")
+      if (isLocal) {
+        try {
+          // ローカルの場合fsを使ってバックからロード
+          const dataUrl = await window.api.loadImage.loadImage(
+            originalSrc.replace(/^file:\/\//, "")
+          )
+          if (dataUrl) {
+            setSrc(dataUrl)
+          } else {
+            console.warn("画像読み込み失敗:", originalSrc)
+            setSrc("")
+          }
+        } catch (error) {
+          console.error("Error loading image:", error)
           setSrc("")
         }
-      })
-    } else {
-      // 通常のURLならそのまま
-      setSrc(originalSrc)
+      } else {
+        // 通常のURLならそのまま
+        setSrc(originalSrc)
+      }
     }
+    loadImage()
   }, [originalSrc])
 
   return <img src={src} {...imgProps} />
