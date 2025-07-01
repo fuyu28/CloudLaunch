@@ -43,6 +43,10 @@ export interface DatabaseAPI {
   createSession(duration: number, gameId: number): Promise<ApiResult>
 }
 
+export interface LoadImageAPI {
+  loadImage(filePath: string): Promise<string | null>
+}
+
 export interface API {
   fileDialog: FileDialogAPI
   saveData: {
@@ -52,4 +56,5 @@ export interface API {
   }
   credential: CredentialAPI
   database: DatabaseAPI
+  loadImage: LoadImageAPI
 }

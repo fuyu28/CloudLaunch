@@ -1,4 +1,4 @@
-import React, { useEffect } from "react"
+import React, { useEffect, useState } from "react"
 import { useAtom } from "jotai"
 import { CiSearch } from "react-icons/ci"
 import { IoIosAdd } from "react-icons/io"
@@ -7,22 +7,15 @@ import GameCard from "@renderer/components/GameCard"
 import GameFormModal from "@renderer/components/AddGameModal"
 import { InputGameData } from "src/types/game"
 import { ApiResult } from "src/types/result"
-import {
-  searchWordAtom,
-  filterAtom,
-  sortAtom,
-  visibleGamesAtom,
-  homeErrorAtom,
-  isModalOpenAtom
-} from "../state/home"
+import { searchWordAtom, filterAtom, sortAtom, visibleGamesAtom } from "../state/home"
 
 export default function Home(): React.ReactElement {
   const [searchWord, setSearchWord] = useAtom(searchWordAtom)
   const [filter, setFilter] = useAtom(filterAtom)
   const [sort, setSort] = useAtom(sortAtom)
   const [visibleGames, setVisibleGames] = useAtom(visibleGamesAtom)
-  const [error, setError] = useAtom(homeErrorAtom)
-  const [isModalOpen, setIsModalOpen] = useAtom(isModalOpenAtom)
+  const [error, setError] = useState<string | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   useEffect(() => {
     let cancelled = false
