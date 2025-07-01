@@ -6,6 +6,7 @@ import type { SortName, FilterName } from "src/types/menu"
 import GameCard from "@renderer/components/GameCard"
 import GameFormModal from "@renderer/components/AddGameModal"
 import { InputGameData } from "src/types/game"
+import { ApiResult } from "src/types/result"
 
 export default function Home(): React.ReactElement {
   const [searchWord, setSearchWord] = useState<string>("")
@@ -40,14 +41,22 @@ export default function Home(): React.ReactElement {
   const handleOpenModal = (): void => setIsModalOpen(true)
   const handleCloseModal = (): void => setIsModalOpen(false)
 
-  const handleAddGame = async (values: InputGameData): Promise<void> => {
-    const result = await window.api.database.createGame(values)
-    if (result.success) {
-      const games = await window.api.database.listGames(searchWord, filter, sort)
-      setVisibleGames(games)
-      handleCloseModal()
-    } else {
-      setError(result.message ?? "ゲームの追加に失敗しました")
+  const handleAddGame = async (values: InputGameData): Promise<ApiResult> => {
+    try {
+      const result = await window.api.database.createGame(values)
+      if (result.success) {
+        const games = await window.api.database.listGames(searchWord, filter, sort)
+        setVisibleGames(games)
+        handleCloseModal()
+        return { success: true }
+      } else {
+        const message = result.message ?? "ゲームの追加に失敗しました"
+        setError(message)
+        return { success: false, message: message }
+      }
+    } catch (e) {
+      console.error(e)
+      return { success: false, message: `${e}` }
     }
   }
 
