@@ -1,6 +1,6 @@
 import { useEffect } from "react"
 import { useAtom } from "jotai"
-import { isValidCredsAtom } from "@renderer/state/atoms"
+import { isValidCredsAtom } from "@renderer/state/credentials"
 import type { Creds } from "src/types/creds"
 
 export function useIsValidCreds(): boolean {

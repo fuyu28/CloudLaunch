@@ -14,7 +14,7 @@ import {
   visibleGamesAtom,
   homeErrorAtom,
   isModalOpenAtom
-} from "../state/atoms"
+} from "../state/home"
 
 export default function Home(): React.ReactElement {
   const [searchWord, setSearchWord] = useAtom(searchWordAtom)

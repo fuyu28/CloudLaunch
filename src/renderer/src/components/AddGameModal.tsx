@@ -8,7 +8,7 @@ import {
   canSubmitAtom,
   gameFormValuesAtom,
   submittingAtom
-} from "@renderer/state/atoms"
+} from "@renderer/state/addGameModal"
 
 type GameFormModalProps = {
   isOpen: boolean

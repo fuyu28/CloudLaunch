@@ -5,13 +5,12 @@ import { isValidR2OrS3Endpoint } from "@renderer/utils/endpointValidator"
 import {
   accessKeyIdAtom,
   bucketNameAtom,
-  credsAtom,
   endpointAtom,
   regionAtom,
-  reloadCredsAtom,
   secretAccessKeyAtom,
   toastAtom
-} from "@renderer/state/atoms"
+} from "@renderer/state/settings"
+import { credsAtom, reloadCredsAtom } from "@renderer/state/credentials"
 
 export default function Settings(): React.JSX.Element {
   const [bucketName, setBucketName] = useAtom(bucketNameAtom)

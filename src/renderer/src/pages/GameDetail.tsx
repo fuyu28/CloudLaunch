@@ -1,4 +1,3 @@
-// src/pages/GameDetail.tsx
 import { useParams, useNavigate } from "react-router-dom"
 
 export default function GameDetail(): React.JSX.Element {
