@@ -14,7 +14,7 @@ const filterMap: Record<FilterName, Prisma.GameWhereInput> = {
 }
 const sortMap: Record<SortName, { [key: string]: "asc" | "desc" }> = {
   title: { title: "asc" },
-  recentlyPlayed: { lastPlayed: "asc" },
+  recentlyPlayed: { lastPlayed: "desc" },
   longestPlayed: { totalPlayTime: "desc" },
   recentlyRegistered: { createdAt: "desc" }
 }
