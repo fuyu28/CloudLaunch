@@ -25,8 +25,8 @@ export default function MainLayout(): React.JSX.Element {
           className="
           fixed left-0 z-50
           h-full w-56
-          bg-white
-          border-r border-gray-200
+          bg-base-100
+          border-r border-base-200
           pt-14 pb-2 px-2
           rounded-tr-lg rounded-br-lg
           shadow-lg
@@ -41,7 +41,9 @@ export default function MainLayout(): React.JSX.Element {
                   to="/"
                   className={({ isActive }) =>
                     `flex items-center w-full p-3 rounded-md ${
-                      isActive ? "bg-gray-100 font-medium" : "hover:bg-gray-50"
+                      isActive
+                        ? "bg-primary text-primary-content font-medium"
+                        : "hover:bg-base-300 dark:hover:bg-base-700"
                     }`
                   }
                   onClick={closeDrawer}
@@ -59,7 +61,9 @@ export default function MainLayout(): React.JSX.Element {
                   to="/settings"
                   className={({ isActive }) =>
                     `flex items-center w-full p-3 rounded-md ${
-                      isActive ? "bg-gray-100 font-medium" : "hover:bg-gray-50"
+                      isActive
+                        ? "bg-primary text-primary-content font-medium"
+                        : "hover:bg-base-300 dark:hover:bg-base-700"
                     }`
                   }
                   onClick={closeDrawer}
