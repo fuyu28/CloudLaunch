@@ -1,51 +1,84 @@
-import { useEffect } from "react"
-import { useAtom, useSetAtom } from "jotai"
+import { useState, useEffect, useMemo } from "react"
 import { AwsSdkError } from "src/types/error"
 import { isValidR2OrS3Endpoint } from "@renderer/utils/endpointValidator"
-import {
-  accessKeyIdAtom,
-  bucketNameAtom,
-  endpointAtom,
-  regionAtom,
-  secretAccessKeyAtom,
-  toastAtom
-} from "@renderer/state/settings"
-import { credsAtom, reloadCredsAtom } from "@renderer/state/credentials"
+import { useValidateCreds } from "@renderer/hooks/useValidCreds"
+import { FaCheck, FaSyncAlt, FaTimes } from "react-icons/fa"
 
 export default function Settings(): React.JSX.Element {
-  const [bucketName, setBucketName] = useAtom(bucketNameAtom)
-  const [endpoint, setEndpoint] = useAtom(endpointAtom)
-  const [region, setRegion] = useAtom(regionAtom)
-  const [accessKeyId, setAccessKeyId] = useAtom(accessKeyIdAtom)
-  const [secretAccessKey, setSecretAccessKey] = useAtom(secretAccessKeyAtom)
-  const [toast, setToast] = useAtom<{ message: string; type: "success" | "error" } | null>(
-    toastAtom
+  // --- 既存の state ---
+  const [bucketName, setBucketName] = useState("")
+  const [endpoint, setEndpoint] = useState("")
+  const [region, setRegion] = useState("auto")
+  const [accessKeyId, setAccessKeyId] = useState("")
+  const [secretAccessKey, setSecretAccessKey] = useState("")
+  const [toast, setToast] = useState<{
+    message: string
+    type: "loading" | "success" | "error"
+  } | null>(null)
+
+  // カスタムフックから接続チェック関数
+  const validateCreds = useValidateCreds()
+
+  // ステータス管理: loading → success / error
+  const [status, setStatus] = useState<"loading" | "success" | "error">("loading")
+  const [statusMessage, setStatusMessage] = useState<string | null>(null)
+
+  // 初回マウント時に接続チェック
+  useEffect(() => {
+    ;(async () => {
+      setStatus("loading")
+      const ok = await validateCreds()
+      if (ok) {
+        setStatus("success")
+      } else {
+        setStatus("error")
+        setStatusMessage("クレデンシャルが有効ではありません")
+      }
+    })()
+  }, [validateCreds])
+
+  // 初回マウント時に既存のデータを表示
+  useEffect(() => {
+    ;(async () => {
+      const stored = await window.api.credential.getCredential()
+      if (stored) {
+        setBucketName(stored.bucketName)
+        setEndpoint(stored.endpoint)
+        setRegion(stored.region)
+        setAccessKeyId(stored.accessKeyId)
+        // 一度だけ入れてすぐ消す
+        setSecretAccessKey(stored.secretAccessKey)
+        setTimeout(() => setSecretAccessKey(""), 0)
+      }
+    })()
+  }, [])
+
+  // --- 既存の canSubmit や toastクリアなど ---
+  const canSubmit = useMemo(
+    () =>
+      bucketName.trim() !== "" &&
+      isValidR2OrS3Endpoint(endpoint) &&
+      accessKeyId.trim() !== "" &&
+      secretAccessKey.trim() !== "",
+    [bucketName, endpoint, accessKeyId, secretAccessKey]
   )
 
-  const [creds] = useAtom(credsAtom)
-  const reloadCreds = useSetAtom(reloadCredsAtom)
-
-  // Toast の自動クリア
   useEffect(() => {
     if (!toast) return
     const timer = setTimeout(() => setToast(null), 3000)
     return () => clearTimeout(timer)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [toast])
 
-  // 初回ロード時に既存 creds を反映
-  useEffect(() => {
-    if (creds) {
-      setBucketName(creds.bucketName)
-      setEndpoint(creds.endpoint)
-      setRegion(creds.region)
-      setAccessKeyId(creds.accessKeyId)
-      setSecretAccessKey(creds.secretAccessKey)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [creds])
+  // フォームリセット
+  const resetForm = (): void => {
+    setBucketName("")
+    setEndpoint("")
+    setRegion("auto")
+    setAccessKeyId("")
+    setSecretAccessKey("")
+  }
 
-  /** 入力された設定で疎通確認を行う関数 */
+  // 疎通確認
   const testConnection = async (): Promise<{ success: boolean; err?: AwsSdkError }> => {
     if (!isValidR2OrS3Endpoint(endpoint))
       return {
@@ -63,19 +96,15 @@ export default function Settings(): React.JSX.Element {
     else return { success: false, err: res.err }
   }
 
-  /** 保存ボタンハンドラ */
+  // 保存ハンドラ
   const handleSave = async (): Promise<void> => {
     setToast(null)
-
-    // 1) まず疎通確認
-    setToast({ message: "接続確認中…", type: "success" })
+    setToast({ message: "接続確認中…", type: "loading" })
     const test = await testConnection()
     if (!test.success) {
       setToast({ message: `${test.err?.Code}\n${test.err?.message}`, type: "error" })
       return
     }
-
-    // 2) 接続 OK ならストレージへ書き込み
     const res = await window.api.credential.upsertCredential({
       bucketName,
       endpoint,
@@ -84,8 +113,9 @@ export default function Settings(): React.JSX.Element {
       secretAccessKey
     })
     if (res.success) {
-      await reloadCreds()
+      await validateCreds()
       setToast({ message: "設定の保存に成功しました", type: "success" })
+      resetForm()
     } else {
       setToast({ message: "設定の保存に失敗しました", type: "error" })
     }
@@ -96,7 +126,11 @@ export default function Settings(): React.JSX.Element {
       {toast && (
         <div
           className={`fixed top-4 right-4 z-50 alert shadow-lg ${
-            toast.type === "success" ? "alert-success" : "alert-error"
+            toast.type === "success"
+              ? "alert-success"
+              : toast.type === "error"
+                ? "alert-error"
+                : "alert-info"
           } animate-fade-in-down`}
         >
           <span className="whitespace-pre-line">{toast.message}</span>
@@ -105,8 +139,26 @@ export default function Settings(): React.JSX.Element {
 
       <div className="card w-full bg-base-100 shadow-lg">
         <div className="card-body">
-          <h2 className="card-title mb-4">R2/S3 設定</h2>
+          <h2 className="card-title mb-2 flex items-center justify-between">
+            R2/S3 設定
+            <div className="text-sm flex items-center space-x-1">
+              {status === "loading" && (
+                <FaSyncAlt className="animate-spin text-gray-600 dark:text-gray-300" />
+              )}
+              {status === "success" && <FaCheck className="text-green-600 dark:text-green-400" />}
+              {status === "error" && <FaTimes className="text-red-600 dark:text-red-400" />}
+              <span className="text-gray-800 dark:text-gray-200">
+                {status === "loading"
+                  ? "接続確認中..."
+                  : status === "success"
+                    ? "接続OK"
+                    : statusMessage}
+              </span>
+            </div>
+          </h2>
+
           <div className="flex flex-col space-y-4">
+            {/* フォームフィールド群 */}
             <div className="flex items-center">
               <span className="w-36 text-sm font-medium">Bucket Name</span>
               <input
@@ -158,8 +210,13 @@ export default function Settings(): React.JSX.Element {
               />
             </div>
           </div>
+
           <div className="form-control mt-6 flex justify-end">
-            <button className="btn btn-primary" onClick={handleSave}>
+            <button
+              className="btn btn-primary"
+              onClick={handleSave}
+              disabled={!canSubmit || toast?.type === "loading"}
+            >
               保存
             </button>
           </div>
