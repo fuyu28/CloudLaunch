@@ -45,9 +45,11 @@ export interface DatabaseAPI {
 
 export interface API {
   fileDialog: FileDialogAPI
-  upload: SaveDataUploadAPI
-  getR2FolderList: saveDataFolderAPI
-  download: SaveDataDownloadAPI
+  saveData: {
+    upload: SaveDataUploadAPI
+    download: SaveDataDownloadAPI
+    listFolders: SaveDataFolderAPI
+  }
   credential: CredentialAPI
   database: DatabaseAPI
 }

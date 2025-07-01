@@ -11,9 +11,11 @@ import { databaseAPI } from "./api/databasePreload"
 
 const api = {
   fileDialog: fileDialogAPI,
-  upload: saveDataUploadAPI,
-  getR2FolderList: saveDataFolderAPI,
-  download: saveDataDownloadAPI,
+  saveData: {
+    upload: saveDataUploadAPI,
+    download: saveDataDownloadAPI,
+    listFolders: saveDataFolderAPI
+  },
   credential: credentialAPI,
   database: databaseAPI
 }
