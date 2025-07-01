@@ -10,8 +10,8 @@ export interface Creds extends Schema {
 }
 
 export interface CredsContextType {
-  hasValidCreds: boolean
+  isValidCreds: boolean
   creds: Creds | null
-  setHasValidCreds: (v: boolean) => void
+  setIsValidCreds: (v: boolean) => void
   reloadCreds: () => Promise<boolean>
 }

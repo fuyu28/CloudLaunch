@@ -1,23 +1,36 @@
-import { useState, useEffect } from "react"
-import { useCredentials } from "@renderer/context/CredentialsContext"
+import { useEffect } from "react"
+import { useAtom, useSetAtom } from "jotai"
 import { AwsSdkError } from "src/types/error"
 import { isValidR2OrS3Endpoint } from "@renderer/utils/endpointValidator"
+import {
+  accessKeyIdAtom,
+  bucketNameAtom,
+  endpointAtom,
+  regionAtom,
+  secretAccessKeyAtom,
+  toastAtom
+} from "@renderer/state/settings"
+import { credsAtom, reloadCredsAtom } from "@renderer/state/credentials"
 
 export default function Settings(): React.JSX.Element {
-  const [bucketName, setBucketName] = useState("")
-  const [endpoint, setEndpoint] = useState("")
-  const [region, setRegion] = useState("")
-  const [accessKeyId, setAccessKeyId] = useState("")
-  const [secretAccessKey, setSecretAccessKey] = useState("")
-  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null)
+  const [bucketName, setBucketName] = useAtom(bucketNameAtom)
+  const [endpoint, setEndpoint] = useAtom(endpointAtom)
+  const [region, setRegion] = useAtom(regionAtom)
+  const [accessKeyId, setAccessKeyId] = useAtom(accessKeyIdAtom)
+  const [secretAccessKey, setSecretAccessKey] = useAtom(secretAccessKeyAtom)
+  const [toast, setToast] = useAtom<{ message: string; type: "success" | "error" } | null>(
+    toastAtom
+  )
 
-  const { creds, reloadCreds } = useCredentials()
+  const [creds] = useAtom(credsAtom)
+  const reloadCreds = useSetAtom(reloadCredsAtom)
 
   // Toast の自動クリア
   useEffect(() => {
     if (!toast) return
     const timer = setTimeout(() => setToast(null), 3000)
     return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [toast])
 
   // 初回ロード時に既存 creds を反映
@@ -29,6 +42,7 @@ export default function Settings(): React.JSX.Element {
       setAccessKeyId(creds.accessKeyId)
       setSecretAccessKey(creds.secretAccessKey)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [creds])
 
   /** 入力された設定で疎通確認を行う関数 */

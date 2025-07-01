@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react"
-import type { Game } from "@prisma/client"
+import React, { useEffect } from "react"
+import { useAtom } from "jotai"
 import { CiSearch } from "react-icons/ci"
 import { IoIosAdd } from "react-icons/io"
 import type { SortName, FilterName } from "src/types/menu"
@@ -7,14 +7,22 @@ import GameCard from "@renderer/components/GameCard"
 import GameFormModal from "@renderer/components/AddGameModal"
 import { InputGameData } from "src/types/game"
 import { ApiResult } from "src/types/result"
+import {
+  searchWordAtom,
+  filterAtom,
+  sortAtom,
+  visibleGamesAtom,
+  homeErrorAtom,
+  isModalOpenAtom
+} from "../state/home"
 
 export default function Home(): React.ReactElement {
-  const [searchWord, setSearchWord] = useState<string>("")
-  const [filter, setFilter] = useState<FilterName>("all")
-  const [sort, setSort] = useState<SortName>("title")
-  const [visibleGames, setVisibleGames] = useState<Game[]>([])
-  const [error, setError] = useState<string | null>(null)
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false)
+  const [searchWord, setSearchWord] = useAtom(searchWordAtom)
+  const [filter, setFilter] = useAtom(filterAtom)
+  const [sort, setSort] = useAtom(sortAtom)
+  const [visibleGames, setVisibleGames] = useAtom(visibleGamesAtom)
+  const [error, setError] = useAtom(homeErrorAtom)
+  const [isModalOpen, setIsModalOpen] = useAtom(isModalOpenAtom)
 
   useEffect(() => {
     let cancelled = false
@@ -35,7 +43,7 @@ export default function Home(): React.ReactElement {
     fetchGames()
     return () => {
       cancelled = true
-    }
+    } // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchWord, filter, sort])
 
   const handleOpenModal = (): void => setIsModalOpen(true)
