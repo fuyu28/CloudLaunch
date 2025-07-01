@@ -1,15 +1,15 @@
-import { registerCredentialHandler } from "./ipcHandlers/credentialHandler"
-import { registerDatabaseHandler } from "./ipcHandlers/databaseHandler"
-import { registerDownloadHandlers } from "./ipcHandlers/downloadHandler"
-import { registerFileDialogHandler } from "./ipcHandlers/fileDialogHandlers"
-import { registerGetR2FolderListHandler } from "./ipcHandlers/getR2FolderListHandler"
-import { registerUploadHandlers } from "./ipcHandlers/uploadHandlers"
+import { registerCredentialHandlers } from "./ipcHandlers/credentialHandlers"
+import { registerDatabaseHandlers } from "./ipcHandlers/databaseHandlers"
+import { registerDownloadSaveDataHandler } from "./ipcHandlers/downloadHandler"
+import { registerFileDialogHandlers } from "./ipcHandlers/fileDialogHandlers"
+import { registerSaveDataFolderListHandler } from "./ipcHandlers/saveDataFolderListHandler"
+import { registerUploadSaveDataFolderHandlers } from "./ipcHandlers/uploadSaveDataFolderHandlers"
 
 export function registerAllHandlers(): void {
-  registerFileDialogHandler()
-  registerUploadHandlers()
-  registerDownloadHandlers()
-  registerGetR2FolderListHandler()
-  registerCredentialHandler()
-  registerDatabaseHandler()
+  registerCredentialHandlers()
+  registerDatabaseHandlers()
+  registerDownloadSaveDataHandler()
+  registerFileDialogHandlers()
+  registerSaveDataFolderListHandler()
+  registerUploadSaveDataFolderHandlers()
 }
