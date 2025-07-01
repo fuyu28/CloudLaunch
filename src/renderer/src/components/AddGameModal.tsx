@@ -1,19 +1,21 @@
-import React, { useEffect } from "react"
-import { useAtom } from "jotai"
+import React, { useState, useMemo } from "react"
 import { RxCross1 } from "react-icons/rx"
 import type { InputGameData } from "src/types/game"
 import type { ApiResult } from "src/types/result"
-import {
-  addGameModalErrorAtom,
-  canSubmitAtom,
-  gameFormValuesAtom,
-  submittingAtom
-} from "@renderer/state/addGameModal"
 
 type GameFormModalProps = {
   isOpen: boolean
   onClose: () => void
-  onSubmit: (values: InputGameData) => Promise<ApiResult>
+  onSubmit: (gameFormValues: InputGameData) => Promise<ApiResult>
+}
+
+const initialValues: InputGameData = {
+  title: "",
+  publisher: "",
+  saveFolderPath: "",
+  exePath: "",
+  imagePath: "",
+  playStatus: ""
 }
 
 export default function GameFormModal({
@@ -21,10 +23,16 @@ export default function GameFormModal({
   onClose,
   onSubmit
 }: GameFormModalProps): React.JSX.Element {
-  const [gameFormValues, setGameFormValues] = useAtom(gameFormValuesAtom)
-  const [error, setError] = useAtom<string | null>(addGameModalErrorAtom)
-  const [submitting, setSubmitting] = useAtom(submittingAtom)
-  const [canSubmit, setCanSubmit] = useAtom(canSubmitAtom)
+  const [gameFormValues, setGameFormValues] = useState<InputGameData>({
+    title: "",
+    publisher: "",
+    saveFolderPath: "",
+    exePath: "",
+    imagePath: "",
+    playStatus: "unplayed"
+  })
+  const [error, setError] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const { name, value } = e.target
@@ -32,6 +40,7 @@ export default function GameFormModal({
       ...prev,
       [name]: value
     }))
+    if (error) setError(null)
   }
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
@@ -41,6 +50,7 @@ export default function GameFormModal({
     try {
       const result = await onSubmit(gameFormValues)
       if (result.success) {
+        resetForm()
         onClose()
       } else {
         setError(result.message ?? "登録に失敗しました。")
@@ -53,15 +63,25 @@ export default function GameFormModal({
     }
   }
 
-  useEffect(() => {
-    setCanSubmit(
+  const resetForm = (): void => {
+    setGameFormValues(initialValues)
+    setError(null)
+    setSubmitting(false)
+  }
+
+  const handleCancel = (): void => {
+    resetForm()
+    onClose()
+  }
+
+  const canSubmit = useMemo(
+    () =>
       gameFormValues.title.trim() !== "" &&
-        gameFormValues.publisher.trim() !== "" &&
-        gameFormValues.exePath.trim() !== "" &&
-        gameFormValues.saveFolderPath.trim() !== ""
-    )
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gameFormValues])
+      gameFormValues.publisher.trim() !== "" &&
+      gameFormValues.exePath.trim() !== "" &&
+      gameFormValues.saveFolderPath.trim() !== "",
+    [gameFormValues]
+  )
 
   return (
     <>
@@ -171,10 +191,15 @@ export default function GameFormModal({
             {/* モーダルアクション */}
             {error && <p className="text-error text-sm">{error}</p>}
             <div className="modal-action justify-end">
-              <button type="button" className="btn" onClick={onClose} disabled={submitting}>
+              <button type="button" className="btn" onClick={handleCancel} disabled={submitting}>
                 キャンセル
               </button>
-              <button type="submit" className="btn btn-primary" disabled={submitting || !canSubmit}>
+              <button
+                type="submit"
+                className="btn btn-primary"
+                onClick={handleSubmit}
+                disabled={submitting || !canSubmit}
+              >
                 {submitting ? "登録中…" : "登録"}
               </button>
             </div>
