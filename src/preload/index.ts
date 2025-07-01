@@ -8,6 +8,7 @@ import { saveDataFolderAPI } from "./api/saveDataFolderPreload"
 import { saveDataDownloadAPI } from "./api/saveDataDownloadPreload"
 import { credentialAPI } from "./api/credentialPreload"
 import { databaseAPI } from "./api/databasePreload"
+import { loadImageAPI } from "./api/loadImagePreload"
 
 const api = {
   fileDialog: fileDialogAPI,
@@ -17,7 +18,8 @@ const api = {
     listFolders: saveDataFolderAPI
   },
   credential: credentialAPI,
-  database: databaseAPI
+  database: databaseAPI,
+  loadImage: loadImageAPI
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to
