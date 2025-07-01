@@ -1,7 +1,14 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect } from "react"
+import { useAtom } from "jotai"
 import { RxCross1 } from "react-icons/rx"
 import type { InputGameData } from "src/types/game"
 import type { ApiResult } from "src/types/result"
+import {
+  addGameModalErrorAtom,
+  canSubmitAtom,
+  gameFormValuesAtom,
+  submittingAtom
+} from "@renderer/state/atoms"
 
 type GameFormModalProps = {
   isOpen: boolean
@@ -14,22 +21,14 @@ export default function GameFormModal({
   onClose,
   onSubmit
 }: GameFormModalProps): React.JSX.Element {
-  // GameType の型に合わせて初期値を設定
-  const [values, setValues] = useState<InputGameData>({
-    title: "",
-    publisher: "",
-    saveFolderPath: "",
-    exePath: "",
-    imagePath: "",
-    playStatus: "unplayed"
-  })
-  const [error, setError] = useState<string | null>(null)
-  const [submitting, setSubmitting] = useState(false)
-  const [canSubmit, setCanSubmit] = useState(false)
+  const [gameFormValues, setGameFormValues] = useAtom(gameFormValuesAtom)
+  const [error, setError] = useAtom<string | null>(addGameModalErrorAtom)
+  const [submitting, setSubmitting] = useAtom(submittingAtom)
+  const [canSubmit, setCanSubmit] = useAtom(canSubmitAtom)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const { name, value } = e.target
-    setValues((prev) => ({
+    setGameFormValues((prev) => ({
       ...prev,
       [name]: value
     }))
@@ -40,7 +39,7 @@ export default function GameFormModal({
     setError(null)
     setSubmitting(true)
     try {
-      const result = await onSubmit(values)
+      const result = await onSubmit(gameFormValues)
       if (result.success) {
         onClose()
       } else {
@@ -56,12 +55,13 @@ export default function GameFormModal({
 
   useEffect(() => {
     setCanSubmit(
-      values.title.trim() !== "" &&
-        values.publisher.trim() !== "" &&
-        values.exePath.trim() !== "" &&
-        values.saveFolderPath.trim() !== ""
+      gameFormValues.title.trim() !== "" &&
+        gameFormValues.publisher.trim() !== "" &&
+        gameFormValues.exePath.trim() !== "" &&
+        gameFormValues.saveFolderPath.trim() !== ""
     )
-  }, [values])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameFormValues])
 
   return (
     <>
@@ -92,7 +92,7 @@ export default function GameFormModal({
               <input
                 type="text"
                 name="title"
-                value={values.title}
+                value={gameFormValues.title}
                 onChange={handleChange}
                 className="input input-bordered w-full"
                 required
@@ -106,7 +106,7 @@ export default function GameFormModal({
               <input
                 type="text"
                 name="publisher"
-                value={values.publisher}
+                value={gameFormValues.publisher}
                 onChange={handleChange}
                 className="input input-bordered w-full"
                 required
@@ -121,7 +121,7 @@ export default function GameFormModal({
                 <input
                   type="text"
                   name="imagePath"
-                  value={values.imagePath ?? ""}
+                  value={gameFormValues.imagePath ?? ""}
                   onChange={handleChange}
                   className="input input-bordered flex-1"
                 />
@@ -139,7 +139,7 @@ export default function GameFormModal({
                 <input
                   type="text"
                   name="exePath"
-                  value={values.exePath}
+                  value={gameFormValues.exePath}
                   onChange={handleChange}
                   className="input input-bordered flex-1"
                   required
@@ -158,7 +158,7 @@ export default function GameFormModal({
                 <input
                   type="text"
                   name="saveFolderPath"
-                  value={values.saveFolderPath}
+                  value={gameFormValues.saveFolderPath}
                   onChange={handleChange}
                   className="input input-bordered flex-1"
                   required
