@@ -1,6 +1,6 @@
 import { ipcMain, dialog } from "electron"
 
-export function registerFileDialogHandler(): void {
+export function registerFileDialogHandlers(): void {
   ipcMain.handle("select-app-exe", async (): Promise<string | null> => {
     const { canceled, filePaths } = await dialog.showOpenDialog({
       properties: ["openFile"],

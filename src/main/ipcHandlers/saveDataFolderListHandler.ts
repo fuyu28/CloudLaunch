@@ -3,7 +3,7 @@ import { ListObjectsV2Command } from "@aws-sdk/client-s3"
 import { createR2Client } from "../r2Client"
 import { getCredential } from "../service/credentialService"
 
-export function registerGetR2FolderListHandler(): void {
+export function registerSaveDataFolderListHandler(): void {
   ipcMain.handle("list-remote-save-data-folders", async (): Promise<string[] | null> => {
     try {
       const r2Client = await createR2Client()

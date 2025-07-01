@@ -5,7 +5,7 @@ import { S3Client, ListObjectsV2Command } from "@aws-sdk/client-s3"
 import { handleAwsSdkError } from "../utils/awsSdkErrorHandler"
 import { AwsSdkError } from "../../types/error"
 
-export function registerCredentialHandler(): void {
+export function registerCredentialHandlers(): void {
   ipcMain.handle(
     "upsert-credential",
     async (_event, creds: Creds): Promise<{ success: boolean }> => {

@@ -5,7 +5,7 @@ import { GetObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3"
 import { createR2Client } from "../r2Client"
 import { getCredential } from "../service/credentialService"
 
-export function registerDownloadHandlers(): void {
+export function registerDownloadSaveDataHandler(): void {
   ipcMain.handle(
     "download-save-data",
     async (
