@@ -1,8 +1,6 @@
 import { atom } from "jotai"
 import { InputGameData } from "src/types/game"
 
-// AddGameModal.tsx
-
 // 入力するゲームの情報
 export const gameFormValuesAtom = atom<InputGameData>({
   title: "",
