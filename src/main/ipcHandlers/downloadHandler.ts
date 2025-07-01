@@ -10,7 +10,7 @@ export function registerDownloadHandlers(): void {
     "download-folder",
     async (
       _event,
-      localsaveFolderPath: string,
+      localSaveFolderPath: string,
       r2DestinationPath: string
     ): Promise<{ success: boolean }> => {
       try {
@@ -39,9 +39,9 @@ export function registerDownloadHandlers(): void {
 
         // 2) 取得したキーごとにダウンロード＆ローカル保存
         for (const key of allKeys) {
-          // r2DestinationPath を除いた相対パスを localsaveFolderPath 配下に作る
+          // r2DestinationPath を除いた相対パスを localSaveFolderPath 配下に作る
           const relativePath = relative(r2DestinationPath, key)
-          const outputPath = join(localsaveFolderPath, relativePath)
+          const outputPath = join(localSaveFolderPath, relativePath)
 
           // 保存先ディレクトリがなければ作成
           await fs.mkdir(dirname(outputPath), { recursive: true })

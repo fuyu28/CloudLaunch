@@ -12,7 +12,7 @@ export interface FileDialogAPI {
 
 export interface UploadAPI {
   uploadFolder(
-    localsaveFolderPath: string,
+    localSaveFolderPath: string,
     r2DestinationPath: string
   ): Promise<{ success: boolean }>
 }
@@ -23,7 +23,7 @@ export interface GetR2ListAPI {
 
 export interface DownloadAPI {
   downloadFolder(
-    localsaveFolderPath: string,
+    localSaveFolderPath: string,
     r2DestinationPath: string
   ): Promise<{ success: boolean }>
 }
