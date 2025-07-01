@@ -3,17 +3,19 @@ import { electronAPI } from "@electron-toolkit/preload"
 
 // Custom APIs for renderer
 import { fileDialogAPI } from "./api/fileDialogPreload"
-import { uploadAPI } from "./api/uploadPreload"
-import { getR2FolderListAPI } from "./api/r2ListPreload"
-import { downloadAPI } from "./api/downloadPreload"
+import { saveDataUploadAPI } from "./api/saveDataUploadPreload"
+import { saveDataFolderAPI } from "./api/saveDataFolderPreload"
+import { saveDataDownloadAPI } from "./api/saveDataDownloadPreload"
 import { credentialAPI } from "./api/credentialPreload"
 import { databaseAPI } from "./api/databasePreload"
 
 const api = {
   fileDialog: fileDialogAPI,
-  upload: uploadAPI,
-  getR2FolderList: getR2FolderListAPI,
-  download: downloadAPI,
+  saveData: {
+    upload: saveDataUploadAPI,
+    download: saveDataDownloadAPI,
+    listFolders: saveDataFolderAPI
+  },
   credential: credentialAPI,
   database: databaseAPI
 }

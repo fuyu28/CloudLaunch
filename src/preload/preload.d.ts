@@ -6,32 +6,32 @@ import { InputGameData } from "../types/game"
 import { ApiResult } from "../types/result"
 
 export interface FileDialogAPI {
-  selectExe(): Promise<string | null>
-  selectFolder(): Promise<string | null>
+  selectAppExe(): Promise<string | null>
+  selectSaveDataFolder(): Promise<string | null>
 }
 
-export interface UploadAPI {
-  uploadFolder(
+export interface SaveDataUploadAPI {
+  uploadSaveDataFolder(
     localSaveFolderPath: string,
-    r2DestinationPath: string
+    remoteSaveDataPath: string
   ): Promise<{ success: boolean }>
 }
 
-export interface GetR2ListAPI {
-  getR2FolderList(): Promise<string[] | null>
+export interface saveDataFolderAPI {
+  listRemoteSaveDataFolders(): Promise<string[] | null>
 }
 
-export interface DownloadAPI {
-  downloadFolder(
+export interface SaveDataDownloadAPI {
+  downloadSaveData(
     localSaveFolderPath: string,
-    r2DestinationPath: string
+    remoteSaveDataPath: string
   ): Promise<{ success: boolean }>
 }
 
 export interface CredentialAPI {
-  setCredential(creds: Creds): Promise<{ success: boolean }>
+  upsertCredential(creds: Creds): Promise<{ success: boolean }>
   getCredential(): Promise<Creds | null>
-  testCredential(creds: Creds): Promise<{ success: boolean; err?: AwsSdkError }>
+  validateCredential(creds: Creds): Promise<{ success: boolean; err?: AwsSdkError }>
 }
 
 export interface DatabaseAPI {
@@ -45,9 +45,11 @@ export interface DatabaseAPI {
 
 export interface API {
   fileDialog: FileDialogAPI
-  upload: UploadAPI
-  getR2FolderList: GetR2ListAPI
-  download: DownloadAPI
+  saveData: {
+    upload: SaveDataUploadAPI
+    download: SaveDataDownloadAPI
+    listFolders: SaveDataFolderAPI
+  }
   credential: CredentialAPI
   database: DatabaseAPI
 }

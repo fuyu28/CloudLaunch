@@ -52,7 +52,7 @@ export default function Settings(): React.JSX.Element {
         success: false,
         err: { Code: "InvalidEndpoint", message: "エンドポイントのURLが不正な形式です。" }
       }
-    const res = await window.api.credential.testCredential({
+    const res = await window.api.credential.validateCredential({
       bucketName,
       endpoint,
       region,
@@ -76,7 +76,7 @@ export default function Settings(): React.JSX.Element {
     }
 
     // 2) 接続 OK ならストレージへ書き込み
-    const res = await window.api.credential.setCredential({
+    const res = await window.api.credential.upsertCredential({
       bucketName,
       endpoint,
       region,

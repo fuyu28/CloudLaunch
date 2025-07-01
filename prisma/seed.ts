@@ -11,7 +11,7 @@ type DummyType = {
 const DUMMY_DATA: DummyType[] = [
   { title: "WHITE ALBUM2", publisher: "Leaf" },
   { title: "Summer Pockets REFLECTION BLUE", publisher: "Key" },
-  { title: "オトメ＊ドメイン", publisher: "ぱれっとクトリア" },
+  { title: "オトメ＊ドメイン", publisher: "ぱれっとクオリア" },
   { title: "きまぐれテンプテーション2 ゆうやみ廻奇譚", publisher: "シルキーズプラスWASABI" },
   { title: "9-nine- ここのつここのかここのいろ", publisher: "ぱれっと" }
 ]

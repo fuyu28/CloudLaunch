@@ -3,9 +3,9 @@ import type { Creds } from "../../types/creds"
 import { AwsSdkError } from "../../types/error"
 
 export const credentialAPI = {
-  setCredential: (creds: Creds): Promise<{ success: boolean }> =>
-    ipcRenderer.invoke("set-credential", creds),
+  upsertCredential: (creds: Creds): Promise<{ success: boolean }> =>
+    ipcRenderer.invoke("upsert-credential", creds),
   getCredential: (): Promise<Creds | null> => ipcRenderer.invoke("get-credential"),
-  testCredential: (creds: Creds): Promise<{ success: boolean; err?: AwsSdkError }> =>
-    ipcRenderer.invoke("test-credential", creds)
+  validateCredential: (creds: Creds): Promise<{ success: boolean; err?: AwsSdkError }> =>
+    ipcRenderer.invoke("validate-credential", creds)
 }

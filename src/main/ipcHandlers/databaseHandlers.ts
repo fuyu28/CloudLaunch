@@ -19,7 +19,7 @@ const sortMap: Record<SortName, { [key: string]: "asc" | "desc" }> = {
   recentlyRegistered: { createdAt: "desc" }
 }
 
-export function registerDatabaseHandler(): void {
+export function registerDatabaseHandlers(): void {
   ipcMain.handle(
     "list-games",
     async (_event, searchWord: string, filter: FilterName, sort: SortName): Promise<Game[]> => {

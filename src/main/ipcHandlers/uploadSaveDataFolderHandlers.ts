@@ -5,9 +5,9 @@ import { PutObjectCommand } from "@aws-sdk/client-s3"
 import { createR2Client } from "../r2Client"
 import { getCredential } from "../service/credentialService"
 
-export function registerUploadHandlers(): void {
+export function registerUploadSaveDataFolderHandlers(): void {
   ipcMain.handle(
-    "upload-folder",
+    "upload-save-data-folder",
     async (
       _event,
       localSaveFolderPath: string,

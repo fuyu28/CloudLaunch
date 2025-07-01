@@ -1,7 +1,7 @@
 import { ipcMain, dialog } from "electron"
 
-export function registerFileDialogHandler(): void {
-  ipcMain.handle("select-exe", async (): Promise<string | null> => {
+export function registerFileDialogHandlers(): void {
+  ipcMain.handle("select-app-exe", async (): Promise<string | null> => {
     const { canceled, filePaths } = await dialog.showOpenDialog({
       properties: ["openFile"],
       filters: [{ name: "Executable Files", extensions: ["exe"] }]
@@ -9,7 +9,7 @@ export function registerFileDialogHandler(): void {
     return canceled ? null : filePaths[0]
   })
 
-  ipcMain.handle("select-folder", async (): Promise<string | null> => {
+  ipcMain.handle("select-save-data-folder", async (): Promise<string | null> => {
     const { canceled, filePaths } = await dialog.showOpenDialog({
       properties: ["openDirectory"]
     })
