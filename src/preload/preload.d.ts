@@ -35,9 +35,12 @@ export interface CredentialAPI {
 }
 
 export interface DatabaseAPI {
-  getGameList(searchWord: string, filter: FilterName, sort: SortName): Promise<Game[]>
-  addGame(game: InputGameData): Promise<ApiResult>
-  addSession(duration: number, gameId: number): Promise<ApiResult>
+  listGames(searchWord: string, filter: FilterName, sort: SortName): Promise<Game[]>
+  getGameById(game: InputGameData): Promise<Game | null>
+  createGame(game: InputGameData): Promise<ApiResult>
+  updateGame(id: number, game: InputGameData): Promise<ApiResult>
+  deleteGame(id: number): Promise<ApiResult>
+  createSession(duration: number, gameId: number): Promise<ApiResult>
 }
 
 export interface API {

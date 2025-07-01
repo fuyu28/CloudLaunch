@@ -20,7 +20,7 @@ export default function Home(): React.ReactElement {
     async function fetchGames(): Promise<void> {
       setError(null)
       try {
-        const games = await window.api.database.getGameList(searchWord, filter, sort)
+        const games = await window.api.database.listGames(searchWord, filter, sort)
         if (!cancelled) {
           setVisibleGames(games)
         }
@@ -41,9 +41,9 @@ export default function Home(): React.ReactElement {
   const handleCloseModal = (): void => setIsModalOpen(false)
 
   const handleAddGame = async (values: InputGameData): Promise<void> => {
-    const result = await window.api.database.addGame(values)
+    const result = await window.api.database.createGame(values)
     if (result.success) {
-      const games = await window.api.database.getGameList(searchWord, filter, sort)
+      const games = await window.api.database.listGames(searchWord, filter, sort)
       setVisibleGames(games)
       handleCloseModal()
     } else {
