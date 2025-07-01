@@ -13,6 +13,12 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum PlayStatus {
+  unplayed
+  playing
+  played
+}
+
 model Game {
   id             Int           @id @default(autoincrement())
   title          String
@@ -21,7 +27,7 @@ model Game {
   exePath        String
   imagePath      String?
   createdAt      DateTime      @default(now())
-  playStatus     String        @default("unplayed")
+  playStatus     PlayStatus    @default(unplayed)
   totalPlayTime  Int           @default(0)
   lastPlayed     DateTime?
   sessions       PlaySession[]
