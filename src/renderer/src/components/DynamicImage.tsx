@@ -19,12 +19,12 @@ export default function DynamicImage({
       originalSrc.startsWith("/")
 
     if (isLocal) {
-      // preload で expose した api.loadImage を呼ぶ
+      // ローカルの場合fsを使ってバックからロード
       window.api.loadImage.loadImage(originalSrc.replace(/^file:\/\//, "")).then((dataUrl) => {
         if (dataUrl) setSrc(dataUrl)
         else {
           console.warn("画像読み込み失敗:", originalSrc)
-          setSrc("") // フォールバックさせる場合は別途
+          setSrc("")
         }
       })
     } else {
@@ -33,6 +33,5 @@ export default function DynamicImage({
     }
   }, [originalSrc])
 
-  // 読み込み中や失敗時は空の <img> でも良いし、プレースホルダー表示でも OK
   return <img src={src} {...imgProps} />
 }
