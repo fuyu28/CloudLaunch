@@ -14,17 +14,17 @@ datasource db {
 }
 
 model Game {
-  id            Int           @id @default(autoincrement())
-  title         String
-  publisher     String
-  folderPath    String
-  exePath       String
-  imagePath     String?
-  createdAt     DateTime      @default(now())
-  playStatus    String        @default("unplayed")
-  totalPlayTime Int           @default(0)
-  lastPlayed    DateTime?
-  sessions      PlaySession[]
+  id             Int           @id @default(autoincrement())
+  title          String
+  publisher      String
+  saveFolderPath String
+  exePath        String
+  imagePath      String?
+  createdAt      DateTime      @default(now())
+  playStatus     String        @default("unplayed")
+  totalPlayTime  Int           @default(0)
+  lastPlayed     DateTime?
+  sessions       PlaySession[]
 }
 
 model PlaySession {

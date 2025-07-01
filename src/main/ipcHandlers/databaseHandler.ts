@@ -3,7 +3,7 @@ import { ipcMain } from "electron"
 import { prisma } from "../db"
 import type { Prisma } from "@prisma/client"
 import type { FilterName, SortName } from "../../types/menu"
-import type { GameType } from "../../types/game"
+import type { InputGameData } from "../../types/game"
 import { ApiResult } from "../../types/result"
 
 const filterMap: Record<FilterName, Prisma.GameWhereInput> = {
@@ -45,13 +45,13 @@ export function registerDatabaseHandler(): void {
     }
   )
 
-  ipcMain.handle("add-game", async (_event, game: GameType): Promise<ApiResult> => {
+  ipcMain.handle("add-game", async (_event, game: InputGameData): Promise<ApiResult> => {
     try {
       await prisma.game.create({
         data: {
           title: game.title,
           publisher: game.publisher,
-          folderPath: game.folderPath,
+          saveFolderPath: game.saveFolderPath,
           exePath: game.exePath,
           imagePath: game.imagePath
         }

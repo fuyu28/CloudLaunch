@@ -5,7 +5,7 @@ import { IoIosAdd } from "react-icons/io"
 import type { SortName, FilterName } from "src/types/menu"
 import GameCard from "@renderer/components/GameCard"
 import GameFormModal from "@renderer/components/AddModal"
-import { GameType } from "src/types/game"
+import { InputGameData } from "src/types/game"
 
 export default function Home(): React.ReactElement {
   const [searchWord, setSearchWord] = useState<string>("")
@@ -40,7 +40,7 @@ export default function Home(): React.ReactElement {
   const handleOpenModal = (): void => setIsModalOpen(true)
   const handleCloseModal = (): void => setIsModalOpen(false)
 
-  const handleAddGame = async (values: GameType): Promise<void> => {
+  const handleAddGame = async (values: InputGameData): Promise<void> => {
     const result = await window.api.database.addGame(values)
     if (result.success) {
       const games = await window.api.database.getGameList(searchWord, filter, sort)
@@ -103,7 +103,13 @@ export default function Home(): React.ReactElement {
             style={{ gridTemplateColumns: "repeat(auto-fill, 220px)" }}
           >
             {visibleGames.map((game) => (
-              <GameCard key={game.id} game={game} />
+              <GameCard
+                key={game.id}
+                id={game.id}
+                title={game.title}
+                publisher={game.publisher}
+                imagePath={game.imagePath ?? ""}
+              />
             ))}
           </div>
         </div>

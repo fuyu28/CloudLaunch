@@ -2,7 +2,7 @@ import { Game } from "@prisma/client"
 import type { Creds } from "../types/creds"
 import { AwsSdkError } from "../types/error"
 import { FilterName, SortName } from "../types/menu"
-import { GameType } from "../types/game"
+import { InputGameData } from "../types/game"
 import { ApiResult } from "../types/result"
 
 export interface FileDialogAPI {
@@ -11,7 +11,10 @@ export interface FileDialogAPI {
 }
 
 export interface UploadAPI {
-  uploadFolder(localFolderPath: string, r2DestinationPath: string): Promise<{ success: boolean }>
+  uploadFolder(
+    localsaveFolderPath: string,
+    r2DestinationPath: string
+  ): Promise<{ success: boolean }>
 }
 
 export interface GetR2ListAPI {
@@ -19,7 +22,10 @@ export interface GetR2ListAPI {
 }
 
 export interface DownloadAPI {
-  downloadFolder(localFolderPath: string, r2DestinationPath: string): Promise<{ success: boolean }>
+  downloadFolder(
+    localsaveFolderPath: string,
+    r2DestinationPath: string
+  ): Promise<{ success: boolean }>
 }
 
 export interface CredentialAPI {
@@ -30,7 +36,7 @@ export interface CredentialAPI {
 
 export interface DatabaseAPI {
   getGameList(searchWord: string, filter: FilterName, sort: SortName): Promise<Game[]>
-  addGame(game: GameType): Promise<ApiResult>
+  addGame(game: InputGameData): Promise<ApiResult>
   addSession(duration: number, gameId: number): Promise<ApiResult>
 }
 

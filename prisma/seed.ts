@@ -23,7 +23,7 @@ async function main(): Promise<void> {
       data: {
         title: dummy.title,
         publisher: dummy.publisher,
-        folderPath: `D:\\game\\Novel\\${i}`,
+        saveFolderPath: `D:\\game\\Novel\\${i}`,
         exePath: `D:\\game\\Novel\\${i}\\game.exe`,
         imagePath: `D:\\game\\Novel\\${i}\\image.png`
       }

@@ -1,16 +1,23 @@
 import React from "react"
 import { Link } from "react-router-dom"
 import { IoIosPlay } from "react-icons/io"
-import { Game } from "@prisma/client"
 
-interface GameCardProps {
-  game: Game
+type GameCardProps = {
+  id: number
+  title: string
+  publisher: string
+  imagePath: string
 }
 
-export default function GameCard({ game }: GameCardProps): React.JSX.Element {
+export default function GameCard({
+  id,
+  title,
+  publisher,
+  imagePath
+}: GameCardProps): React.JSX.Element {
   return (
     <Link
-      to={`/games/${game.id}`}
+      to={`/games/${id}`}
       className="
         bg-base-100 rounded-xl overflow-hidden
         shadow-lg transform transition
@@ -18,10 +25,10 @@ export default function GameCard({ game }: GameCardProps): React.JSX.Element {
       "
     >
       <div className="relative h-40 w-full bg-gray-100">
-        {game.imagePath && (
+        {imagePath && (
           <img
-            src={game.imagePath}
-            alt={game.title}
+            src={imagePath}
+            alt={title}
             className="h-full w-full object-cover"
             loading="lazy"
             onError={(e) => {
@@ -42,8 +49,8 @@ export default function GameCard({ game }: GameCardProps): React.JSX.Element {
         </div>
       </div>
       <div className="p-2 h-20">
-        <h3 className="text-base font-semibold line-clamp-2">{game.title}</h3>
-        <p className="text-sm text-gray-500 line-clamp-2">{game.publisher}</p>
+        <h3 className="text-base font-semibold line-clamp-2">{title}</h3>
+        <p className="text-sm text-gray-500 line-clamp-2">{publisher}</p>
       </div>
     </Link>
   )

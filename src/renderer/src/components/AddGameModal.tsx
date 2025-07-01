@@ -1,10 +1,10 @@
 import React, { useState } from "react"
-import type { GameType } from "src/types/game"
+import type { InputGameData } from "src/types/game"
 
-interface GameFormModalProps {
+type GameFormModalProps = {
   isOpen: boolean
   onClose: () => void
-  onSubmit: (values: GameType) => void
+  onSubmit: (values: InputGameData) => void
 }
 
 export default function GameFormModal({
@@ -13,17 +13,13 @@ export default function GameFormModal({
   onSubmit
 }: GameFormModalProps): React.JSX.Element {
   // GameType の型に合わせて初期値を設定
-  const [values, setValues] = useState<GameType>({
-    id: 0,
+  const [values, setValues] = useState<InputGameData>({
     title: "",
     publisher: "",
-    folderPath: "",
+    saveFolderPath: "",
     exePath: "",
     imagePath: "",
-    createdAt: new Date(),
-    playStatus: "unplayed",
-    totalPlayTime: 0,
-    lastPlayed: null
+    playStatus: "unplayed"
   })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
@@ -91,7 +87,7 @@ export default function GameFormModal({
             {/* サムネイルパス */}
             <div>
               <label className="label">
-                <span className="label-text">サムネイル画像の場所 (URLまたはファイルパス)</span>
+                <span className="label-text">サムネイル画像の場所</span>
               </label>
               <div className="flex">
                 <input
