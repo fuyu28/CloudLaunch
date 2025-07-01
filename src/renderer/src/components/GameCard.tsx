@@ -1,6 +1,7 @@
 import React from "react"
 import { Link } from "react-router-dom"
 import { IoIosPlay } from "react-icons/io"
+import DynamicImage from "./DynamicImage"
 
 type GameCardProps = {
   id: number
@@ -26,7 +27,7 @@ export default function GameCard({
     >
       <div className="relative h-40 w-full bg-gray-100">
         {imagePath && (
-          <img
+          <DynamicImage
             src={imagePath}
             alt={title}
             className="h-full w-full object-cover"

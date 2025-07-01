@@ -13,9 +13,3 @@ export const sortAtom = atom<SortName>("title")
 
 // 可視ゲーム一覧
 export const visibleGamesAtom = atom<Game[]>([])
-
-// Homeのエラーメッセージ
-export const homeErrorAtom = atom<string | null>(null)
-
-// Homeのモーダル開閉フラグ
-export const isModalOpenAtom = atom<boolean>(false)
