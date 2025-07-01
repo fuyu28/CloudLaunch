@@ -4,7 +4,7 @@ import { CiSearch } from "react-icons/ci"
 import { IoIosAdd } from "react-icons/io"
 import type { SortName, FilterName } from "src/types/menu"
 import GameCard from "@renderer/components/GameCard"
-import GameFormModal from "@renderer/components/AddModal"
+import GameFormModal from "@renderer/components/AddGameModal"
 import { InputGameData } from "src/types/game"
 
 export default function Home(): React.ReactElement {
