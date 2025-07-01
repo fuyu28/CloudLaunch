@@ -1,5 +1,9 @@
 import { useParams, useNavigate, Navigate } from "react-router-dom"
 import { useAtomValue } from "jotai"
+import { IoIosPlay } from "react-icons/io"
+import { MdEdit } from "react-icons/md"
+import { FaTrash } from "react-icons/fa"
+import { FaArrowLeftLong } from "react-icons/fa6"
 import { visibleGamesAtom } from "@renderer/state/home"
 import DynamicImage from "@renderer/components/DynamicImage"
 
@@ -15,7 +19,7 @@ export default function GameDetail(): React.JSX.Element {
   return (
     <div className="min-h-screen bg-base-200 p-6">
       <button onClick={() => navigate(-1)} className="btn btn-ghost mb-4">
-        ← 戻る
+        <FaArrowLeftLong /> 戻る
       </button>
 
       <div className="card card-side bg-base-100 shadow-xl p-6">
@@ -34,9 +38,15 @@ export default function GameDetail(): React.JSX.Element {
           <p className="text-lg text-gray-700">{game.publisher}</p>
 
           <div className="card-actions mt-6 space-x-2">
-            <button className="btn btn-primary gap-2">▶ ゲームを起動</button>
-            <button className="btn btn-outline gap-2">✏ 編集</button>
-            <button className="btn btn-error gap-2">🗑 登録を解除</button>
+            <button className="btn btn-primary gap-2">
+              <IoIosPlay /> ゲームを起動
+            </button>
+            <button className="btn btn-outline gap-2">
+              <MdEdit /> 編集
+            </button>
+            <button className="btn btn-error gap-2">
+              <FaTrash /> 登録を解除
+            </button>
           </div>
         </div>
       </div>
