@@ -4,10 +4,12 @@ import { AwsSdkError } from "../types/error"
 import { FilterName, SortName } from "../types/menu"
 import { InputGameData } from "../types/game"
 import { ApiResult } from "../types/result"
+import { ValidatePathResult } from "../types/file"
 
-export interface FileDialogAPI {
+export interface FileAPI {
   selectAppExe(): Promise<string | null>
   selectSaveDataFolder(): Promise<string | null>
+  validatePath(filePath: string, expectType?: string): Promise<ValidatePathResult>
 }
 
 export interface SaveDataUploadAPI {
@@ -48,6 +50,11 @@ export interface LoadImageAPI {
   loadImageFromWeb(url: string): Promise<string | null>
 }
 
+export interface LaunchGameAPI {
+  launchGame(filePath: string): Promise<ApiResult>
+  launchGameFromSteam(url: string, steamPath: string): Promise<ApiResult>
+}
+
 export interface API {
   fileDialog: FileDialogAPI
   saveData: {
@@ -58,4 +65,5 @@ export interface API {
   credential: CredentialAPI
   database: DatabaseAPI
   loadImage: LoadImageAPI
+  game: LaunchGameAPI
 }

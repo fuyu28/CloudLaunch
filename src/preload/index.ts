@@ -2,16 +2,17 @@ import { contextBridge } from "electron"
 import { electronAPI } from "@electron-toolkit/preload"
 
 // Custom APIs for renderer
-import { fileDialogAPI } from "./api/fileDialogPreload"
+import { fileAPI } from "./api/filePreload"
 import { saveDataUploadAPI } from "./api/saveDataUploadPreload"
 import { saveDataFolderAPI } from "./api/saveDataFolderPreload"
 import { saveDataDownloadAPI } from "./api/saveDataDownloadPreload"
 import { credentialAPI } from "./api/credentialPreload"
 import { databaseAPI } from "./api/databasePreload"
 import { loadImageAPI } from "./api/loadImagePreload"
+import { launchGameAPI } from "./api/launchGamePreload"
 
 const api = {
-  fileDialog: fileDialogAPI,
+  file: fileAPI,
   saveData: {
     upload: saveDataUploadAPI,
     download: saveDataDownloadAPI,
@@ -19,7 +20,8 @@ const api = {
   },
   credential: credentialAPI,
   database: databaseAPI,
-  loadImage: loadImageAPI
+  loadImage: loadImageAPI,
+  game: launchGameAPI
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

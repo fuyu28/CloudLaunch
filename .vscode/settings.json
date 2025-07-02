@@ -8,5 +8,6 @@
   "[json]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
-  "files.eol": "\n"
+  "files.eol": "\n",
+  "cSpell.words": ["applaunch", "rungameid"]
 }
