@@ -24,18 +24,18 @@ export default function GameDetail(): React.JSX.Element {
 
       <div className="card card-side bg-base-100 shadow-xl p-6">
         {/* 左側のサムネイル */}
-        <figure className="w-48 h-64 overflow-hidden rounded-lg">
+        <figure className="w-100 h-64 flex items-center justify-center bg-gray-200 rounded-lg overflow-hidden">
           <DynamicImage
             src={game.imagePath ?? ""}
-            alt={game.title}
-            className="object-cover w-full h-full"
+            alt={game.imagePath ?? ""}
+            className="max-w-full max-h-full object-contain text-black"
           />
         </figure>
 
         {/* 右側の本文 */}
-        <div className="card-body pl-6">
+        <div className="card-body pl-12">
           <h2 className="card-title text-3xl">{game.title}</h2>
-          <p className="text-lg text-gray-700">{game.publisher}</p>
+          <p className="text-lg">{game.publisher}</p>
 
           <div className="card-actions mt-6 space-x-2">
             <button className="btn btn-primary gap-2">
