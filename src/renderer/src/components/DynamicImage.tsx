@@ -50,6 +50,13 @@ export default function DynamicImage({
     }
   }, [originalSrc])
 
-  if (!dataSrc) return null
+  if (!dataSrc) {
+    return (
+      <div style={{ display: "inline-block", textAlign: "center" }}>
+        <span>Loading...</span>
+        <img alt={imgProps.alt || "Image loading"} style={{ visibility: "hidden" }} />
+      </div>
+    );
+  }
   return <img src={dataSrc} {...imgProps} />
 }
