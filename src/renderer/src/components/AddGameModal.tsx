@@ -1,11 +1,9 @@
-import React, { useState, useMemo, useEffect } from "react"
+import React, { useState, useMemo } from "react"
 import { RxCross1 } from "react-icons/rx"
 import type { InputGameData } from "src/types/game"
 import type { ApiResult } from "src/types/result"
 
 type GameFormModalProps = {
-  mode: "add" | "edit"
-  initialData?: InputGameData | null
   isOpen: boolean
   onClose: () => void
   onSubmit: (gameFormValues: InputGameData) => Promise<ApiResult>
@@ -17,27 +15,24 @@ const initialValues: InputGameData = {
   saveFolderPath: "",
   exePath: "",
   imagePath: "",
-  playStatus: "unplayed"
-}
-
-const modeMap: Record<string, string> = {
-  add: "追加",
-  edit: "更新"
+  playStatus: ""
 }
 
 export default function GameFormModal({
-  mode,
-  initialData,
   isOpen,
   onClose,
   onSubmit
 }: GameFormModalProps): React.JSX.Element {
-  const [gameFormValues, setGameFormValues] = useState<InputGameData>(initialValues ?? initialData)
+  const [gameFormValues, setGameFormValues] = useState<InputGameData>({
+    title: "",
+    publisher: "",
+    saveFolderPath: "",
+    exePath: "",
+    imagePath: "",
+    playStatus: "unplayed"
+  })
+  const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
-
-  useEffect(() => {
-    setGameFormValues(initialData ?? initialValues)
-  }, [initialData, isOpen])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const { name, value } = e.target
@@ -45,19 +40,24 @@ export default function GameFormModal({
       ...prev,
       [name]: value
     }))
+    if (error) setError(null)
   }
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault()
+    setError(null)
     setSubmitting(true)
     try {
       const result = await onSubmit(gameFormValues)
       if (result.success) {
         resetForm()
         onClose()
+      } else {
+        setError(result.message ?? "登録に失敗しました。")
       }
     } catch (e) {
       console.error("予期しないエラー : ", e)
+      setError("予期しないエラーが発生しました。")
     } finally {
       setSubmitting(false)
     }
@@ -65,6 +65,7 @@ export default function GameFormModal({
 
   const resetForm = (): void => {
     setGameFormValues(initialValues)
+    setError(null)
     setSubmitting(false)
   }
 
@@ -93,9 +94,7 @@ export default function GameFormModal({
       />
       <div className="modal cursor-pointer">
         <div className="modal-box relative max-w-lg" onClick={(e) => e.stopPropagation()}>
-          <h3 className="text-xl font-bold mb-4">
-            {mode === "add" ? "ゲームの登録" : "ゲーム情報を編集"}
-          </h3>
+          <h3 className="text-xl font-bold mb-4">ゲームの登録</h3>
           {/* 閉じるボタン */}
           <button
             className="btn btn-sm btn-circle absolute right-2 top-2"
@@ -190,6 +189,7 @@ export default function GameFormModal({
               </div>
             </div>
             {/* モーダルアクション */}
+            {error && <p className="text-error text-sm">{error}</p>}
             <div className="modal-action justify-end">
               <button type="button" className="btn" onClick={handleCancel} disabled={submitting}>
                 キャンセル
@@ -200,7 +200,7 @@ export default function GameFormModal({
                 onClick={handleSubmit}
                 disabled={submitting || !canSubmit}
               >
-                {`${modeMap[mode]}${submitting ? "中…" : ""}`}
+                {submitting ? "登録中…" : "登録"}
               </button>
             </div>
           </form>
