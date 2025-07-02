@@ -27,6 +27,7 @@
     "@prisma/client": "^6.10.1",
     "electron-store": "^10.1.0",
     "electron-updater": "^6.3.9",
+    "file-type": "^21.0.0",
     "jotai": "^2.12.5",
     "keytar": "^7.9.0",
     "react": "^19.1.0",

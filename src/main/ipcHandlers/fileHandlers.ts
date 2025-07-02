@@ -1,4 +1,6 @@
 import { ipcMain, dialog } from "electron"
+import { validatePathWithType } from "../utils/file"
+import { ValidatePathResult } from "../../types/file"
 
 export function registerFileDialogHandlers(): void {
   ipcMain.handle(
@@ -18,4 +20,11 @@ export function registerFileDialogHandlers(): void {
     })
     return canceled ? null : filePaths[0]
   })
+
+  ipcMain.handle(
+    "validate-file",
+    async (_event, filePath: string, expectType?: string): Promise<ValidatePathResult> => {
+      return validatePathWithType(filePath, expectType)
+    }
+  )
 }
