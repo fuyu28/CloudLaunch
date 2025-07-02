@@ -90,7 +90,7 @@ export default function GameDetail(): React.JSX.Element {
         <figure className="w-100 h-64 flex items-center justify-center bg-gray-200 rounded-lg overflow-hidden">
           <DynamicImage
             src={game.imagePath ?? ""}
-            alt={game.imagePath ?? ""}
+            alt={game.title ?? ""}
             className="max-w-full max-h-full object-contain text-black"
           />
         </figure>
