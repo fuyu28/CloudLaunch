@@ -26,17 +26,15 @@ export function registerLoadImageHandler(): void {
 
   ipcMain.handle("load-image-from-web", async (_event, url: string): Promise<string | null> => {
     try {
-      // headからcontent-typeを検査する
-      const head = await fetch(url, { method: "HEAD" })
-      const contentType = head.headers.get("content-type") || ""
+      // Data URI処理
+      const res = await fetch(url)
+      if (!res.ok) throw new Error(`Fetch failed: ${res.status}`)
+      const contentType = res.headers.get("content-type") || ""
       // png | jpeg ならOK
       if (!/^image\/(png|jpeg)$/.test(contentType)) {
         console.warn(`Blocked by MIME policy: ${contentType}`)
         return null
       }
-      // Data URI処理
-      const res = await fetch(url)
-      if (!res.ok) throw new Error(`Fetch failed: ${res.status}`)
       const arrayBuffer = await res.arrayBuffer()
       const buffer = Buffer.from(arrayBuffer)
       const base64 = buffer.toString("base64")
