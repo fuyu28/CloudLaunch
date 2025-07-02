@@ -8,39 +8,48 @@ type DynamicImgProps = Omit<ImgHTMLAttributes<HTMLImageElement>, "src"> & {
 export default function DynamicImage({
   src: originalSrc,
   ...imgProps
-}: DynamicImgProps): React.JSX.Element {
-  const [src, setSrc] = useState<string>("")
+}: DynamicImgProps): React.JSX.Element | null {
+  const [dataSrc, setDataSrc] = useState<string | null>(null)
 
   useEffect(() => {
+    let mounted = true
+
     const loadImage = async (): Promise<void> => {
       // file:// か絶対パスならローカル読み込み
       const isLocal =
         originalSrc.startsWith("file://") ||
         /^[A-Za-z]:\\/.test(originalSrc) ||
         originalSrc.startsWith("/")
-      if (isLocal) {
-        try {
-          // ローカルの場合fsを使ってバックからロード
-          const dataUrl = await window.api.loadImage.loadImage(
-            originalSrc.replace(/^file:\/\//, "")
-          )
-          if (dataUrl) {
-            setSrc(dataUrl)
-          } else {
-            console.warn("画像読み込み失敗:", originalSrc)
-            setSrc("")
-          }
-        } catch (error) {
-          console.error("Error loading image:", error)
-          setSrc("")
+      try {
+        let dataUrl: string | null
+        if (isLocal) {
+          // ローカル画像の場合fsでnodeからロード
+          const path = originalSrc.replace(/^file:\/\//, "")
+          dataUrl = await window.api.loadImage.loadImageFromLocal(path)
+        } else {
+          // Web画像の場合fetchしてnodeからロード
+          dataUrl = await window.api.loadImage.loadImageFromWeb(originalSrc)
         }
-      } else {
-        // 通常のURLならそのまま
-        setSrc(originalSrc)
+        if (mounted) {
+          setDataSrc(dataUrl)
+          if (!dataUrl) {
+            console.warn("画像読み込み失敗:", originalSrc)
+          }
+        }
+      } catch (error) {
+        if (mounted) {
+          console.error("Error loading image:", error)
+          setDataSrc(null)
+        }
       }
     }
+
     loadImage()
+    return () => {
+      mounted = false
+    }
   }, [originalSrc])
 
-  return <img src={src} {...imgProps} />
+  if (!dataSrc) return null
+  return <img src={dataSrc} {...imgProps} />
 }

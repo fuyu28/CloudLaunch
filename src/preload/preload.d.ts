@@ -44,7 +44,8 @@ export interface DatabaseAPI {
 }
 
 export interface LoadImageAPI {
-  loadImage(filePath: string): Promise<string | null>
+  loadImageFromLocal(filePath: string): Promise<string | null>
+  loadImageFromWeb(url: string): Promise<string | null>
 }
 
 export interface API {
