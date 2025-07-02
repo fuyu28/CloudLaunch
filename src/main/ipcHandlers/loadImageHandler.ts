@@ -9,14 +9,38 @@ const mimeMap: Record<string, string> = {
 }
 
 export function registerLoadImageHandler(): void {
-  ipcMain.handle("load-image", async (_event, filePath: string): Promise<string | null> => {
+  ipcMain.handle(
+    "load-image-from-local",
+    async (_event, filePath: string): Promise<string | null> => {
+      try {
+        const buffer = await fs.readFile(filePath)
+        const ext = path.extname(filePath).slice(1).toLocaleLowerCase()
+        const mime = mimeMap[ext] || "image/jpeg"
+        return `data:${mime};base64,${buffer.toString("base64")}`
+      } catch (e) {
+        console.error(`load-image failed ${e}`)
+        return null
+      }
+    }
+  )
+
+  ipcMain.handle("load-image-from-web", async (_event, url: string): Promise<string | null> => {
     try {
-      const buffer = await fs.readFile(filePath)
-      const ext = path.extname(filePath).slice(1).toLocaleLowerCase()
-      const mime = mimeMap[ext] || "image/jpeg"
-      return `data:${mime};base64,${buffer.toString("base64")}`
+      // Data URI処理
+      const res = await fetch(url)
+      if (!res.ok) throw new Error(`Fetch failed: ${res.status}`)
+      const contentType = res.headers.get("content-type") || ""
+      // png | jpeg ならOK
+      if (!/^image\/(png|jpeg)$/.test(contentType)) {
+        console.warn(`Blocked by MIME policy: ${contentType}`)
+        return null
+      }
+      const arrayBuffer = await res.arrayBuffer()
+      const buffer = Buffer.from(arrayBuffer)
+      const base64 = buffer.toString("base64")
+      return `data:${contentType};base64,${base64}`
     } catch (e) {
-      console.error(`load-image failed ${e}`)
+      console.error(e)
       return null
     }
   })
