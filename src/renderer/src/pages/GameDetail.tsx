@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useCallback, useState } from "react"
 import { useParams, useNavigate, Navigate } from "react-router-dom"
 import { useAtom } from "jotai"
 import { IoIosPlay } from "react-icons/io"
@@ -21,17 +21,33 @@ export default function GameDetail(): React.JSX.Element {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [editData, setEditData] = useState<InputGameData | null>(null)
 
-  if (!id) return <Navigate to="/" replace />
-  const gameId = Number(id)
-  const game = filteredGames.find((g) => g.id === gameId)
-  if (!game) return <Navigate to="/" replace />
+  const game = filteredGames.find((g) => g.id === Number(game.id))
 
-  const confirmDelete = async (): Promise<void> => {
+  const handleBack = useCallback(() => navigate(-1), [navigate])
+
+  const handleClose = useCallback(() => setIsEditModalOpen(false), [])
+
+  const openEdit = useCallback(() => {
+    if (!game) return
+    const { title, publisher, imagePath, exePath, saveFolderPath, playStatus } = game
+    setEditData({
+      title,
+      publisher,
+      imagePath: imagePath ?? "",
+      exePath,
+      saveFolderPath,
+      playStatus
+    })
+    setIsEditModalOpen(true)
+  }, [game])
+
+  const confirmDelete = useCallback(async (): Promise<void> => {
+    if (!game) return
     try {
       // DBから削除
-      await window.api.database.deleteGame(gameId)
-      // ゲーム一覧から削除 (一応)
-      setFilteredGames((g) => g.filter((x) => x.id !== gameId))
+      await window.api.database.deleteGame(game.id)
+      // ゲーム一覧から削除
+      setFilteredGames((g) => g.filter((x) => x.id !== game.id))
       // Homeに戻る
       navigate("/", { replace: true })
     } catch (e) {
@@ -40,21 +56,32 @@ export default function GameDetail(): React.JSX.Element {
       // モーダルを閉じる
       setIsDeleteModalOpen(false)
     }
-  }
+  }, [game, navigate, setFilteredGames])
 
-  const handleUpdateGame = async (values: InputGameData): Promise<ApiResult> => {
-    try {
-      await window.api.database.updateGame(gameId, values)
-      return { success: true }
-    } catch (e) {
-      console.error(e)
-      return { success: false, message: `${e}` }
-    }
+  const handleUpdateGame = useCallback(
+    async (values: InputGameData): Promise<ApiResult> => {
+      if (!game) return { success: false }
+      try {
+        await window.api.database.updateGame(game.id, values)
+        return { success: true }
+      } catch (e) {
+        console.error(e)
+        return { success: false, message: `${e}` }
+      }
+    },
+    [game]
+  )
+
+  if (!id) {
+    return <Navigate to="/" replace />
+  }
+  if (!game) {
+    return <Navigate to="/" replace />
   }
 
   return (
     <div className="min-h-screen bg-base-200 p-6">
-      <button onClick={() => navigate(-1)} className="btn btn-ghost mb-4">
+      <button onClick={handleBack} className="btn btn-ghost mb-4">
         <FaArrowLeftLong /> 戻る
       </button>
 
@@ -77,21 +104,7 @@ export default function GameDetail(): React.JSX.Element {
             <button className="btn btn-primary gap-2">
               <IoIosPlay /> ゲームを起動
             </button>
-            <button
-              className="btn btn-outline gap-2"
-              onClick={() => {
-                setEditData({
-                  title: game.title,
-                  publisher: game.publisher,
-                  imagePath: game.imagePath ?? "",
-                  exePath: game.exePath,
-                  saveFolderPath: game.saveFolderPath,
-                  playStatus: game.playStatus
-                })
-
-                setIsEditModalOpen(true)
-              }}
-            >
+            <button className="btn btn-outline gap-2" onClick={openEdit}>
               <MdEdit /> 編集
             </button>
             <button className="btn btn-error gap-2" onClick={() => setIsDeleteModalOpen(true)}>
@@ -113,7 +126,7 @@ export default function GameDetail(): React.JSX.Element {
         cancelText="キャンセル"
         confirmText="削除する"
         onConfirm={confirmDelete}
-        onCancel={() => setIsDeleteModalOpen(false)}
+        onCancel={handleClose}
       />
 
       {/* 編集 */}
@@ -122,7 +135,7 @@ export default function GameDetail(): React.JSX.Element {
         initialData={editData}
         isOpen={isEditModalOpen}
         onSubmit={handleUpdateGame}
-        onClose={() => setIsEditModalOpen(false)}
+        onClose={handleClose}
       />
     </div>
   )

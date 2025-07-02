@@ -2,12 +2,12 @@ import React, { useEffect, useState } from "react"
 import { useAtom } from "jotai"
 import { CiSearch } from "react-icons/ci"
 import { IoIosAdd } from "react-icons/io"
-import type { SortName, FilterName } from "src/types/menu"
 import GameCard from "@renderer/components/GameCard"
 import GameFormModal from "@renderer/components/GameModal"
-import { InputGameData } from "src/types/game"
-import { ApiResult } from "src/types/result"
 import { searchWordAtom, filterAtom, sortAtom, visibleGamesAtom } from "../state/home"
+import type { InputGameData } from "src/types/game"
+import type { ApiResult } from "src/types/result"
+import type { SortName, FilterName } from "src/types/menu"
 
 export default function Home(): React.ReactElement {
   const [searchWord, setSearchWord] = useAtom(searchWordAtom)
