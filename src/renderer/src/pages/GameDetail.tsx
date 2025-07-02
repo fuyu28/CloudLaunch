@@ -89,7 +89,7 @@ export default function GameDetail(): React.JSX.Element {
 
       <div className="card card-side bg-base-100 shadow-xl p-6">
         {/* 左側のサムネイル */}
-        <figure className="w-full h-64 flex items-center justify-center bg-gray-200 rounded-lg overflow-hidden">
+        <figure className="w-[380px] h-64 flex items-center justify-center bg-gray-200 rounded-lg overflow-hidden">
           <DynamicImage
             src={game.imagePath ?? ""}
             alt={game.title ?? ""}
