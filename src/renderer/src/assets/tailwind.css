@@ -4,5 +4,6 @@
     light --default,
     dark --prefersdark,
     cupcake;
+  exclude: rootscrollgutter;
 }
 @plugin 'tailwind-scrollbar';
