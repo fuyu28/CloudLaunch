@@ -60,6 +60,18 @@ export default function GameDetail(): React.JSX.Element {
     }
   }, [game, navigate, setFilteredGames])
 
+  const handleLaunch = useCallback(async (): Promise<ApiResult> => {
+    if (!game) return { success: false }
+    try {
+      const res = await window.api.game.launchGame(game.exePath)
+      if (!res.success) throw new Error(res.message)
+      return { success: true }
+    } catch (e) {
+      console.error(e)
+      return { success: false, message: `ゲームの実行に失敗しました: ${e}` }
+    }
+  }, [game])
+
   const handleUpdateGame = useCallback(
     async (values: InputGameData): Promise<ApiResult> => {
       if (!game) return { success: false }
@@ -103,7 +115,7 @@ export default function GameDetail(): React.JSX.Element {
           <p className="text-lg">{game.publisher}</p>
 
           <div className="card-actions mt-6 space-x-2">
-            <button className="btn btn-primary gap-2">
+            <button className="btn btn-primary gap-2" onClick={handleLaunch}>
               <IoIosPlay /> ゲームを起動
             </button>
             <button className="btn btn-outline gap-2" onClick={openEdit}>
