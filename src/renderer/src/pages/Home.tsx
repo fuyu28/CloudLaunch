@@ -4,7 +4,7 @@ import { CiSearch } from "react-icons/ci"
 import { IoIosAdd } from "react-icons/io"
 import type { SortName, FilterName } from "src/types/menu"
 import GameCard from "@renderer/components/GameCard"
-import GameFormModal from "@renderer/components/AddGameModal"
+import GameFormModal from "@renderer/components/GameModal"
 import { InputGameData } from "src/types/game"
 import { ApiResult } from "src/types/result"
 import { searchWordAtom, filterAtom, sortAtom, visibleGamesAtom } from "../state/home"
@@ -39,16 +39,13 @@ export default function Home(): React.ReactElement {
     } // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchWord, filter, sort])
 
-  const handleOpenModal = (): void => setIsModalOpen(true)
-  const handleCloseModal = (): void => setIsModalOpen(false)
-
   const handleAddGame = async (values: InputGameData): Promise<ApiResult> => {
     try {
       const result = await window.api.database.createGame(values)
       if (result.success) {
         const games = await window.api.database.listGames(searchWord, filter, sort)
         setVisibleGames(games)
-        handleCloseModal()
+        setIsModalOpen(false)
         return { success: true }
       } else {
         const message = result.message ?? "ゲームの追加に失敗しました"
@@ -129,13 +126,18 @@ export default function Home(): React.ReactElement {
       <button
         className="btn btn-primary btn-circle fixed bottom-6 right-6 shadow-lg h-14 w-14 flex items-center justify-center"
         aria-label="ゲームを追加"
-        onClick={handleOpenModal}
+        onClick={() => setIsModalOpen(true)}
       >
         <IoIosAdd size={28} />
       </button>
 
       {/* ゲーム登録モーダル */}
-      <GameFormModal isOpen={isModalOpen} onClose={handleCloseModal} onSubmit={handleAddGame} />
+      <GameFormModal
+        mode="add"
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleAddGame}
+      />
     </div>
   )
 }
