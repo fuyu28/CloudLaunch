@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react"
+import React, { useState, useMemo, useEffect, useCallback } from "react"
 import { RxCross1 } from "react-icons/rx"
 import type { InputGameData } from "src/types/game"
 import type { ApiResult } from "src/types/result"
@@ -44,6 +44,31 @@ export default function GameFormModal({
       setGameFormValues(initialValues)
     }
   }, [initialData, isOpen, mode])
+
+  const browseImage = useCallback(async () => {
+    const result = await window.api.file.selectFile([
+      { name: "Image", extensions: ["png", "jpg", "jpeg", "gif"] }
+    ])
+    if (result && result[0]) {
+      setGameFormValues((prev) => ({ ...prev, imagePath: result }))
+    }
+  }, [])
+
+  const browseExe = useCallback(async () => {
+    const result = await window.api.file.selectFile([
+      { name: "Executable", extensions: ["exe", "app"] }
+    ])
+    if (result && result[0]) {
+      setGameFormValues((prev) => ({ ...prev, exePath: result }))
+    }
+  }, [])
+
+  const browseSaveFolder = useCallback(async () => {
+    const result = await window.api.file.selectFolder()
+    if (result && result[0]) {
+      setGameFormValues((prev) => ({ ...prev, saveFolderPath: result }))
+    }
+  }, [])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const { name, value } = e.target
@@ -152,7 +177,7 @@ export default function GameFormModal({
                   onChange={handleChange}
                   className="input input-bordered flex-1"
                 />
-                <button type="button" className="btn ml-2">
+                <button type="button" className="btn ml-2" onClick={browseImage}>
                   参照
                 </button>
               </div>
@@ -171,7 +196,7 @@ export default function GameFormModal({
                   className="input input-bordered flex-1"
                   required
                 />
-                <button type="button" className="btn ml-2">
+                <button type="button" className="btn ml-2" onClick={browseExe}>
                   参照
                 </button>
               </div>
@@ -190,7 +215,7 @@ export default function GameFormModal({
                   className="input input-bordered flex-1"
                   required
                 />
-                <button type="button" className="btn ml-2">
+                <button type="button" className="btn ml-2" onClick={browseSaveFolder}>
                   参照
                 </button>
               </div>

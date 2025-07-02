@@ -5,9 +5,10 @@ import { FilterName, SortName } from "../types/menu"
 import { InputGameData } from "../types/game"
 import { ApiResult } from "../types/result"
 
-export interface FileDialogAPI {
-  selectAppExe(): Promise<string | null>
-  selectSaveDataFolder(): Promise<string | null>
+export interface FileAPI {
+  selectFile(filters: Electron.FileFilter[]): Promise<string | null>
+  selectFolder(): Promise<string | null>
+  validatePath(filePath: string, expectType?: string): Promise<ValidatePathResult>
 }
 
 export interface SaveDataUploadAPI {
@@ -49,7 +50,7 @@ export interface LoadImageAPI {
 }
 
 export interface API {
-  fileDialog: FileDialogAPI
+  file: FileAPI
   saveData: {
     upload: SaveDataUploadAPI
     download: SaveDataDownloadAPI
