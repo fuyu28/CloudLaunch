@@ -68,7 +68,7 @@ export default function GameDetail(): React.JSX.Element {
       return { success: true }
     } catch (e) {
       console.error(e)
-      return { success: false, message: `ゲームの実行に失敗しました: ${e}` }
+      return { success: false, message: `ゲームの実行に失敗しました: ${e instanceof Error ? e.message : String(e)}` }
     }
   }, [game])
 
