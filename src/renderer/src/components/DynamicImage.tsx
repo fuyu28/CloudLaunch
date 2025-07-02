@@ -56,7 +56,7 @@ export default function DynamicImage({
         <span>Loading...</span>
         <img alt={imgProps.alt || "Image loading"} style={{ visibility: "hidden" }} />
       </div>
-    );
+    )
   }
   return <img src={dataSrc} {...imgProps} />
 }

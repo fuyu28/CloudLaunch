@@ -7,8 +7,8 @@ import { ApiResult } from "../types/result"
 import { ValidatePathResult } from "../types/file"
 
 export interface FileAPI {
-  selectAppExe(): Promise<string | null>
-  selectSaveDataFolder(): Promise<string | null>
+  selectFile(filters: Electron.FileFilter[]): Promise<string | null>
+  selectFolder(): Promise<string | null>
   validatePath(filePath: string, expectType?: string): Promise<ValidatePathResult>
 }
 
@@ -56,7 +56,7 @@ export interface LaunchGameAPI {
 }
 
 export interface API {
-  fileDialog: FileDialogAPI
+  file: FileAPI
   saveData: {
     upload: SaveDataUploadAPI
     download: SaveDataDownloadAPI

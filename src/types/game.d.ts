@@ -17,5 +17,5 @@ export type InputGameData = {
   saveFolderPath: string
   exePath: string
   imagePath: string
-  playStatus: string
+  playStatus: "unplayed" | "playing" | "played"
 }

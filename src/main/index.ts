@@ -7,8 +7,8 @@ import { registerAllHandlers } from "./registerHandlers"
 function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    width: 900,
-    height: 700,
+    width: 1050,
+    height: 750,
     show: false,
     autoHideMenuBar: true,
     ...(process.platform === "linux" ? { icon } : {}),

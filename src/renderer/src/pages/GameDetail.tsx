@@ -17,6 +17,7 @@ export default function GameDetail(): React.JSX.Element {
   const navigate = useNavigate()
   const [filteredGames, setFilteredGames] = useAtom(visibleGamesAtom)
 
+  const [isLaunching, setIsLaunching] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [editData, setEditData] = useState<InputGameData | null>(null)
@@ -62,13 +63,19 @@ export default function GameDetail(): React.JSX.Element {
 
   const handleLaunch = useCallback(async (): Promise<ApiResult> => {
     if (!game) return { success: false }
+    setIsLaunching(true)
     try {
       const res = await window.api.game.launchGame(game.exePath)
       if (!res.success) throw new Error(res.message)
       return { success: true }
     } catch (e) {
       console.error(e)
-      return { success: false, message: `ゲームの実行に失敗しました: ${e instanceof Error ? e.message : String(e)}` }
+      return {
+        success: false,
+        message: `ゲームの実行に失敗しました: ${e instanceof Error ? e.message : String(e)}`
+      }
+    } finally {
+      setIsLaunching(false)
     }
   }, [game])
 
@@ -76,14 +83,28 @@ export default function GameDetail(): React.JSX.Element {
     async (values: InputGameData): Promise<ApiResult> => {
       if (!game) return { success: false }
       try {
+        // 1. DB 更新
         await window.api.database.updateGame(game.id, values)
+
+        // 2. Atom の該当ゲームだけ差し替え
+        setFilteredGames((list) =>
+          list.map((g) =>
+            g.id === game.id
+              ? { ...g, ...values } // 更新後の値をマージ
+              : g
+          )
+        )
+
+        // 3. モーダルを閉じる
+        setIsEditModalOpen(false)
+
         return { success: true }
       } catch (e) {
         console.error(e)
         return { success: false, message: `${e}` }
       }
     },
-    [game]
+    [game, setFilteredGames]
   )
 
   if (!id) {
@@ -115,8 +136,18 @@ export default function GameDetail(): React.JSX.Element {
           <p className="text-lg">{game.publisher}</p>
 
           <div className="card-actions mt-6 space-x-2">
-            <button className="btn btn-primary gap-2" onClick={handleLaunch}>
-              <IoIosPlay /> ゲームを起動
+            <button className="btn btn-primary gap-2" onClick={handleLaunch} disabled={isLaunching}>
+              {isLaunching ? (
+                <>
+                  <IoIosPlay className="animate-spin" />
+                  起動中…
+                </>
+              ) : (
+                <>
+                  <IoIosPlay />
+                  ゲームを起動
+                </>
+              )}
             </button>
             <button className="btn btn-outline gap-2" onClick={openEdit}>
               <MdEdit /> 編集

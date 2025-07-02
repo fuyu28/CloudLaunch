@@ -124,7 +124,16 @@ export default function Home(): React.ReactElement {
 
       {/* ゲーム追加ボタン */}
       <button
-        className="btn btn-primary btn-circle fixed bottom-6 right-6 shadow-lg h-14 w-14 flex items-center justify-center"
+        className="
+          btn btn-primary btn-circle
+          fixed bottom-6 right-6
+          h-14 w-14
+          flex items-center justify-center
+          shadow-2xl hover:shadow-[0_20px_40px_rgba(0,0,0,0.2)]
+          rounded-full
+          active:scale-95
+          transition-all duration-200 ease-out
+        "
         aria-label="ゲームを追加"
         onClick={() => setIsModalOpen(true)}
       >
