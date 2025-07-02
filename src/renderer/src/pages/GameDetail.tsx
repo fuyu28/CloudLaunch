@@ -25,7 +25,9 @@ export default function GameDetail(): React.JSX.Element {
 
   const handleBack = useCallback(() => navigate(-1), [navigate])
 
-  const handleClose = useCallback(() => setIsEditModalOpen(false), [])
+  const closeEditModal = useCallback(() => setIsEditModalOpen(false), [])
+
+  const closeDeleteModal = useCallback(() => setIsDeleteModalOpen(false), [])
 
   const openEdit = useCallback(() => {
     if (!game) return
@@ -126,7 +128,7 @@ export default function GameDetail(): React.JSX.Element {
         cancelText="キャンセル"
         confirmText="削除する"
         onConfirm={confirmDelete}
-        onCancel={handleClose}
+        onCancel={closeDeleteModal}
       />
 
       {/* 編集 */}
@@ -135,7 +137,7 @@ export default function GameDetail(): React.JSX.Element {
         initialData={editData}
         isOpen={isEditModalOpen}
         onSubmit={handleUpdateGame}
-        onClose={handleClose}
+        onClose={closeEditModal}
       />
     </div>
   )
