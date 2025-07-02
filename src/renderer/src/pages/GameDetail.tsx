@@ -21,7 +21,7 @@ export default function GameDetail(): React.JSX.Element {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [editData, setEditData] = useState<InputGameData | null>(null)
 
-  const game = filteredGames.find((g) => g.id === Number(game.id))
+  const game = filteredGames.find((g) => g.id === Number(id))
 
   const handleBack = useCallback(() => navigate(-1), [navigate])
 
