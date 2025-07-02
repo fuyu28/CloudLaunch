@@ -32,12 +32,18 @@ export default function GameFormModal({
   onClose,
   onSubmit
 }: GameFormModalProps): React.JSX.Element {
-  const [gameFormValues, setGameFormValues] = useState<InputGameData>(initialValues ?? initialData)
+  const [gameFormValues, setGameFormValues] = useState<InputGameData>(
+    mode === "edit" && initialData ? initialData : initialValues
+  )
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
-    setGameFormValues(initialData ?? initialValues)
-  }, [initialData, isOpen])
+    if (mode === "edit" && initialData) {
+      setGameFormValues(initialData)
+    } else {
+      setGameFormValues(initialValues)
+    }
+  }, [initialData, isOpen, mode])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const { name, value } = e.target
