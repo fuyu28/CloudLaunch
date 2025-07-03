@@ -21,8 +21,7 @@ export default function GameCard({
   onLaunchGame
 }: GameCardProps): React.JSX.Element {
   return (
-    <Link
-      to={`/games/${id}`}
+    <div
       className="
         group
         bg-base-100 rounded-xl overflow-hidden
@@ -30,13 +29,7 @@ export default function GameCard({
         hover:shadow-xl
       "
     >
-      <div
-        className="relative h-40 w-full bg-gray-100"
-        onClick={(e) => {
-          e.preventDefault()
-          onLaunchGame(exePath)
-        }}
-      >
+      <button className="relative h-40 w-full bg-gray-100" onClick={() => onLaunchGame(exePath)}>
         {imagePath && (
           <DynamicImage
             src={imagePath}
@@ -61,11 +54,13 @@ export default function GameCard({
             <IoIosPlay size={40} className="pl-1 text-gray-700" />
           </div>
         </div>
-      </div>
-      <div className="p-2 h-20">
-        <h3 className="text-base font-semibold line-clamp-2">{title}</h3>
-        <p className="text-sm text-gray-500 line-clamp-2">{publisher}</p>
-      </div>
-    </Link>
+      </button>
+      <Link to={`/games/${id}`}>
+        <div className="p-2 h-20">
+          <h3 className="text-base font-semibold line-clamp-2">{title}</h3>
+          <p className="text-sm text-gray-500 line-clamp-2">{publisher}</p>
+        </div>
+      </Link>
+    </div>
   )
 }
