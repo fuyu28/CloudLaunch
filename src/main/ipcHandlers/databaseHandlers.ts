@@ -45,7 +45,7 @@ export function registerDatabaseHandlers(): void {
     }
   )
 
-  ipcMain.handle("get-game-by-id", async (_event, id: number): Promise<Game | null> => {
+  ipcMain.handle("get-game-by-id", async (_event, id: string): Promise<Game | null> => {
     return prisma.game.findFirst({
       where: { id }
     })
@@ -57,9 +57,9 @@ export function registerDatabaseHandlers(): void {
         data: {
           title: game.title,
           publisher: game.publisher,
-          saveFolderPath: game.saveFolderPath,
+          saveFolderPath: game.saveFolderPath ?? null,
           exePath: game.exePath,
-          imagePath: game.imagePath
+          imagePath: game.imagePath ?? null
         }
       })
       return { success: true }
@@ -74,7 +74,7 @@ export function registerDatabaseHandlers(): void {
 
   ipcMain.handle(
     "update-game",
-    async (_event, id: number, game: InputGameData): Promise<ApiResult> => {
+    async (_event, id: string, game: InputGameData): Promise<ApiResult> => {
       try {
         await prisma.game.update({
           where: {
@@ -99,7 +99,7 @@ export function registerDatabaseHandlers(): void {
     }
   )
 
-  ipcMain.handle("delete-game", async (_event, gameId: number): Promise<ApiResult> => {
+  ipcMain.handle("delete-game", async (_event, gameId: string): Promise<ApiResult> => {
     try {
       await prisma.game.delete({
         where: { id: gameId }
@@ -113,13 +113,14 @@ export function registerDatabaseHandlers(): void {
 
   ipcMain.handle(
     "create-session",
-    async (_event, duration: number, gameId: number): Promise<ApiResult> => {
+    async (_event, duration: number, gameId: string): Promise<ApiResult> => {
       try {
         await prisma.$transaction(async (tx) => {
           await tx.playSession.create({
             data: {
               duration,
-              gameId
+              gameId,
+              userId: "default-user" // TODO: 将来的にユーザー管理を実装時に修正
             }
           })
 

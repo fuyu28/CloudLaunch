@@ -1,5 +1,5 @@
 export type GameType = {
-  id: number
+  id: string
   title: string
   publisher: string
   saveFolderPath: string

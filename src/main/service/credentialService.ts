@@ -1,9 +1,7 @@
 import Store from "electron-store"
 import type { Schema, Creds } from "../../types/creds"
 import { ApiResult } from "../../types/result"
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const keytar = require("keytar")
+import keytar from "keytar"
 
 const store = new Store<Schema>({
   defaults: {

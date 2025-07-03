@@ -4,7 +4,7 @@ import { IoIosPlay } from "react-icons/io"
 import DynamicImage from "./DynamicImage"
 
 type GameCardProps = {
-  id: number
+  id: string
   title: string
   publisher: string
   imagePath: string

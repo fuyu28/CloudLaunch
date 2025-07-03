@@ -38,11 +38,11 @@ export interface CredentialAPI {
 
 export interface DatabaseAPI {
   listGames(searchWord: string, filter: FilterName, sort: SortName): Promise<Game[]>
-  getGameById(id: number): Promise<Game | null>
+  getGameById(id: string): Promise<Game | null>
   createGame(game: InputGameData): Promise<ApiResult<void>>
-  updateGame(id: number, game: InputGameData): Promise<ApiResult<void>>
-  deleteGame(id: number): Promise<ApiResult<void>>
-  createSession(duration: number, gameId: number): Promise<ApiResult<void>>
+  updateGame(id: string, game: InputGameData): Promise<ApiResult<void>>
+  deleteGame(id: string): Promise<ApiResult<void>>
+  createSession(duration: number, gameId: string): Promise<ApiResult<void>>
 }
 
 export interface LoadImageAPI {

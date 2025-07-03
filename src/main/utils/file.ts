@@ -1,7 +1,6 @@
 import { promises as fs } from "fs"
 import { fileTypeFromFile, FileTypeResult } from "file-type"
-import { PathType } from "../ipcHandlers/launchGameHandlers"
-import type { ValidatePathResult } from "../../types/file"
+import { PathType, ValidatePathResult } from "../../types/file"
 
 const EXE_HEADER = Buffer.from([0x4d, 0x5a]) // "MZ"
 

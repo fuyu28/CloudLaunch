@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useCallback } from "react"
-import toast from "react-hot-toast"
 import { useAtom } from "jotai"
 import { CiSearch } from "react-icons/ci"
 import { IoIosAdd } from "react-icons/io"
@@ -7,6 +6,8 @@ import GameCard from "@renderer/components/GameCard"
 import GameFormModal from "@renderer/components/GameModal"
 import FloatingButton from "@renderer/components/FloatingButton"
 import { searchWordAtom, filterAtom, sortAtom, visibleGamesAtom } from "../state/home"
+import { useDebounce } from "../hooks/useDebounce"
+import { useLoadingState } from "../hooks/useLoadingState"
 import type { InputGameData } from "src/types/game"
 import type { ApiResult } from "src/types/result"
 import type { SortName, FilterName } from "src/types/menu"
@@ -18,54 +19,81 @@ export default function Home(): React.ReactElement {
   const [visibleGames, setVisibleGames] = useAtom(visibleGamesAtom)
   const [isModalOpen, setIsModalOpen] = useState(false)
 
+  // 検索語をデバウンス（300ms遅延）
+  const debouncedSearchWord = useDebounce(searchWord, 300)
+
+  // ローディング状態管理
+  const gameListLoading = useLoadingState()
+  const gameActionLoading = useLoadingState()
+
   useEffect(() => {
     let cancelled = false
-    async function fetchGames(): Promise<void> {
-      try {
-        const games = await window.api.database.listGames(searchWord, filter, sort)
-        if (!cancelled) {
-          setVisibleGames(games)
+
+    const fetchGames = async (): Promise<void> => {
+      const games = await gameListLoading.executeWithLoading(
+        () => window.api.database.listGames(debouncedSearchWord, filter, sort),
+        {
+          errorMessage: "ゲーム一覧の取得に失敗しました",
+          showToast: true
         }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (e: any) {
-        if (!cancelled) {
-          toast.error(e.message ?? "ゲーム一覧の取得に失敗しました")
-        }
+      )
+
+      if (!cancelled && games) {
+        setVisibleGames(games)
       }
     }
+
     fetchGames()
     return () => {
       cancelled = true
     } // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchWord, filter, sort])
+  }, [debouncedSearchWord, filter, sort])
 
   const handleAddGame = async (values: InputGameData): Promise<ApiResult<void>> => {
-    const result = await window.api.database.createGame(values)
-    if (result.success) {
-      toast.success("ゲームを追加しました。")
-      const games = await window.api.database.listGames(searchWord, filter, sort)
-      setVisibleGames(games)
-      setIsModalOpen(false)
-    } else {
-      toast.error(result.message)
-    }
-    return result
+    const result = await gameActionLoading.executeWithLoading(
+      async () => {
+        const createResult = await window.api.database.createGame(values)
+        if (!createResult.success) {
+          throw new Error(createResult.message)
+        }
+
+        // ゲーム一覧を再取得
+        const games = await window.api.database.listGames(debouncedSearchWord, filter, sort)
+        setVisibleGames(games)
+        setIsModalOpen(false)
+
+        return createResult
+      },
+      {
+        loadingMessage: "ゲームを追加しています...",
+        successMessage: "ゲームを追加しました",
+        showToast: true
+      }
+    )
+
+    return result || { success: false, message: "ゲームの追加に失敗しました" }
   }
 
-  const handleLaunchGame = useCallback(async (exePath: string) => {
-    const loadingToastId = toast.loading("ゲームを起動しています…")
-    try {
-      const result = await window.api.game.launchGame(exePath)
-      if (result.success) {
-        toast.success("ゲームが起動しました", { id: loadingToastId })
-      } else {
-        toast.error(result.message, { id: loadingToastId })
-      }
-    } catch (error) {
-      toast.error("ゲームの起動に失敗しました", { id: loadingToastId })
-      console.error("Failed to launch game:", error)
-    }
-  }, [])
+  const handleLaunchGame = useCallback(
+    async (exePath: string) => {
+      await gameActionLoading.executeWithLoading(
+        async () => {
+          const result = await window.api.game.launchGame(exePath)
+          if (!result.success) {
+            throw new Error(result.message)
+          }
+          return result
+        },
+        {
+          loadingMessage: "ゲームを起動しています...",
+          successMessage: "ゲームが起動しました",
+          errorMessage: "ゲームの起動に失敗しました",
+          showToast: true
+        }
+      )
+    },
+    [gameActionLoading]
+  )
 
   return (
     <div className="flex flex-col h-full min-h-0 relative">

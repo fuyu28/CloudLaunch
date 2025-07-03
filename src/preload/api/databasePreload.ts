@@ -7,12 +7,12 @@ import { ApiResult } from "../../types/result"
 export const databaseAPI = {
   listGames: (searchWord: string, filter: FilterName, sort: SortName): Promise<Game[]> =>
     ipcRenderer.invoke("list-games", searchWord, filter, sort),
-  getGameById: (id: number): Promise<Game | null> => ipcRenderer.invoke("get-game-by-id", id),
+  getGameById: (id: string): Promise<Game | null> => ipcRenderer.invoke("get-game-by-id", id),
   createGame: (game: InputGameData): Promise<ApiResult<void>> =>
     ipcRenderer.invoke("create-game", game),
-  updateGame: (id: number, game: InputGameData): Promise<ApiResult<void>> =>
+  updateGame: (id: string, game: InputGameData): Promise<ApiResult<void>> =>
     ipcRenderer.invoke("update-game", id, game),
-  deleteGame: (id: number): Promise<ApiResult<void>> => ipcRenderer.invoke("delete-game", id),
-  createSession: (duration: number, gameId: number): Promise<ApiResult<void>> =>
+  deleteGame: (id: string): Promise<ApiResult<void>> => ipcRenderer.invoke("delete-game", id),
+  createSession: (duration: number, gameId: string): Promise<ApiResult<void>> =>
     ipcRenderer.invoke("create-session", duration, gameId)
 }
