@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState, useCallback } from "react"
 import { useAtom } from "jotai"
 import { CiSearch } from "react-icons/ci"
 import { IoIosAdd } from "react-icons/io"
@@ -50,6 +50,21 @@ export default function Home(): React.ReactElement {
     }
     return result
   }
+
+  const handleLaunchGame = useCallback(async (exePath: string) => {
+    const loadingToastId = toast.loading("ゲームを起動しています…")
+    try {
+      const result = await window.api.game.launchGame(exePath)
+      if (result.success) {
+        toast.success("ゲームが起動しました", { id: loadingToastId })
+      } else {
+        toast.error(result.message, { id: loadingToastId })
+      }
+    } catch (error) {
+      toast.error("ゲームの起動に失敗しました", { id: loadingToastId })
+      console.error("Failed to launch game:", error)
+    }
+  }, [])
 
   return (
     <div className="flex flex-col h-full min-h-0 relative">
@@ -108,6 +123,8 @@ export default function Home(): React.ReactElement {
                 title={game.title}
                 publisher={game.publisher}
                 imagePath={game.imagePath ?? ""}
+                exePath={game.exePath}
+                onLaunchGame={handleLaunchGame}
               />
             ))}
           </div>

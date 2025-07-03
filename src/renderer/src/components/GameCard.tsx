@@ -8,13 +8,17 @@ type GameCardProps = {
   title: string
   publisher: string
   imagePath: string
+  exePath: string
+  onLaunchGame: (exePath: string) => void
 }
 
 export default function GameCard({
   id,
   title,
   publisher,
-  imagePath
+  imagePath,
+  exePath,
+  onLaunchGame
 }: GameCardProps): React.JSX.Element {
   return (
     <Link
@@ -26,7 +30,13 @@ export default function GameCard({
         hover:shadow-xl
       "
     >
-      <div className="relative h-40 w-full bg-gray-100">
+      <div
+        className="relative h-40 w-full bg-gray-100"
+        onClick={(e) => {
+          e.preventDefault()
+          onLaunchGame(exePath)
+        }}
+      >
         {imagePath && (
           <DynamicImage
             src={imagePath}
