@@ -1,3 +1,19 @@
+/**
+ * @fileoverview ゲーム登録・編集モーダルコンポーネント
+ *
+ * このコンポーネントは、新規ゲーム登録と既存ゲーム編集の両方に対応したモーダルフォームです。
+ * 主な機能：
+ * - ゲーム基本情報の入力（タイトル、発行元、実行ファイルパス等）
+ * - ファイル・フォルダ選択のためのネイティブダイアログ連携
+ * - リアルタイムバリデーション（必須フィールドチェック）
+ * - エラーハンドリングとユーザー向けトースト通知
+ *
+ * 使用技術：
+ * - React Hooks（useState, useEffect, useCallback, useMemo）
+ * - DaisyUI モーダルコンポーネント
+ * - react-hot-toast エラー通知
+ */
+
 import React, { useState, useMemo, useEffect, useCallback } from "react"
 import { RxCross1 } from "react-icons/rx"
 import toast from "react-hot-toast"

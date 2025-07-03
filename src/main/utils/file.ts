@@ -5,10 +5,30 @@ import { PathType, ValidatePathResult } from "../../types/file"
 const EXE_HEADER = Buffer.from([0x4d, 0x5a]) // "MZ"
 
 /**
- * パスが存在し、かつ(expectType指定時は)期待フォーマットと合致するかを検証する。
- * @param filePath 検証するパス
- * @param expectType PNG/JPEG/.exe/"Directory"/"File" など（省略可）
+ * ファイル・ディレクトリの存在確認と形式検証を行う
+ *
+ * この関数は、指定されたパスが存在するかどうかを確認し、
+ * オプションで期待する形式（ファイル種別）と一致するかを検証します。
+ *
+ * 検証プロセス：
+ * 1. パスの存在確認（fs.stat）
+ * 2. ディレクトリ vs ファイルの判定
+ * 3. ファイルの場合：マジックナンバー解析による形式特定
+ *    - file-typeライブラリによる自動判定
+ *    - .exeファイル用のカスタム判定（MZヘッダーチェック）
+ *    - フォールバック：拡張子ベースの判定
+ * 4. 期待形式との照合
+ *
+ * @param filePath 検証するパス（絶対パス推奨）
+ * @param expectType 期待するファイル形式（PathType列挙値または文字列）
+ *                   - PathType.Directory: ディレクトリ
+ *                   - PathType.Executable: 実行ファイル(.exe)
+ *                   - "png", "jpg", "jpeg": 画像ファイル
+ *                   - 省略時: 存在確認のみ
  * @returns ValidatePathResult
+ *          - ok: true = 検証成功
+ *          - ok: false = 検証失敗（errorType に失敗理由）
+ *          - type: 検出されたファイル形式
  */
 export async function validatePathWithType(
   filePath: string,

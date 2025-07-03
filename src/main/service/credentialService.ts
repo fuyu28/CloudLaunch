@@ -1,3 +1,16 @@
+/**
+ * @fileoverview クラウドストレージ認証情報管理サービス
+ *
+ * このサービスは、R2/S3クラウドストレージへの接続に必要な認証情報を安全に管理します。
+ * - セキュアキーチェーン（keytar）: secretAccessKeyの暗号化保存
+ * - electron-store: その他の設定情報（endpoint, region, bucketName等）の保存
+ *
+ * セキュリティ考慮事項：
+ * - 秘密鍵はOSのキーチェーンに保存され、平文でディスクに書き込まれません
+ * - アクセスキーIDなどの機密性の低い情報のみelectron-storeに保存
+ * - 認証情報取得時の詳細なエラーハンドリング（権限エラー、キーチェーン不存在など）
+ */
+
 import Store from "electron-store"
 import type { Schema, Creds } from "../../types/creds"
 import { ApiResult } from "../../types/result"

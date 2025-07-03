@@ -1,3 +1,20 @@
+/**
+ * @fileoverview セーブデータフォルダのクラウドアップロード機能
+ *
+ * このハンドラーは、ローカルのセーブデータフォルダを再帰的にスキャンし、
+ * すべてのファイルをR2/S3クラウドストレージにアップロードします。
+ *
+ * 主な処理フロー：
+ * 1. 認証情報の検証とR2クライアントの作成
+ * 2. ローカルフォルダの再帰的ファイルスキャン
+ * 3. 各ファイルの読み込みとクラウドへのアップロード
+ * 4. 相対パス構造の保持（ローカルの階層構造をクラウドでも維持）
+ *
+ * エラーハンドリング：
+ * - AWS SDK固有エラーの詳細分析
+ * - ネットワーク・権限・ファイルアクセスエラーの適切な処理
+ */
+
 import { readdir, readFile } from "fs/promises"
 import { join, relative } from "path"
 import { ipcMain } from "electron"
@@ -7,7 +24,23 @@ import { getCredential } from "../service/credentialService"
 import { ApiResult } from "../../types/result"
 import { handleAwsSdkError } from "../utils/awsSdkErrorHandler"
 
-// ディレクトリを再帰的に探索して、すべてのファイルパスのリストを返す
+/**
+ * ディレクトリを再帰的にスキャンしてすべてのファイルパスを取得
+ *
+ * この関数は、指定されたディレクトリとそのサブディレクトリを再帰的に探索し、
+ * 含まれるすべてのファイルの絶対パスをフラットな配列として返します。
+ *
+ * 処理アルゴリズム：
+ * 1. readdir() でディレクトリエントリを取得（withFileTypes: true）
+ * 2. 各エントリに対して並行処理：
+ *    - ディレクトリの場合: 再帰的に getFilePathsRecursive() を呼び出し
+ *    - ファイルの場合: そのパスを返す
+ * 3. Promise.all() で並行処理を待機
+ * 4. Array.prototype.concat() でネストした配列をフラット化
+ *
+ * @param dir スキャン対象のディレクトリパス
+ * @returns Promise<string[]> 発見されたすべてのファイルパスの配列
+ */
 async function getFilePathsRecursive(dir: string): Promise<string[]> {
   const dirents = await readdir(dir, { withFileTypes: true })
   const paths = await Promise.all(

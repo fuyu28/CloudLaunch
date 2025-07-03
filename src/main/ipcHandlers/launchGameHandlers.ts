@@ -1,3 +1,29 @@
+/**
+ * @fileoverview ゲーム起動機能のIPC通信ハンドラー
+ *
+ * このファイルは、ローカルゲームの起動機能を提供します。
+ *
+ * 提供する機能：
+ * - 実行ファイル直接起動（launch-game）
+ * - Steam経由でのゲーム起動（launch-game-from-steam）
+ *
+ * セキュリティ機能：
+ * - 実行前のファイル存在・形式検証
+ * - パストラバーサル攻撃対策
+ * - 権限チェック（実行可能ファイルの検証）
+ *
+ * 技術的特徴：
+ * - child_process.spawn による安全なプロセス起動
+ * - detached モードでの独立プロセス実行
+ * - 作業ディレクトリの自動設定
+ * - Steam URL形式の検証とsteam://プロトコル対応
+ *
+ * エラーハンドリング：
+ * - 構造化エラー情報（ERROR_CODES使用）
+ * - ファイル不存在・権限エラー・起動失敗の詳細分析
+ * - ユーザーフレンドリーなエラーメッセージ
+ */
+
 import { ipcMain } from "electron"
 import { spawn } from "child_process"
 import * as path from "path"
@@ -7,6 +33,26 @@ import { validatePathWithType } from "../utils/file"
 import { createErrorResult, createAppError, ERROR_CODES } from "../utils/errorHandler"
 
 export function registerLaunchGameHandlers(): void {
+  /**
+   * ゲーム実行ファイル直接起動API
+   *
+   * 指定された実行ファイルパスのゲームを直接起動します。
+   *
+   * 処理フロー：
+   * 1. ファイル存在・形式検証（validatePathWithType使用）
+   * 2. 実行ファイルの権限確認
+   * 3. 作業ディレクトリの設定（実行ファイルの親ディレクトリ）
+   * 4. child_process.spawn によるプロセス起動
+   * 5. detached モードでの独立実行
+   *
+   * セキュリティチェック：
+   * - 実行ファイル形式の検証（.exe、マジックナンバー確認）
+   * - ファイルアクセス権限の確認
+   * - パストラバーサル攻撃対策
+   *
+   * @param filePath 起動する実行ファイルの絶対パス
+   * @returns ApiResult 起動結果（成功時はsuccess: true、失敗時は詳細なエラー情報）
+   */
   ipcMain.handle("launch-game", async (_event, filePath: string): Promise<ApiResult> => {
     try {
       // 1. 存在＆形式チェック
@@ -54,6 +100,29 @@ export function registerLaunchGameHandlers(): void {
     }
   })
 
+  /**
+   * Steam経由ゲーム起動API
+   *
+   * Steam URLとSteam実行ファイルパスを使用してSteam経由でゲームを起動します。
+   *
+   * 処理フロー：
+   * 1. Steam URL形式の検証（steam://rungameid/[数字] 形式）
+   * 2. Steam実行ファイルの存在・形式検証
+   * 3. Steam プロセスにURL引数を渡して起動
+   * 4. detached モードでの独立実行
+   *
+   * 対応URL形式：
+   * - steam://rungameid/[Steam App ID] （例: steam://rungameid/292030）
+   *
+   * セキュリティチェック：
+   * - URL形式の厳密な検証（正規表現使用）
+   * - Steam実行ファイルの存在・権限確認
+   * - 数値以外のApp IDの拒否
+   *
+   * @param url Steam起動URL（steam://rungameid/[数字] 形式）
+   * @param steamPath Steam実行ファイルの絶対パス
+   * @returns ApiResult 起動結果（成功時はsuccess: true、失敗時は詳細なエラー情報）
+   */
   ipcMain.handle(
     "launch-game-from-steam",
     async (_event, url: string, steamPath: string): Promise<ApiResult> => {
