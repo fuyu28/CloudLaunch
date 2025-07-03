@@ -93,10 +93,10 @@ export function registerDatabaseHandlers(): void {
     }
   )
 
-  ipcMain.handle("delete-game", async (_event, id: number): Promise<ApiResult> => {
+  ipcMain.handle("delete-game", async (_event, gameId: number): Promise<ApiResult> => {
     try {
       await prisma.game.delete({
-        where: { id }
+        where: { id: gameId }
       })
       return { success: true }
     } catch (e) {

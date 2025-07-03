@@ -14,8 +14,8 @@ export type GameType = {
 export type InputGameData = {
   title: string
   publisher: string
-  saveFolderPath: string
+  imagePath?: string
   exePath: string
-  imagePath: string
+  saveFolderPath?: string
   playStatus: "unplayed" | "playing" | "played"
 }

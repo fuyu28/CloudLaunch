@@ -20,6 +20,7 @@ export default function GameCard({
     <Link
       to={`/games/${id}`}
       className="
+        group
         bg-base-100 rounded-xl overflow-hidden
         shadow-lg transform transition
         hover:shadow-xl
@@ -41,12 +42,14 @@ export default function GameCard({
         )}
         <div
           className="
-            absolute inset-0 bg-black bg-opacity-30
+            absolute inset-0
             flex items-center justify-center
-            opacity-0 hover:opacity-100 transition
+            opacity-0 group-hover:opacity-100 transition-opacity
           "
         >
-          <IoIosPlay size={40} className="text-white" />
+          <div className="bg-white/80  rounded-full p-2 shadow-md">
+            <IoIosPlay size={40} className="pl-1 text-gray-700" />
+          </div>
         </div>
       </div>
       <div className="p-2 h-20">

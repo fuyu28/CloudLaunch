@@ -108,8 +108,7 @@ export default function GameFormModal({
     () =>
       gameFormValues.title.trim() !== "" &&
       gameFormValues.publisher.trim() !== "" &&
-      gameFormValues.exePath.trim() !== "" &&
-      gameFormValues.saveFolderPath.trim() !== "",
+      gameFormValues.exePath.trim() !== "",
     [gameFormValues]
   )
 
@@ -213,7 +212,6 @@ export default function GameFormModal({
                   value={gameFormValues.saveFolderPath}
                   onChange={handleChange}
                   className="input input-bordered flex-1"
-                  required
                 />
                 <button type="button" className="btn ml-2" onClick={browseSaveFolder}>
                   参照

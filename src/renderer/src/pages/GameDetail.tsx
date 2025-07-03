@@ -36,9 +36,9 @@ export default function GameDetail(): React.JSX.Element {
     setEditData({
       title,
       publisher,
-      imagePath: imagePath ?? "",
+      imagePath: imagePath ?? undefined,
       exePath,
-      saveFolderPath,
+      saveFolderPath: saveFolderPath ?? undefined,
       playStatus
     })
     setIsEditModalOpen(true)
