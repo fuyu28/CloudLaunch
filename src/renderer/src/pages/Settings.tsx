@@ -44,9 +44,7 @@ export default function Settings(): React.JSX.Element {
         setEndpoint(stored.endpoint)
         setRegion(stored.region)
         setAccessKeyId(stored.accessKeyId)
-        // 一度だけ入れてすぐ消す
         setSecretAccessKey(stored.secretAccessKey)
-        setTimeout(() => setSecretAccessKey(""), 0)
       }
     })()
   }, [])
@@ -60,15 +58,6 @@ export default function Settings(): React.JSX.Element {
       secretAccessKey.trim() !== "",
     [bucketName, endpoint, accessKeyId, secretAccessKey]
   )
-
-  // フォームリセット
-  const resetForm = (): void => {
-    setBucketName("")
-    setEndpoint("")
-    setRegion("auto")
-    setAccessKeyId("")
-    setSecretAccessKey("")
-  }
 
   // 疎通確認
   const testConnection = async (): Promise<ApiResult<void>> => {
@@ -108,7 +97,6 @@ export default function Settings(): React.JSX.Element {
       if (res.success) {
         await validateCreds()
         toast.success("設定の保存に成功しました", { id: loadingToastId })
-        resetForm()
       } else {
         toast.error(res.message, { id: loadingToastId })
       }
