@@ -1,6 +1,9 @@
 # CLAUDE.md
 
-必ず日本語で出力してください
+必ず日本語で出力してください。
+
+コードを作成した後は`npx run format`を行ってください。
+
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Development Commands
@@ -64,20 +67,46 @@ src/
 - **registerHandlers.ts** - Centralized IPC handler registration
 - **db.ts** - Prisma database client setup
 - **r2Client.ts** - AWS S3 client for save data storage
-- **ipcHandlers/** - Individual handlers for different features (games, credentials, file operations)
+- **ipcHandlers/** - Individual handlers for different features:
+  - `databaseHandlers.ts` - ゲーム管理とプレイセッション記録
+  - `credentialHandlers.ts` - R2/S3認証情報管理
+  - `uploadSaveDataFolderHandlers.ts` - クラウドアップロード
+  - `downloadHandler.ts` - クラウドダウンロード
+  - `launchGameHandlers.ts` - ゲーム起動とプロセス管理
+  - `fileHandlers.ts` - ファイル選択ダイアログ
+- **service/** - ビジネスロジックサービス:
+  - `credentialService.ts` - セキュアな認証情報管理（keytar + electron-store）
+- **utils/** - ユーティリティ関数:
+  - `file.ts` - ファイル検証とパス解析
+  - `awsSdkErrorHandler.ts` - AWS SDK エラー処理
+  - `errorHandler.ts` - アプリケーション固有エラー
 
 #### Renderer Process (React)
 
 - **App.tsx** - Main routing configuration
 - **state/home.ts** - Global state atoms for game filtering and search
-- **pages/** - Main application pages (Home, GameDetail, Settings)
-- **components/** - Reusable UI components with consistent styling
+- **pages/** - Main application pages:
+  - `Home.tsx` - ゲーム一覧・検索・フィルタ
+  - `GameDetail.tsx` - ゲーム詳細・プレイ記録
+  - `Settings.tsx` - R2/S3認証設定
+- **components/** - Reusable UI components:
+  - `GameModal.tsx` - ゲーム登録・編集フォーム
+  - `GameCard.tsx` - ゲーム表示カード
+- **utils/** - フロントエンドユーティリティ
+- **hooks/** - カスタムReact Hooks
 
 #### Database Schema
 
-- **Game** model with play tracking (play status, sessions, total time)
-- **PlaySession** model for detailed gameplay statistics
-- SQLite database with automatic migrations
+- **Game** model - ゲーム基本情報とプレイ統計:
+  - UUID主キー、タイトル、発行元、ファイルパス
+  - プレイステータス（未プレイ・プレイ中・クリア済み）
+  - 総プレイ時間、最終プレイ日時
+- **PlaySession** model - 詳細プレイセッション記録:
+  - セッション時間、プレイ日時
+  - 将来的なクラウド同期情報（Upload関連）
+- **Upload** model - クラウド同期履歴:
+  - クライアントID（PC識別）、コメント、作成日時
+  - PlaySessionとの関連付け
 
 ### IPC Communication Pattern
 
@@ -111,3 +140,27 @@ The app uses a structured IPC pattern:
 
 - Database seeding available via `prisma db seed`
 - Test data generation using @faker-js/faker
+
+## Development Guidelines
+
+### Code Quality Standards
+
+- **コメント**: 全ての重要ファイルに `@fileoverview` コメントを記述
+- **エラーハンドリング**: エラー変数は `error` に統一（`err` ではない）
+- **変数命名**: 一貫した命名規約を使用:
+  - `gameData` (ゲーム情報)
+  - `localPath`, `remotePath` (パス関連)
+  - `result`, `credentialResult` (結果変数)
+- **型安全**: `ApiResult<T>` 型で統一的なエラー処理
+- **セキュリティ**: 認証情報はkeytar（OSキーチェーン）で保護
+
+### Documentation
+
+- **コーディングガイドライン**: `docs/CODING_GUIDELINES.md`
+- **開発ワークフロー**: `docs/DEVELOPMENT_WORKFLOW.md`
+- **機能配置ガイド**: どこに何を実装すべきかの詳細ガイド
+
+### Development Commands Reference
+
+- 必須コマンド: `npm run typecheck`, `npm run lint`, `npm run format`
+- データベース操作: `npx prisma migrate dev`, `npx prisma generate`

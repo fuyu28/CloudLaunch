@@ -5,7 +5,9 @@
       "Bash(npm run lint)",
       "Bash(npm run format:*)",
       "Bash(npx prisma:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(ls:*)",
+      "Bash(sed:*)"
     ],
     "deny": []
   }
