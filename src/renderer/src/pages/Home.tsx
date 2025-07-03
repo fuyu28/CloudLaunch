@@ -1,14 +1,15 @@
 import React, { useEffect, useState, useCallback } from "react"
+import toast from "react-hot-toast"
 import { useAtom } from "jotai"
 import { CiSearch } from "react-icons/ci"
 import { IoIosAdd } from "react-icons/io"
 import GameCard from "@renderer/components/GameCard"
 import GameFormModal from "@renderer/components/GameModal"
+import FloatingButton from "@renderer/components/FloatingButton"
 import { searchWordAtom, filterAtom, sortAtom, visibleGamesAtom } from "../state/home"
 import type { InputGameData } from "src/types/game"
 import type { ApiResult } from "src/types/result"
 import type { SortName, FilterName } from "src/types/menu"
-import toast from "react-hot-toast"
 
 export default function Home(): React.ReactElement {
   const [searchWord, setSearchWord] = useAtom(searchWordAtom)
@@ -132,22 +133,13 @@ export default function Home(): React.ReactElement {
       </div>
 
       {/* ゲーム追加ボタン */}
-      <button
-        className="
-          btn btn-primary btn-circle
-          fixed bottom-6 right-6
-          h-14 w-14
-          flex items-center justify-center
-          shadow-2xl hover:shadow-[0_20px_40px_rgba(0,0,0,0.2)]
-          rounded-full
-          active:scale-95
-          transition-all duration-200 ease-out
-        "
-        aria-label="ゲームを追加"
+      <FloatingButton
         onClick={() => setIsModalOpen(true)}
+        ariaLabel="ゲームを追加"
+        positionClass="bottom-6 right-6"
       >
         <IoIosAdd size={28} />
-      </button>
+      </FloatingButton>
 
       {/* ゲーム登録モーダル */}
       <GameFormModal
