@@ -23,9 +23,9 @@ model Game {
   id             Int           @id @default(autoincrement())
   title          String
   publisher      String
-  saveFolderPath String
-  exePath        String
   imagePath      String?
+  exePath        String
+  saveFolderPath String?
   createdAt      DateTime      @default(now())
   playStatus     PlayStatus    @default(unplayed)
   totalPlayTime  Int           @default(0)
@@ -36,7 +36,7 @@ model Game {
 model PlaySession {
   id       Int      @id @default(autoincrement())
   gameId   Int
-  game     Game     @relation(fields: [gameId], references: [id])
+  game     Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
   playedAt DateTime @default(now())
   duration Int
 }

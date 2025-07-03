@@ -155,7 +155,7 @@ src/renderer/src
 - **役割**: TailwindCSS と daisyUI プラグイン設定。
 - **内容**:
   ```css
-  @import 'tailwindcss';
+  @import "tailwindcss";
   @plugin 'daisyui' {
     themes:
       light --default,

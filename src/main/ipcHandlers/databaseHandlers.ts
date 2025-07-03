@@ -95,9 +95,6 @@ export function registerDatabaseHandlers(): void {
 
   ipcMain.handle("delete-game", async (_event, gameId: number): Promise<ApiResult> => {
     try {
-      await prisma.playSession.deleteMany({
-        where: { gameId }
-      })
       await prisma.game.delete({
         where: { id: gameId }
       })

@@ -9,7 +9,7 @@ type DummyType = {
 }
 
 const DUMMY_DATA: DummyType[] = [
-  { title: "WHITE ALBUM2", publisher: "Leaf" },
+  { title: "WHITE ALBUM2 EXTENDED EDITION", publisher: "Leaf" },
   { title: "Summer Pockets REFLECTION BLUE", publisher: "Key" },
   { title: "オトメ＊ドメイン", publisher: "ぱれっとクオリア" },
   { title: "きまぐれテンプテーション2 ゆうやみ廻奇譚", publisher: "シルキーズプラスWASABI" },
@@ -23,9 +23,7 @@ async function main(): Promise<void> {
       data: {
         title: dummy.title,
         publisher: dummy.publisher,
-        saveFolderPath: `D:\\game\\Novel\\${i}`,
-        exePath: `D:\\game\\Novel\\${i}\\game.exe`,
-        imagePath: `D:\\game\\Novel\\${i}\\image.png`
+        exePath: `D:\\game\\Novel\\${i}\\game.exe`
       }
     })
 
