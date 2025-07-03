@@ -5,6 +5,7 @@ import { IoIosPlay } from "react-icons/io"
 import { MdEdit } from "react-icons/md"
 import { FaTrash } from "react-icons/fa"
 import { FaArrowLeftLong } from "react-icons/fa6"
+import toast from "react-hot-toast"
 import { visibleGamesAtom } from "@renderer/state/home"
 import DynamicImage from "@renderer/components/DynamicImage"
 import ConfirmModal from "@renderer/components/ConfirmModal"
@@ -46,47 +47,35 @@ export default function GameDetail(): React.JSX.Element {
 
   const confirmDelete = useCallback(async (): Promise<void> => {
     if (!game) return
-    try {
-      // DBから削除
-      await window.api.database.deleteGame(game.id)
-      // ゲーム一覧から削除
+    const result = await window.api.database.deleteGame(game.id)
+    if (result.success) {
+      toast.success("ゲームを削除しました。")
       setFilteredGames((g) => g.filter((x) => x.id !== game.id))
-      // Homeに戻る
       navigate("/", { replace: true })
-    } catch (e) {
-      console.error(e)
-    } finally {
-      // モーダルを閉じる
-      setIsDeleteModalOpen(false)
+    } else {
+      toast.error(result.message)
     }
+    setIsDeleteModalOpen(false)
   }, [game, navigate, setFilteredGames])
 
-  const handleLaunch = useCallback(async (): Promise<ApiResult> => {
-    if (!game) return { success: false }
+  const handleLaunch = useCallback(async (): Promise<void> => {
+    if (!game) return
     setIsLaunching(true)
-    try {
-      const res = await window.api.game.launchGame(game.exePath)
-      if (!res.success) throw new Error(res.message)
-      return { success: true }
-    } catch (e) {
-      console.error(e)
-      return {
-        success: false,
-        message: `ゲームの実行に失敗しました: ${e instanceof Error ? e.message : String(e)}`
-      }
-    } finally {
-      setIsLaunching(false)
+    const result = await window.api.game.launchGame(game.exePath)
+    if (result.success) {
+      toast.success("ゲームを起動しました。")
+    } else {
+      toast.error(result.message)
     }
+    setIsLaunching(false)
   }, [game])
 
   const handleUpdateGame = useCallback(
-    async (values: InputGameData): Promise<ApiResult> => {
-      if (!game) return { success: false }
-      try {
-        // 1. DB 更新
-        await window.api.database.updateGame(game.id, values)
-
-        // 2. Atom の該当ゲームだけ差し替え
+    async (values: InputGameData): Promise<ApiResult<void>> => {
+      if (!game) return { success: false, message: "ゲームが見つかりません。" }
+      const result = await window.api.database.updateGame(game.id, values)
+      if (result.success) {
+        toast.success("ゲーム情報を更新しました。")
         setFilteredGames((list) =>
           list.map((g) =>
             g.id === game.id
@@ -94,15 +83,11 @@ export default function GameDetail(): React.JSX.Element {
               : g
           )
         )
-
-        // 3. モーダルを閉じる
         setIsEditModalOpen(false)
-
-        return { success: true }
-      } catch (e) {
-        console.error(e)
-        return { success: false, message: `${e}` }
+      } else {
+        toast.error(result.message)
       }
+      return result
     },
     [game, setFilteredGames]
   )

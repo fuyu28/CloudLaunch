@@ -1,5 +1,6 @@
 import Store from "electron-store"
 import type { Schema, Creds } from "../../types/creds"
+import { ApiResult } from "../../types/result"
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const keytar = require("keytar")
@@ -15,7 +16,7 @@ const store = new Store<Schema>({
 
 const SERVICE = "StorageDeck"
 
-export async function setCredential(creds: Creds): Promise<{ success: boolean }> {
+export async function setCredential(creds: Creds): Promise<ApiResult> {
   try {
     store.set("bucketName", creds.bucketName)
     store.set("region", creds.region)
@@ -25,21 +26,26 @@ export async function setCredential(creds: Creds): Promise<{ success: boolean }>
     return { success: true }
   } catch (err) {
     console.error(err)
-    return { success: false }
+    return { success: false, message: `認証情報の設定に失敗しました: ${err}` }
   }
 }
 
 export async function getCredential(): Promise<Creds | null> {
-  const secret = await keytar.getPassword(SERVICE, "secretAccessKey")
-  if (secret !== null) {
-    return {
-      bucketName: store.get("bucketName"),
-      region: store.get("region"),
-      endpoint: store.get("endpoint"),
-      accessKeyId: store.get("accessKeyId"),
-      secretAccessKey: secret
+  try {
+    const secret = await keytar.getPassword(SERVICE, "secretAccessKey")
+    if (secret !== null) {
+      return {
+        bucketName: store.get("bucketName"),
+        region: store.get("region"),
+        endpoint: store.get("endpoint"),
+        accessKeyId: store.get("accessKeyId"),
+        secretAccessKey: secret
+      }
+    } else {
+      return null
     }
-  } else {
+  } catch (err) {
+    console.error("Failed to get credential from store:", err)
     return null
   }
 }

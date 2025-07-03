@@ -2,6 +2,7 @@ import React, { useRef } from "react"
 import { Outlet, NavLink, useLocation } from "react-router-dom"
 import { FiMenu } from "react-icons/fi"
 import { IoIosHome, IoIosSettings } from "react-icons/io"
+import { Toaster } from "react-hot-toast"
 
 export default function MainLayout(): React.JSX.Element {
   const location = useLocation()
@@ -93,6 +94,7 @@ export default function MainLayout(): React.JSX.Element {
           <Outlet />
         </main>
       </div>
+      <Toaster position="bottom-center" />
     </div>
   )
 }

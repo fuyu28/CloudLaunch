@@ -37,7 +37,7 @@ export function handleAwsSdkError(error: unknown): AwsSdkError {
       }
     else {
       console.error(err)
-      return { Code: err.code, message: "その他のエラーです。" }
+      return { Code: err.code, message: `その他のエラーです。(コード: ${err.code ?? "不明"})` }
     }
   }
 }

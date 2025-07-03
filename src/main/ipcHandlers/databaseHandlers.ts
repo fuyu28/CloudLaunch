@@ -1,7 +1,7 @@
 import { Game } from "@prisma/client"
 import { ipcMain } from "electron"
 import { prisma } from "../db"
-import type { Prisma } from "@prisma/client"
+import { Prisma } from "@prisma/client"
 import type { FilterName, SortName } from "../../types/menu"
 import type { InputGameData } from "../../types/game"
 import { ApiResult } from "../../types/result"
@@ -65,7 +65,10 @@ export function registerDatabaseHandlers(): void {
       return { success: true }
     } catch (e) {
       console.error(e)
-      return { success: false, message: `${e}` }
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+        return { success: false, message: `ゲーム「${game.title}」は既に存在します。` }
+      }
+      return { success: false, message: "ゲームの作成に失敗しました。" }
     }
   })
 
@@ -88,7 +91,10 @@ export function registerDatabaseHandlers(): void {
         return { success: true }
       } catch (e) {
         console.error(e)
-        return { success: false, message: `${e}` }
+        if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+          return { success: false, message: `ゲーム「${game.title}」は既に存在します。` }
+        }
+        return { success: false, message: "ゲームの更新に失敗しました。" }
       }
     }
   )
@@ -100,7 +106,8 @@ export function registerDatabaseHandlers(): void {
       })
       return { success: true }
     } catch (e) {
-      return { success: false, message: `${e}` }
+      console.error(e)
+      return { success: false, message: "ゲームの削除に失敗しました。" }
     }
   })
 
@@ -108,30 +115,32 @@ export function registerDatabaseHandlers(): void {
     "create-session",
     async (_event, duration: number, gameId: number): Promise<ApiResult> => {
       try {
-        await prisma.playSession.create({
-          data: {
-            duration,
-            gameId
-          }
-        })
-
-        const game = await prisma.game.findFirst({
-          where: { id: gameId }
-        })
-
-        if (game) {
-          await prisma.game.update({
-            where: { id: gameId },
+        await prisma.$transaction(async (tx) => {
+          await tx.playSession.create({
             data: {
-              totalPlayTime: game.totalPlayTime + duration,
-              lastPlayed: new Date()
+              duration,
+              gameId
             }
           })
-        }
+
+          const game = await tx.game.findUnique({
+            where: { id: gameId }
+          })
+
+          if (game) {
+            await tx.game.update({
+              where: { id: gameId },
+              data: {
+                totalPlayTime: { increment: duration },
+                lastPlayed: new Date()
+              }
+            })
+          }
+        })
         return { success: true }
       } catch (e) {
         console.error(e)
-        return { success: false, message: `${e}` }
+        return { success: false, message: "プレイ時間の記録に失敗しました。" }
       }
     }
   )
