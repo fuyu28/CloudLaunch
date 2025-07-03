@@ -37,6 +37,7 @@ export default function GameFormModal({
     mode === "edit" && initialData ? initialData : initialValues
   )
   const [submitting, setSubmitting] = useState(false)
+  const [isBrowsing, setIsBrowsing] = useState(false) // 新しいstate
 
   useEffect(() => {
     if (mode === "edit" && initialData) {
@@ -47,39 +48,54 @@ export default function GameFormModal({
   }, [initialData, isOpen, mode])
 
   const browseImage = useCallback(async () => {
-    const result = await window.api.file.selectFile([
-      { name: "Image", extensions: ["png", "jpg", "jpeg", "gif"] }
-    ])
-    if (result.success) {
-      if (result.data !== null) {
-        setGameFormValues((prev) => ({ ...prev, imagePath: result.data ?? "" }))
+    setIsBrowsing(true) // 参照開始
+    try {
+      const result = await window.api.file.selectFile([
+        { name: "Image", extensions: ["png", "jpg", "jpeg", "gif"] }
+      ])
+      if (result.success) {
+        if (result.data !== null) {
+          setGameFormValues((prev) => ({ ...prev, imagePath: result.data ?? "" }))
+        }
+      } else {
+        toast.error(result.message)
       }
-    } else {
-      toast.error(result.message)
+    } finally {
+      setIsBrowsing(false) // 参照終了
     }
   }, [])
 
   const browseExe = useCallback(async () => {
-    const result = await window.api.file.selectFile([
-      { name: "Executable", extensions: ["exe", "app"] }
-    ])
-    if (result.success) {
-      if (result.data !== null) {
-        setGameFormValues((prev) => ({ ...prev, exePath: result.data ?? "" }))
+    setIsBrowsing(true) // 参照開始
+    try {
+      const result = await window.api.file.selectFile([
+        { name: "Executable", extensions: ["exe", "app"] }
+      ])
+      if (result.success) {
+        if (result.data !== null) {
+          setGameFormValues((prev) => ({ ...prev, exePath: result.data ?? "" }))
+        }
+      } else {
+        toast.error(result.message)
       }
-    } else {
-      toast.error(result.message)
+    } finally {
+      setIsBrowsing(false) // 参照終了
     }
   }, [])
 
   const browseSaveFolder = useCallback(async () => {
-    const result = await window.api.file.selectFolder()
-    if (result.success) {
-      if (result.data !== null) {
-        setGameFormValues((prev) => ({ ...prev, saveFolderPath: result.data ?? "" }))
+    setIsBrowsing(true) // 参照開始
+    try {
+      const result = await window.api.file.selectFolder()
+      if (result.success) {
+        if (result.data !== null) {
+          setGameFormValues((prev) => ({ ...prev, saveFolderPath: result.data ?? "" }))
+        }
+      } else {
+        toast.error(result.message)
       }
-    } else {
-      toast.error(result.message)
+    } finally {
+      setIsBrowsing(false) // 参照終了
     }
   }, [])
 
@@ -189,7 +205,12 @@ export default function GameFormModal({
                   onChange={handleChange}
                   className="input input-bordered flex-1"
                 />
-                <button type="button" className="btn ml-2" onClick={browseImage}>
+                <button
+                  type="button"
+                  className="btn ml-2"
+                  onClick={browseImage}
+                  disabled={isBrowsing}
+                >
                   参照
                 </button>
               </div>
@@ -208,7 +229,12 @@ export default function GameFormModal({
                   className="input input-bordered flex-1"
                   required
                 />
-                <button type="button" className="btn ml-2" onClick={browseExe}>
+                <button
+                  type="button"
+                  className="btn ml-2"
+                  onClick={browseExe}
+                  disabled={isBrowsing}
+                >
                   参照
                 </button>
               </div>
@@ -226,7 +252,12 @@ export default function GameFormModal({
                   onChange={handleChange}
                   className="input input-bordered flex-1"
                 />
-                <button type="button" className="btn ml-2" onClick={browseSaveFolder}>
+                <button
+                  type="button"
+                  className="btn ml-2"
+                  onClick={browseSaveFolder}
+                  disabled={isBrowsing}
+                >
                   参照
                 </button>
               </div>
