@@ -38,14 +38,18 @@ export function registerLaunchGameHandlers(): void {
     // 2. プロセス起動
     try {
       const workPath = path.dirname(filePath)
+      console.log(`Attempting to launch: ${filePath} from CWD: ${workPath}`)
       const child = spawn(filePath, [], {
         cwd: workPath,
         detached: true,
-        stdio: "ignore",
+        stdio: "inherit", // デバッグのため一時的にinheritに変更
         env: { ...process.env }
       })
       child.on("error", (err) => {
         console.error("Spawn error:", err)
+      })
+      child.on("exit", (code, signal) => {
+        console.log(`Child process exited with code ${code} and signal ${signal}`)
       })
       child.unref()
       return { success: true }
@@ -82,12 +86,16 @@ export function registerLaunchGameHandlers(): void {
       // 3. 実行
       try {
         const args = ["-applaunch", runGameId, "--no-vr"]
+        console.log(`Attempting to launch Steam: ${steamPath} with args: ${args.join(" ")}`)
         const child = spawn(steamPath, args, {
           detached: true,
-          stdio: "ignore",
+          stdio: "inherit", // デバッグのため一時的にinheritに変更
           env: { ...process.env }
         })
         child.on("error", (err) => console.error("Steam spawn error:", err))
+        child.on("exit", (code, signal) => {
+          console.log(`Steam process exited with code ${code} and signal ${signal}`)
+        })
         child.unref()
         return { success: true }
       } catch (err) {
