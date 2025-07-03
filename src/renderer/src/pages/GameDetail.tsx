@@ -1,6 +1,7 @@
-import { useCallback, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
+import { useValidateCreds } from "@renderer/hooks/useValidCreds"
 import { useParams, useNavigate, Navigate } from "react-router-dom"
-import { useAtom } from "jotai"
+import { useAtom, useAtomValue } from "jotai"
 import { IoIosPlay } from "react-icons/io"
 import { MdEdit } from "react-icons/md"
 import { FaTrash } from "react-icons/fa"
@@ -12,11 +13,18 @@ import ConfirmModal from "@renderer/components/ConfirmModal"
 import GameFormModal from "@renderer/components/GameModal"
 import { InputGameData } from "src/types/game"
 import { ApiResult } from "src/types/result"
+import { isValidCredsAtom } from "@renderer/state/credentials"
 
 export default function GameDetail(): React.JSX.Element {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [filteredGames, setFilteredGames] = useAtom(visibleGamesAtom)
+  const isValidCreds = useAtomValue(isValidCredsAtom)
+  const validateCreds = useValidateCreds()
+
+  useEffect(() => {
+    validateCreds()
+  }, [validateCreds])
 
   const [isLaunching, setIsLaunching] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
@@ -154,14 +162,14 @@ export default function GameDetail(): React.JSX.Element {
   }
 
   return (
-    <div className="min-h-screen bg-base-200 p-6">
+    <div className="min-h-screen bg-base-200 px-6">
       <button onClick={handleBack} className="btn btn-ghost mb-4">
-        <FaArrowLeftLong /> 戻る
+        <FaArrowLeftLong />
       </button>
 
-      <div className="card card-side bg-base-100 shadow-xl p-6 flex flex-col lg:flex-row gap-8">
+      <div className="card card-side bg-base-100 shadow-xl p-4 flex flex-col lg:flex-row gap-6">
         {/* 左：サムネイル */}
-        <figure className="flex-shrink-0 w-full lg:w-1/2 aspect-[4/3] bg-gray-200 rounded-lg overflow-hidden">
+        <figure className="flex-shrink-0 w-full lg:w-1/2 aspect-[4/3] bg-gray-50 rounded-lg overflow-hidden">
           <DynamicImage
             src={game.imagePath ?? ""}
             alt={game.title}
@@ -170,11 +178,11 @@ export default function GameDetail(): React.JSX.Element {
         </figure>
 
         {/* 右：情報＆アクション */}
-        <div className="flex-1 flex flex-col justify-between">
+        <div className="flex-1 flex flex-col justify-between bg-base-100 p-4">
           {/* ── 上部エリア ── */}
           <div className="pt-4">
-            <h2 className="card-title text-3xl mb-2">{game.title}</h2>
-            <p className="text-lg text-gray-600 mb-8">{game.publisher}</p>
+            <h2 className="card-title text-3xl mb-1">{game.title}</h2>
+            <p className="text-lg text-gray-600 mb-4">{game.publisher}</p>
 
             {/* メタ情報 */}
             <div className="flex flex-wrap text-sm text-gray-500 gap-4 mb-6">
@@ -184,12 +192,12 @@ export default function GameDetail(): React.JSX.Element {
           </div>
 
           {/* ── 下部エリア ── */}
-          <div className="my-6 flex flex-col gap-2">
+          <div className="flex flex-col gap-4 mt-8">
             {/* １行目：実行ボタン */}
             <button
-              className="btn btn-primary btn-lg w-full flex items-center justify-center gap-2"
               onClick={handleLaunch}
               disabled={isLaunching}
+              className="btn btn-primary btn-lg w-full h-12 flex items-center justify-center gap-2"
             >
               {isLaunching ? (
                 <>
@@ -205,21 +213,24 @@ export default function GameDetail(): React.JSX.Element {
             </button>
 
             {/* ２行目：編集／解除 */}
-            <div className="grid grid-cols-2 gap-2">
-              <button className="btn btn-outline gap-2" onClick={openEdit}>
+            <div className="flex gap-2">
+              <button className="btn btn-outline btn-md flex-1 h-10" onClick={openEdit}>
                 <MdEdit /> 編集
               </button>
-              <button className="btn btn-error gap-2" onClick={() => setIsDeleteModalOpen(true)}>
+              <button
+                className="btn btn-error btn-md flex-1 h-10"
+                onClick={() => setIsDeleteModalOpen(true)}
+              >
                 <FaTrash /> 登録を解除
               </button>
             </div>
 
             {/* ３行目：アップロード／ダウンロード */}
-            <div className="grid grid-cols-2 gap-2">
+            <div className="flex gap-2">
               <button
-                className="btn btn-secondary gap-2"
+                className="btn btn-outline btn-md flex-1 h-10"
                 onClick={handleUploadSaveData}
-                disabled={isUploading || !game.saveFolderPath}
+                disabled={isUploading || !game.saveFolderPath || !isValidCreds}
               >
                 {isUploading ? (
                   <span className="loading loading-spinner">アップロード中…</span>
@@ -228,9 +239,9 @@ export default function GameDetail(): React.JSX.Element {
                 )}
               </button>
               <button
-                className="btn btn-accent gap-2"
+                className="btn btn-outline btn-md flex-1 h-10"
                 onClick={handleDownloadSaveData}
-                disabled={isDownloading || !game.saveFolderPath}
+                disabled={isDownloading || !game.saveFolderPath || !isValidCreds}
               >
                 {isDownloading ? (
                   <span className="loading loading-spinner">ダウンロード中…</span>

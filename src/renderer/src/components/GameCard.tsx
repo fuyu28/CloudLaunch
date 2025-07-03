@@ -23,13 +23,15 @@ export default function GameCard({
   return (
     <div
       className="
-        group
         bg-base-100 rounded-xl overflow-hidden
         shadow-lg transform transition
         hover:shadow-xl
       "
     >
-      <button className="relative h-40 w-full bg-gray-100" onClick={() => onLaunchGame(exePath)}>
+      <button
+        className="group relative h-40 w-full bg-gray-100"
+        onClick={() => onLaunchGame(exePath)}
+      >
         {imagePath && (
           <DynamicImage
             src={imagePath}
