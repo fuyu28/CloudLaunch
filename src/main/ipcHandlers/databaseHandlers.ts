@@ -63,9 +63,9 @@ export function registerDatabaseHandlers(): void {
         }
       })
       return { success: true }
-    } catch (e) {
-      console.error(e)
-      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+    } catch (err) {
+      console.error(err)
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
         return { success: false, message: `ゲーム「${game.title}」は既に存在します。` }
       }
       return { success: false, message: "ゲームの作成に失敗しました。" }
@@ -89,9 +89,9 @@ export function registerDatabaseHandlers(): void {
           }
         })
         return { success: true }
-      } catch (e) {
-        console.error(e)
-        if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+      } catch (err) {
+        console.error(err)
+        if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
           return { success: false, message: `ゲーム「${game.title}」は既に存在します。` }
         }
         return { success: false, message: "ゲームの更新に失敗しました。" }
@@ -105,8 +105,8 @@ export function registerDatabaseHandlers(): void {
         where: { id: gameId }
       })
       return { success: true }
-    } catch (e) {
-      console.error(e)
+    } catch (err) {
+      console.error(err)
       return { success: false, message: "ゲームの削除に失敗しました。" }
     }
   })
@@ -139,8 +139,8 @@ export function registerDatabaseHandlers(): void {
           }
         })
         return { success: true }
-      } catch (e) {
-        console.error(e)
+      } catch (err) {
+        console.error(err)
         return { success: false, message: "プレイ時間の記録に失敗しました。" }
       }
     }

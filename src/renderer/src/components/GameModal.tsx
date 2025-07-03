@@ -116,8 +116,8 @@ export default function GameFormModal({
         resetForm()
         onClose()
       }
-    } catch (e) {
-      console.error("予期しないエラー : ", e)
+    } catch (err) {
+      console.error("予期しないエラー : ", err)
     } finally {
       setSubmitting(false)
     }
