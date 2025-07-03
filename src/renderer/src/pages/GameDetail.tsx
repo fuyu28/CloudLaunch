@@ -19,6 +19,8 @@ export default function GameDetail(): React.JSX.Element {
   const [filteredGames, setFilteredGames] = useAtom(visibleGamesAtom)
 
   const [isLaunching, setIsLaunching] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
+  const [isDownloading, setIsDownloading] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [editData, setEditData] = useState<InputGameData | null>(null)
@@ -70,6 +72,58 @@ export default function GameDetail(): React.JSX.Element {
     setIsLaunching(false)
   }, [game])
 
+  const handleUploadSaveData = useCallback(async (): Promise<void> => {
+    if (!game || !game.saveFolderPath) {
+      toast.error("セーブデータフォルダが設定されていません。")
+      return
+    }
+    setIsUploading(true)
+    const loadingToastId = toast.loading("セーブデータをアップロード中…")
+    try {
+      const remotePath = `games/${game.title}/save_data`
+      const result = await window.api.saveData.upload.uploadSaveDataFolder(
+        game.saveFolderPath,
+        remotePath
+      )
+      if (result.success) {
+        toast.success("セーブデータのアップロードに成功しました。", { id: loadingToastId })
+      } else {
+        toast.error(result.message, { id: loadingToastId })
+      }
+    } catch (error) {
+      toast.error("セーブデータのアップロード中にエラーが発生しました。", { id: loadingToastId })
+      console.error("Failed to upload save data:", error)
+    } finally {
+      setIsUploading(false)
+    }
+  }, [game])
+
+  const handleDownloadSaveData = useCallback(async (): Promise<void> => {
+    if (!game || !game.saveFolderPath) {
+      toast.error("セーブデータフォルダが設定されていません。")
+      return
+    }
+    setIsDownloading(true)
+    const loadingToastId = toast.loading("セーブデータをダウンロード中…")
+    try {
+      const remotePath = `games/${game.title}/save_data`
+      const result = await window.api.saveData.download.downloadSaveData(
+        game.saveFolderPath,
+        remotePath
+      )
+      if (result.success) {
+        toast.success("セーブデータのダウンロードに成功しました。", { id: loadingToastId })
+      } else {
+        toast.error(result.message, { id: loadingToastId })
+      }
+    } catch (error) {
+      toast.error("セーブデータのダウンロード中にエラーが発生しました。", { id: loadingToastId })
+      console.error("Failed to download save data:", error)
+    } finally {
+      setIsDownloading(false)
+    }
+  }, [game])
+
   const handleUpdateGame = useCallback(
     async (values: InputGameData): Promise<ApiResult<void>> => {
       if (!game) return { success: false, message: "ゲームが見つかりません。" }
@@ -105,45 +159,89 @@ export default function GameDetail(): React.JSX.Element {
         <FaArrowLeftLong /> 戻る
       </button>
 
-      <div className="card card-side bg-base-100 shadow-xl p-6">
-        {/* 左側のサムネイル */}
-        <figure className="w-[380px] h-64 flex items-center justify-center bg-gray-200 rounded-lg overflow-hidden">
+      <div className="card card-side bg-base-100 shadow-xl p-6 flex flex-col lg:flex-row gap-8">
+        {/* 左：サムネイル */}
+        <figure className="flex-shrink-0 w-full lg:w-1/2 aspect-[4/3] bg-gray-200 rounded-lg overflow-hidden">
           <DynamicImage
             src={game.imagePath ?? ""}
-            alt={game.title ?? ""}
-            className="max-w-full max-h-full object-contain text-black"
+            alt={game.title}
+            className="w-full h-full object-contain text-black"
           />
         </figure>
 
-        {/* 右側の本文 */}
-        <div className="card-body pl-12">
-          <h2 className="card-title text-3xl">{game.title}</h2>
-          <p className="text-lg">{game.publisher}</p>
+        {/* 右：情報＆アクション */}
+        <div className="flex-1 flex flex-col justify-between">
+          {/* ── 上部エリア ── */}
+          <div className="pt-4">
+            <h2 className="card-title text-3xl mb-2">{game.title}</h2>
+            <p className="text-lg text-gray-600 mb-8">{game.publisher}</p>
 
-          <div className="card-actions mt-6 space-x-2">
-            <button className="btn btn-primary gap-2" onClick={handleLaunch} disabled={isLaunching}>
+            {/* メタ情報 */}
+            <div className="flex flex-wrap text-sm text-gray-500 gap-4 mb-6">
+              <span>最終プレイ: {game.lastPlayed?.toDateString() ?? "なし"}</span>
+              <span>総プレイ時間: {game.totalPlayTime ?? 0} 分</span>
+            </div>
+          </div>
+
+          {/* ── 下部エリア ── */}
+          <div className="my-6 flex flex-col gap-2">
+            {/* １行目：実行ボタン */}
+            <button
+              className="btn btn-primary btn-lg w-full flex items-center justify-center gap-2"
+              onClick={handleLaunch}
+              disabled={isLaunching}
+            >
               {isLaunching ? (
                 <>
-                  <IoIosPlay className="animate-spin" />
-                  起動中…
+                  <IoIosPlay className="animate-spin text-2xl" />
+                  <span className="text-lg">起動中…</span>
                 </>
               ) : (
                 <>
-                  <IoIosPlay />
-                  ゲームを起動
+                  <IoIosPlay size={24} />
+                  <span className="text-lg font-medium">ゲームを起動</span>
                 </>
               )}
             </button>
-            <button className="btn btn-outline gap-2" onClick={openEdit}>
-              <MdEdit /> 編集
-            </button>
-            <button className="btn btn-error gap-2" onClick={() => setIsDeleteModalOpen(true)}>
-              <FaTrash /> 登録を解除
-            </button>
+
+            {/* ２行目：編集／解除 */}
+            <div className="grid grid-cols-2 gap-2">
+              <button className="btn btn-outline gap-2" onClick={openEdit}>
+                <MdEdit /> 編集
+              </button>
+              <button className="btn btn-error gap-2" onClick={() => setIsDeleteModalOpen(true)}>
+                <FaTrash /> 登録を解除
+              </button>
+            </div>
+
+            {/* ３行目：アップロード／ダウンロード */}
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                className="btn btn-secondary gap-2"
+                onClick={handleUploadSaveData}
+                disabled={isUploading || !game.saveFolderPath}
+              >
+                {isUploading ? (
+                  <span className="loading loading-spinner">アップロード中…</span>
+                ) : (
+                  "アップロード"
+                )}
+              </button>
+              <button
+                className="btn btn-accent gap-2"
+                onClick={handleDownloadSaveData}
+                disabled={isDownloading || !game.saveFolderPath}
+              >
+                {isDownloading ? (
+                  <span className="loading loading-spinner">ダウンロード中…</span>
+                ) : (
+                  "ダウンロード"
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>
-
       {/* ここに統計パネルやプレイ履歴カレンダーなどを追加 */}
 
       {/* モーダル */}
