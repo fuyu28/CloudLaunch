@@ -38,13 +38,13 @@ export default function Settings(): React.JSX.Element {
   // 初回マウント時に既存のデータを表示
   useEffect(() => {
     ;(async () => {
-      const stored = await window.api.credential.getCredential()
-      if (stored) {
-        setBucketName(stored.bucketName)
-        setEndpoint(stored.endpoint)
-        setRegion(stored.region)
-        setAccessKeyId(stored.accessKeyId)
-        setSecretAccessKey(stored.secretAccessKey)
+      const result = await window.api.credential.getCredential()
+      if (result.success && result.data) {
+        setBucketName(result.data.bucketName)
+        setEndpoint(result.data.endpoint)
+        setRegion(result.data.region)
+        setAccessKeyId(result.data.accessKeyId)
+        setSecretAccessKey(result.data.secretAccessKey)
       }
     })()
   }, [])

@@ -23,32 +23,42 @@ export function registerDatabaseHandlers(): void {
   ipcMain.handle(
     "list-games",
     async (_event, searchWord: string, filter: FilterName, sort: SortName): Promise<Game[]> => {
-      // 文字検索
-      const searchCondition: Prisma.GameWhereInput = searchWord
-        ? {
-            OR: [{ title: { contains: searchWord } }, { publisher: { contains: searchWord } }]
-          }
-        : {}
+      try {
+        // 文字検索
+        const searchCondition: Prisma.GameWhereInput = searchWord
+          ? {
+              OR: [{ title: { contains: searchWord } }, { publisher: { contains: searchWord } }]
+            }
+          : {}
 
-      // フィルター指定
-      const filterCondition = filterMap[filter]
+        // フィルター指定
+        const filterCondition = filterMap[filter]
 
-      // ソート順指定
-      const orderBy = sortMap[sort]
+        // ソート順指定
+        const orderBy = sortMap[sort]
 
-      return prisma.game.findMany({
-        where: {
-          AND: [searchCondition, filterCondition]
-        },
-        orderBy
-      })
+        return prisma.game.findMany({
+          where: {
+            AND: [searchCondition, filterCondition]
+          },
+          orderBy
+        })
+      } catch (error) {
+        console.error(error)
+        return []
+      }
     }
   )
 
   ipcMain.handle("get-game-by-id", async (_event, id: string): Promise<Game | null> => {
-    return prisma.game.findFirst({
-      where: { id }
-    })
+    try {
+      return prisma.game.findFirst({
+        where: { id }
+      })
+    } catch (error) {
+      console.error(error)
+      return null
+    }
   })
 
   ipcMain.handle("create-game", async (_event, game: InputGameData): Promise<ApiResult> => {
@@ -63,9 +73,9 @@ export function registerDatabaseHandlers(): void {
         }
       })
       return { success: true }
-    } catch (err) {
-      console.error(err)
-      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
+    } catch (error) {
+      console.error(error)
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
         return { success: false, message: `ゲーム「${game.title}」は既に存在します。` }
       }
       return { success: false, message: "ゲームの作成に失敗しました。" }
@@ -89,9 +99,9 @@ export function registerDatabaseHandlers(): void {
           }
         })
         return { success: true }
-      } catch (err) {
-        console.error(err)
-        if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
+      } catch (error) {
+        console.error(error)
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
           return { success: false, message: `ゲーム「${game.title}」は既に存在します。` }
         }
         return { success: false, message: "ゲームの更新に失敗しました。" }
@@ -105,8 +115,8 @@ export function registerDatabaseHandlers(): void {
         where: { id: gameId }
       })
       return { success: true }
-    } catch (err) {
-      console.error(err)
+    } catch (error) {
+      console.error(error)
       return { success: false, message: "ゲームの削除に失敗しました。" }
     }
   })
@@ -138,8 +148,8 @@ export function registerDatabaseHandlers(): void {
           }
         })
         return { success: true }
-      } catch (err) {
-        console.error(err)
+      } catch (error) {
+        console.error(error)
         return { success: false, message: "プレイ時間の記録に失敗しました。" }
       }
     }

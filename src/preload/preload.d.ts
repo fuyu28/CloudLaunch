@@ -32,7 +32,7 @@ export interface SaveDataDownloadAPI {
 
 export interface CredentialAPI {
   upsertCredential(creds: Creds): Promise<ApiResult<void>>
-  getCredential(): Promise<Creds | null>
+  getCredential(): Promise<ApiResult<Creds>>
   validateCredential(creds: Creds): Promise<ApiResult<void> & { err?: AwsSdkError }>
 }
 

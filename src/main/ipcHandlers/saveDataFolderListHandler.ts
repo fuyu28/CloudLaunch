@@ -7,10 +7,13 @@ export function registerSaveDataFolderListHandler(): void {
   ipcMain.handle("list-remote-save-data-folders", async (): Promise<string[] | null> => {
     try {
       const r2Client = await createR2Client()
-      const creds = await getCredential()
-      if (!creds) {
-        throw new Error("R2/S3 クレデンシャルが設定されていません")
+      const credsResult = await getCredential()
+      if (!credsResult.success || !credsResult.data) {
+        throw new Error(
+          credsResult.success ? "R2/S3 クレデンシャルが設定されていません" : credsResult.message
+        )
       }
+      const creds = credsResult.data
       const cmd = new ListObjectsV2Command({
         Bucket: creds.bucketName,
         Delimiter: "/"

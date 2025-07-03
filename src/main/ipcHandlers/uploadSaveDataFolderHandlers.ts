@@ -22,20 +22,26 @@ async function getFilePathsRecursive(dir: string): Promise<string[]> {
 export function registerUploadSaveDataFolderHandlers(): void {
   ipcMain.handle(
     "upload-save-data-folder",
-    async (_event, localSaveFolderPath: string, r2DestinationPath: string): Promise<ApiResult> => {
+    async (_event, localPath: string, remotePath: string): Promise<ApiResult> => {
       try {
         const r2Client = await createR2Client()
-        const creds = await getCredential()
-        if (!creds) {
-          return { success: false, message: "R2/S3 クレデンシャルが設定されていません" }
+        const credsResult = await getCredential()
+        if (!credsResult.success || !credsResult.data) {
+          return {
+            success: false,
+            message: credsResult.success
+              ? "R2/S3 クレデンシャルが設定されていません"
+              : credsResult.message
+          }
         }
+        const creds = credsResult.data
 
-        const filePaths = await getFilePathsRecursive(localSaveFolderPath)
+        const filePaths = await getFilePathsRecursive(localPath)
 
         for (const filePath of filePaths) {
           const fileBody = await readFile(filePath)
-          const relativePath = relative(localSaveFolderPath, filePath)
-          const r2Key = join(r2DestinationPath, relativePath).replace(/\\/g, "/")
+          const relativePath = relative(localPath, filePath)
+          const r2Key = join(remotePath, relativePath).replace(/\\/g, "/")
 
           const cmd = new PutObjectCommand({
             Bucket: creds.bucketName,
@@ -45,14 +51,14 @@ export function registerUploadSaveDataFolderHandlers(): void {
           await r2Client.send(cmd)
         }
         return { success: true }
-      } catch (err: unknown) {
-        console.error(err)
-        const awsSdkError = handleAwsSdkError(err)
+      } catch (error: unknown) {
+        console.error(error)
+        const awsSdkError = handleAwsSdkError(error)
         if (awsSdkError) {
           return { success: false, message: `アップロードに失敗しました: ${awsSdkError.message}` }
         }
-        if (err instanceof Error) {
-          return { success: false, message: `アップロードに失敗しました: ${err.message}` }
+        if (error instanceof Error) {
+          return { success: false, message: `アップロードに失敗しました: ${error.message}` }
         }
         return { success: false, message: "アップロード中に不明なエラーが発生しました。" }
       }

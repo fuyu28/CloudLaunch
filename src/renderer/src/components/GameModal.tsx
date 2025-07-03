@@ -9,7 +9,7 @@ type GameFormModalProps = {
   initialData?: InputGameData | null
   isOpen: boolean
   onClose: () => void
-  onSubmit: (gameFormValues: InputGameData) => Promise<ApiResult>
+  onSubmit: (gameData: InputGameData) => Promise<ApiResult>
 }
 
 const initialValues: InputGameData = {
@@ -33,7 +33,7 @@ export default function GameFormModal({
   onClose,
   onSubmit
 }: GameFormModalProps): React.JSX.Element {
-  const [gameFormValues, setGameFormValues] = useState<InputGameData>(
+  const [gameData, setGameData] = useState<InputGameData>(
     mode === "edit" && initialData ? initialData : initialValues
   )
   const [submitting, setSubmitting] = useState(false)
@@ -41,9 +41,9 @@ export default function GameFormModal({
 
   useEffect(() => {
     if (mode === "edit" && initialData) {
-      setGameFormValues(initialData)
+      setGameData(initialData)
     } else {
-      setGameFormValues(initialValues)
+      setGameData(initialValues)
     }
   }, [initialData, isOpen, mode])
 
@@ -55,7 +55,7 @@ export default function GameFormModal({
       ])
       if (result.success) {
         if (result.data !== null) {
-          setGameFormValues((prev) => ({ ...prev, imagePath: result.data ?? "" }))
+          setGameData((prev) => ({ ...prev, imagePath: result.data ?? "" }))
         }
       } else {
         toast.error(result.message)
@@ -73,7 +73,7 @@ export default function GameFormModal({
       ])
       if (result.success) {
         if (result.data !== null) {
-          setGameFormValues((prev) => ({ ...prev, exePath: result.data ?? "" }))
+          setGameData((prev) => ({ ...prev, exePath: result.data ?? "" }))
         }
       } else {
         toast.error(result.message)
@@ -89,7 +89,7 @@ export default function GameFormModal({
       const result = await window.api.file.selectFolder()
       if (result.success) {
         if (result.data !== null) {
-          setGameFormValues((prev) => ({ ...prev, saveFolderPath: result.data ?? "" }))
+          setGameData((prev) => ({ ...prev, saveFolderPath: result.data ?? "" }))
         }
       } else {
         toast.error(result.message)
@@ -101,7 +101,7 @@ export default function GameFormModal({
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const { name, value } = e.target
-    setGameFormValues((prev) => ({
+    setGameData((prev) => ({
       ...prev,
       [name]: value
     }))
@@ -111,20 +111,23 @@ export default function GameFormModal({
     e.preventDefault()
     setSubmitting(true)
     try {
-      const result = await onSubmit(gameFormValues)
+      const result = await onSubmit(gameData)
       if (result.success) {
         resetForm()
         onClose()
+      } else {
+        toast.error(result.message)
       }
     } catch (err) {
       console.error("予期しないエラー : ", err)
+      toast.error("予期しないエラーが発生しました")
     } finally {
       setSubmitting(false)
     }
   }
 
   const resetForm = (): void => {
-    setGameFormValues(initialValues)
+    setGameData(initialValues)
     setSubmitting(false)
   }
 
@@ -135,10 +138,10 @@ export default function GameFormModal({
 
   const canSubmit = useMemo(
     () =>
-      gameFormValues.title.trim() !== "" &&
-      gameFormValues.publisher.trim() !== "" &&
-      gameFormValues.exePath.trim() !== "",
-    [gameFormValues]
+      gameData.title.trim() !== "" &&
+      gameData.publisher.trim() !== "" &&
+      gameData.exePath.trim() !== "",
+    [gameData]
   )
 
   return (
@@ -172,7 +175,7 @@ export default function GameFormModal({
               <input
                 type="text"
                 name="title"
-                value={gameFormValues.title}
+                value={gameData.title}
                 onChange={handleChange}
                 className="input input-bordered w-full"
                 required
@@ -186,7 +189,7 @@ export default function GameFormModal({
               <input
                 type="text"
                 name="publisher"
-                value={gameFormValues.publisher}
+                value={gameData.publisher}
                 onChange={handleChange}
                 className="input input-bordered w-full"
                 required
@@ -201,7 +204,7 @@ export default function GameFormModal({
                 <input
                   type="text"
                   name="imagePath"
-                  value={gameFormValues.imagePath ?? ""}
+                  value={gameData.imagePath ?? ""}
                   onChange={handleChange}
                   className="input input-bordered flex-1"
                 />
@@ -224,7 +227,7 @@ export default function GameFormModal({
                 <input
                   type="text"
                   name="exePath"
-                  value={gameFormValues.exePath}
+                  value={gameData.exePath}
                   onChange={handleChange}
                   className="input input-bordered flex-1"
                   required
@@ -248,7 +251,7 @@ export default function GameFormModal({
                 <input
                   type="text"
                   name="saveFolderPath"
-                  value={gameFormValues.saveFolderPath}
+                  value={gameData.saveFolderPath}
                   onChange={handleChange}
                   className="input input-bordered flex-1"
                 />

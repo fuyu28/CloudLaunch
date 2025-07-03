@@ -35,9 +35,9 @@ export function registerLaunchGameHandlers(): void {
       }
 
       // 2. プロセス起動
-      const workPath = path.dirname(filePath)
+      const workingDirectory = path.dirname(filePath)
       const child = spawn(filePath, [], {
-        cwd: workPath,
+        cwd: workingDirectory,
         detached: true,
         stdio: "ignore",
         env: { ...process.env }

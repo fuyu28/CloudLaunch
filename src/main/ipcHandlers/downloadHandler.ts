@@ -10,44 +10,50 @@ import { handleAwsSdkError } from "../utils/awsSdkErrorHandler"
 export function registerDownloadSaveDataHandler(): void {
   ipcMain.handle(
     "download-save-data",
-    async (_event, localSaveFolderPath: string, r2DestinationPath: string): Promise<ApiResult> => {
+    async (_event, localPath: string, remotePath: string): Promise<ApiResult> => {
       try {
         const r2Client = await createR2Client()
-        const creds = await getCredential()
-        if (!creds) {
-          return { success: false, message: "R2/S3 クレデンシャルが設定されていません" }
+        const credentialResult = await getCredential()
+        if (!credentialResult.success || !credentialResult.data) {
+          return {
+            success: false,
+            message: credentialResult.success
+              ? "R2/S3 クレデンシャルが設定されていません"
+              : credentialResult.message
+          }
         }
+        const creds = credentialResult.data
 
         const allKeys: string[] = []
         let token: string | undefined = undefined
         do {
-          const listRes = await r2Client.send(
+          const listResult = await r2Client.send(
             new ListObjectsV2Command({
               Bucket: creds.bucketName,
-              Prefix: r2DestinationPath.replace(/\/+$/, "") + "/",
+              Prefix: remotePath.replace(/\/+$/, "") + "/",
               ContinuationToken: token
             })
           )
-          listRes.Contents?.forEach((obj) => {
+          listResult.Contents?.forEach((obj) => {
             if (obj.Key) allKeys.push(obj.Key)
           })
-          token = listRes.NextContinuationToken
+          token = listResult.NextContinuationToken
         } while (token)
 
         for (const key of allKeys) {
-          const relativePath = relative(r2DestinationPath, key)
-          const outputPath = join(localSaveFolderPath, relativePath)
+          const relativePath = relative(remotePath, key)
+          const outputPath = join(localPath, relativePath)
 
           await fs.mkdir(dirname(outputPath), { recursive: true })
 
-          const getRes = await r2Client.send(
+          const getResult = await r2Client.send(
             new GetObjectCommand({
               Bucket: creds.bucketName,
               Key: key
             })
           )
 
-          const bodyStream = getRes.Body as NodeJS.ReadableStream
+          const bodyStream = getResult.Body as NodeJS.ReadableStream
           const fileHandle = await fs.open(outputPath, "w")
           await new Promise<void>((resolve, reject) => {
             const writeStream = fileHandle.createWriteStream()

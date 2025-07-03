@@ -28,22 +28,68 @@ export async function setCredential(creds: Creds): Promise<ApiResult> {
   }
 }
 
-export async function getCredential(): Promise<Creds | null> {
+export async function getCredential(): Promise<ApiResult<Creds>> {
   try {
+    // keytarからsecretAccessKeyを取得
     const secret = await keytar.getPassword(SERVICE, "secretAccessKey")
-    if (secret !== null) {
+
+    if (secret === null) {
       return {
-        bucketName: store.get("bucketName"),
-        region: store.get("region"),
-        endpoint: store.get("endpoint"),
-        accessKeyId: store.get("accessKeyId"),
+        success: false,
+        message: "認証情報が見つかりません。まず認証情報を設定してください。"
+      }
+    }
+
+    // electron-storeから他の認証情報を取得
+    const bucketName = store.get("bucketName")
+    const region = store.get("region")
+    const endpoint = store.get("endpoint")
+    const accessKeyId = store.get("accessKeyId")
+
+    // 必要な認証情報が不足していないかチェック
+    if (!bucketName || !region || !endpoint || !accessKeyId) {
+      return {
+        success: false,
+        message: "認証情報が不完全です。すべての設定項目を確認してください。"
+      }
+    }
+
+    return {
+      success: true,
+      data: {
+        bucketName,
+        region,
+        endpoint,
+        accessKeyId,
         secretAccessKey: secret
       }
-    } else {
-      return null
     }
   } catch (err) {
     console.error("Failed to get credential from store:", err)
-    return null
+
+    // keytarのエラーに関する詳細なメッセージを提供
+    let errorMessage = "認証情報の取得に失敗しました。"
+
+    if (err instanceof Error) {
+      // keytarの一般的なエラーパターンをチェック
+      if (err.message.includes("The specified item could not be found")) {
+        errorMessage =
+          "認証情報がシステムキーチェーンに見つかりません。認証情報を再設定してください。"
+      } else if (err.message.includes("Access denied")) {
+        errorMessage =
+          "システムキーチェーンへのアクセスが拒否されました。アプリケーションの権限を確認してください。"
+      } else if (err.message.includes("The keychain does not exist")) {
+        errorMessage = "システムキーチェーンが存在しません。OSの設定を確認してください。"
+      } else {
+        errorMessage = `認証情報の取得エラー: ${err.message}`
+      }
+    } else if (typeof err === "string") {
+      errorMessage = `認証情報の取得エラー: ${err}`
+    }
+
+    return {
+      success: false,
+      message: errorMessage
+    }
   }
 }

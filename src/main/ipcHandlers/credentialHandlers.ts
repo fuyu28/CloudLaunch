@@ -8,13 +8,13 @@ import type { ApiResult } from "../../types/result"
 
 export function registerCredentialHandlers(): void {
   ipcMain.handle("upsert-credential", async (_event, creds: Creds): Promise<ApiResult> => {
-    const res = await setCredential(creds)
-    return res
+    const result = await setCredential(creds)
+    return result
   })
 
-  ipcMain.handle("get-credential", async (): Promise<Creds | null> => {
-    const res = await getCredential()
-    return res
+  ipcMain.handle("get-credential", async (): Promise<ApiResult<Creds>> => {
+    const result = await getCredential()
+    return result
   })
 
   ipcMain.handle("validate-credential", async (_event, creds: Creds): Promise<ApiResult> => {
@@ -35,8 +35,8 @@ export function registerCredentialHandlers(): void {
         })
       )
       return { success: true }
-    } catch (err: unknown) {
-      const awsSdkError = handleAwsSdkError(err)
+    } catch (error: unknown) {
+      const awsSdkError = handleAwsSdkError(error)
       return { success: false, message: awsSdkError.message }
     }
   })

@@ -6,7 +6,7 @@ import { AwsSdkError } from "../../types/error"
 export const credentialAPI = {
   upsertCredential: (creds: Creds): Promise<ApiResult<void>> =>
     ipcRenderer.invoke("upsert-credential", creds),
-  getCredential: (): Promise<Creds | null> => ipcRenderer.invoke("get-credential"),
+  getCredential: (): Promise<ApiResult<Creds>> => ipcRenderer.invoke("get-credential"),
   validateCredential: (creds: Creds): Promise<ApiResult<void> & { err?: AwsSdkError }> =>
     ipcRenderer.invoke("validate-credential", creds)
 }
