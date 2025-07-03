@@ -119,8 +119,7 @@ export function registerDatabaseHandlers(): void {
           await tx.playSession.create({
             data: {
               duration,
-              gameId,
-              userId: "default-user" // TODO: 将来的にユーザー管理を実装時に修正
+              gameId
             }
           })
 
