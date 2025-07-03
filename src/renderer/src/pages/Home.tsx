@@ -8,19 +8,18 @@ import { searchWordAtom, filterAtom, sortAtom, visibleGamesAtom } from "../state
 import type { InputGameData } from "src/types/game"
 import type { ApiResult } from "src/types/result"
 import type { SortName, FilterName } from "src/types/menu"
+import toast from "react-hot-toast"
 
 export default function Home(): React.ReactElement {
   const [searchWord, setSearchWord] = useAtom(searchWordAtom)
   const [filter, setFilter] = useAtom(filterAtom)
   const [sort, setSort] = useAtom(sortAtom)
   const [visibleGames, setVisibleGames] = useAtom(visibleGamesAtom)
-  const [error, setError] = useState<string | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
 
   useEffect(() => {
     let cancelled = false
     async function fetchGames(): Promise<void> {
-      setError(null)
       try {
         const games = await window.api.database.listGames(searchWord, filter, sort)
         if (!cancelled) {
@@ -29,7 +28,7 @@ export default function Home(): React.ReactElement {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (e: any) {
         if (!cancelled) {
-          setError(e.message ?? "ゲーム一覧の取得に失敗しました")
+          toast.error(e.message ?? "ゲーム一覧の取得に失敗しました")
         }
       }
     }
@@ -39,23 +38,17 @@ export default function Home(): React.ReactElement {
     } // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchWord, filter, sort])
 
-  const handleAddGame = async (values: InputGameData): Promise<ApiResult> => {
-    try {
-      const result = await window.api.database.createGame(values)
-      if (result.success) {
-        const games = await window.api.database.listGames(searchWord, filter, sort)
-        setVisibleGames(games)
-        setIsModalOpen(false)
-        return { success: true }
-      } else {
-        const message = result.message ?? "ゲームの追加に失敗しました"
-        setError(message)
-        return { success: false, message: message }
-      }
-    } catch (e) {
-      console.error(e)
-      return { success: false, message: `${e}` }
+  const handleAddGame = async (values: InputGameData): Promise<ApiResult<void>> => {
+    const result = await window.api.database.createGame(values)
+    if (result.success) {
+      toast.success("ゲームを追加しました。")
+      const games = await window.api.database.listGames(searchWord, filter, sort)
+      setVisibleGames(games)
+      setIsModalOpen(false)
+    } else {
+      toast.error(result.message)
     }
+    return result
   }
 
   return (
@@ -100,7 +93,6 @@ export default function Home(): React.ReactElement {
       </div>
 
       {/* エラー */}
-      {error && <p className="p-4 text-red-500">{error}</p>}
 
       {/* ゲーム一覧 */}
       <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-transparent min-h-0">

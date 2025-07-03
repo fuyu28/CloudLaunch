@@ -49,12 +49,12 @@ export function registerLaunchGameHandlers(): void {
       })
       child.unref()
       return { success: true }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Spawn exception:", err)
+      const message = err instanceof Error ? err.message : "不明なエラー"
       return {
         success: false,
-        message: `ゲームの起動時にエラーが発生しました: ${err.message || err}`
+        message: `ゲームの起動時にエラーが発生しました: ${message}`
       }
     }
   })

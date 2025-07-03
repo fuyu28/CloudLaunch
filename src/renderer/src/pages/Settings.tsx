@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo } from "react"
-import { AwsSdkError } from "src/types/error"
+import toast from "react-hot-toast"
 import { isValidR2OrS3Endpoint } from "@renderer/utils/endpointValidator"
 import { useValidateCreds } from "@renderer/hooks/useValidCreds"
 import { FaCheck, FaSyncAlt, FaTimes } from "react-icons/fa"
+import { ApiResult } from "src/types/result"
 
 export default function Settings(): React.JSX.Element {
   // --- 既存の state ---
@@ -11,10 +12,7 @@ export default function Settings(): React.JSX.Element {
   const [region, setRegion] = useState("auto")
   const [accessKeyId, setAccessKeyId] = useState("")
   const [secretAccessKey, setSecretAccessKey] = useState("")
-  const [toast, setToast] = useState<{
-    message: string
-    type: "loading" | "success" | "error"
-  } | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
 
   // カスタムフックから接続チェック関数
   const validateCreds = useValidateCreds()
@@ -63,12 +61,6 @@ export default function Settings(): React.JSX.Element {
     [bucketName, endpoint, accessKeyId, secretAccessKey]
   )
 
-  useEffect(() => {
-    if (!toast) return
-    const timer = setTimeout(() => setToast(null), 3000)
-    return () => clearTimeout(timer)
-  }, [toast])
-
   // フォームリセット
   const resetForm = (): void => {
     setBucketName("")
@@ -79,12 +71,13 @@ export default function Settings(): React.JSX.Element {
   }
 
   // 疎通確認
-  const testConnection = async (): Promise<{ success: boolean; err?: AwsSdkError }> => {
-    if (!isValidR2OrS3Endpoint(endpoint))
+  const testConnection = async (): Promise<ApiResult<void>> => {
+    if (!isValidR2OrS3Endpoint(endpoint)) {
       return {
         success: false,
-        err: { Code: "InvalidEndpoint", message: "エンドポイントのURLが不正な形式です。" }
+        message: "エンドポイントのURLが不正な形式です。"
       }
+    }
     const res = await window.api.credential.validateCredential({
       bucketName,
       endpoint,
@@ -92,51 +85,40 @@ export default function Settings(): React.JSX.Element {
       accessKeyId,
       secretAccessKey
     })
-    if (res.success) return { success: true }
-    else return { success: false, err: res.err }
+    return res
   }
 
   // 保存ハンドラ
   const handleSave = async (): Promise<void> => {
-    setToast(null)
-    setToast({ message: "接続確認中…", type: "loading" })
-    const test = await testConnection()
-    if (!test.success) {
-      setToast({ message: `${test.err?.Code}\n${test.err?.message}`, type: "error" })
-      return
-    }
-    const res = await window.api.credential.upsertCredential({
-      bucketName,
-      endpoint,
-      region,
-      accessKeyId,
-      secretAccessKey
-    })
-    if (res.success) {
-      await validateCreds()
-      setToast({ message: "設定の保存に成功しました", type: "success" })
-      resetForm()
-    } else {
-      setToast({ message: "設定の保存に失敗しました", type: "error" })
+    setIsSaving(true)
+    const loadingToastId = toast.loading("接続確認中…")
+    try {
+      const test = await testConnection()
+      if (!test.success) {
+        toast.error(test.message, { id: loadingToastId })
+        return
+      }
+      const res = await window.api.credential.upsertCredential({
+        bucketName,
+        endpoint,
+        region,
+        accessKeyId,
+        secretAccessKey
+      })
+      if (res.success) {
+        await validateCreds()
+        toast.success("設定の保存に成功しました", { id: loadingToastId })
+        resetForm()
+      } else {
+        toast.error(res.message, { id: loadingToastId })
+      }
+    } finally {
+      setIsSaving(false)
     }
   }
 
   return (
     <div className="relative container mx-auto px-6 mt-10">
-      {toast && (
-        <div
-          className={`fixed top-4 right-4 z-50 alert shadow-lg ${
-            toast.type === "success"
-              ? "alert-success"
-              : toast.type === "error"
-                ? "alert-error"
-                : "alert-info"
-          } animate-fade-in-down`}
-        >
-          <span className="whitespace-pre-line">{toast.message}</span>
-        </div>
-      )}
-
       <div className="card w-full bg-base-100 shadow-lg">
         <div className="card-body">
           <h2 className="card-title mb-2 flex items-center justify-between">
@@ -215,7 +197,7 @@ export default function Settings(): React.JSX.Element {
             <button
               className="btn btn-primary"
               onClick={handleSave}
-              disabled={!canSubmit || toast?.type === "loading"}
+              disabled={!canSubmit || isSaving}
             >
               保存
             </button>

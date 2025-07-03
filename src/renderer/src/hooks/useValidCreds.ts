@@ -12,8 +12,11 @@ export function useValidateCreds(): () => Promise<boolean> {
         setIsValidCreds(false)
         return false
       }
-      const { success } = await window.api.credential.validateCredential(stored)
+      const { success, err } = await window.api.credential.validateCredential(stored)
       setIsValidCreds(success)
+      if (!success) {
+        console.error("Credential validation failed:", err?.message ?? "不明なエラー")
+      }
       return success
     } catch {
       setIsValidCreds(false)

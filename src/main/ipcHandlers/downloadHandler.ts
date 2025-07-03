@@ -4,49 +4,42 @@ import { ipcMain } from "electron"
 import { GetObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3"
 import { createR2Client } from "../r2Client"
 import { getCredential } from "../service/credentialService"
+import { ApiResult } from "../../types/result"
+import { handleAwsSdkError } from "../utils/awsSdkErrorHandler"
 
 export function registerDownloadSaveDataHandler(): void {
   ipcMain.handle(
     "download-save-data",
-    async (
-      _event,
-      localSaveFolderPath: string,
-      r2DestinationPath: string
-    ): Promise<{ success: boolean }> => {
+    async (_event, localSaveFolderPath: string, r2DestinationPath: string): Promise<ApiResult> => {
       try {
         const r2Client = await createR2Client()
         const creds = await getCredential()
         if (!creds) {
-          throw new Error("R2/S3 クレデンシャルが設定されていません")
+          return { success: false, message: "R2/S3 クレデンシャルが設定されていません" }
         }
-        // 1) R2 から prefix 配下のオブジェクト一覧を取得（ページネーション対応）
+
         const allKeys: string[] = []
         let token: string | undefined = undefined
         do {
           const listRes = await r2Client.send(
             new ListObjectsV2Command({
               Bucket: creds.bucketName,
-              Prefix: r2DestinationPath.replace(/\/+$/, "") + "/", // 確実に末尾に `/`
+              Prefix: r2DestinationPath.replace(/\/+$/, "") + "/",
               ContinuationToken: token
             })
           )
-          // Contents に含まれるキーを拾う
           listRes.Contents?.forEach((obj) => {
             if (obj.Key) allKeys.push(obj.Key)
           })
           token = listRes.NextContinuationToken
         } while (token)
 
-        // 2) 取得したキーごとにダウンロード＆ローカル保存
         for (const key of allKeys) {
-          // r2DestinationPath を除いた相対パスを localSaveFolderPath 配下に作る
           const relativePath = relative(r2DestinationPath, key)
           const outputPath = join(localSaveFolderPath, relativePath)
 
-          // 保存先ディレクトリがなければ作成
           await fs.mkdir(dirname(outputPath), { recursive: true })
 
-          // オブジェクト取得
           const getRes = await r2Client.send(
             new GetObjectCommand({
               Bucket: creds.bucketName,
@@ -54,25 +47,25 @@ export function registerDownloadSaveDataHandler(): void {
             })
           )
 
-          // Body（ReadableStream）をローカルファイルに書き出し
           const bodyStream = getRes.Body as NodeJS.ReadableStream
           const fileHandle = await fs.open(outputPath, "w")
           await new Promise<void>((resolve, reject) => {
             const writeStream = fileHandle.createWriteStream()
-            bodyStream
-              .pipe(writeStream)
-              .on("finish", () => {
-                writeStream.close()
-                resolve()
-              })
-              .on("error", reject)
-          })
+            bodyStream.pipe(writeStream).on("finish", resolve).on("error", reject)
+          }).finally(() => fileHandle.close())
         }
 
         return { success: true }
-      } catch (err) {
+      } catch (err: unknown) {
         console.error(err)
-        return { success: false }
+        const awsSdkError = handleAwsSdkError(err)
+        if (awsSdkError) {
+          return { success: false, message: `ダウンロードに失敗しました: ${awsSdkError.message}` }
+        }
+        if (err instanceof Error) {
+          return { success: false, message: `ダウンロードに失敗しました: ${err.message}` }
+        }
+        return { success: false, message: "ダウンロード中に不明なエラーが発生しました。" }
       }
     }
   )

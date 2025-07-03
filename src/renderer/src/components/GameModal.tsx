@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback } from "react"
 import { RxCross1 } from "react-icons/rx"
+import toast from "react-hot-toast"
 import type { InputGameData } from "src/types/game"
 import type { ApiResult } from "src/types/result"
 
@@ -49,8 +50,12 @@ export default function GameFormModal({
     const result = await window.api.file.selectFile([
       { name: "Image", extensions: ["png", "jpg", "jpeg", "gif"] }
     ])
-    if (result && result[0]) {
-      setGameFormValues((prev) => ({ ...prev, imagePath: result }))
+    if (result.success) {
+      if (result.data !== null) {
+        setGameFormValues((prev) => ({ ...prev, imagePath: result.data ?? "" }))
+      }
+    } else {
+      toast.error(result.message)
     }
   }, [])
 
@@ -58,15 +63,23 @@ export default function GameFormModal({
     const result = await window.api.file.selectFile([
       { name: "Executable", extensions: ["exe", "app"] }
     ])
-    if (result && result[0]) {
-      setGameFormValues((prev) => ({ ...prev, exePath: result }))
+    if (result.success) {
+      if (result.data !== null) {
+        setGameFormValues((prev) => ({ ...prev, exePath: result.data ?? "" }))
+      }
+    } else {
+      toast.error(result.message)
     }
   }, [])
 
   const browseSaveFolder = useCallback(async () => {
     const result = await window.api.file.selectFolder()
-    if (result && result[0]) {
-      setGameFormValues((prev) => ({ ...prev, saveFolderPath: result }))
+    if (result.success) {
+      if (result.data !== null) {
+        setGameFormValues((prev) => ({ ...prev, saveFolderPath: result.data ?? "" }))
+      }
+    } else {
+      toast.error(result.message)
     }
   }, [])
 

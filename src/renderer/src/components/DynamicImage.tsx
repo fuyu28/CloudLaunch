@@ -1,4 +1,6 @@
 import React, { useEffect, useState, ImgHTMLAttributes } from "react"
+import toast from "react-hot-toast"
+import { ApiResult } from "src/types/result"
 
 // ① ImgHTMLAttributes で <img> の全属性を継承
 type DynamicImgProps = Omit<ImgHTMLAttributes<HTMLImageElement>, "src"> & {
@@ -21,19 +23,33 @@ export default function DynamicImage({
         /^[A-Za-z]:\\/.test(originalSrc) ||
         originalSrc.startsWith("/")
       try {
-        let dataUrl: string | null
+        let dataUrl: string | null = null
+        let errorMessage: string | null = null
+
         if (isLocal) {
-          // ローカル画像の場合fsでnodeからロード
           const path = originalSrc.replace(/^file:\/\//, "")
-          dataUrl = await window.api.loadImage.loadImageFromLocal(path)
+          const result = (await window.api.loadImage.loadImageFromLocal(path)) as ApiResult<string>
+          if (result.success) {
+            dataUrl = result.data ?? null
+          } else {
+            errorMessage = result.message
+          }
         } else {
-          // Web画像の場合fetchしてnodeからロード
-          dataUrl = await window.api.loadImage.loadImageFromWeb(originalSrc)
+          const result = (await window.api.loadImage.loadImageFromWeb(
+            originalSrc
+          )) as ApiResult<string>
+          if (result.success) {
+            dataUrl = result.data ?? null
+          } else {
+            errorMessage = result.message
+          }
         }
+
         if (mounted) {
           setDataSrc(dataUrl)
-          if (!dataUrl) {
-            console.warn("画像読み込み失敗:", originalSrc)
+          if (!dataUrl && errorMessage) {
+            console.warn("画像読み込み失敗:", originalSrc, errorMessage)
+            toast.error(`画像読み込み失敗: ${errorMessage}`)
           }
         }
       } catch (error) {
@@ -50,7 +66,7 @@ export default function DynamicImage({
     }
   }, [originalSrc])
 
-  if (!dataSrc) {
+  if (dataSrc === null) {
     return (
       <div style={{ display: "inline-block", textAlign: "center" }}>
         <span>Loading...</span>

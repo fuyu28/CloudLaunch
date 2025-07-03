@@ -7,8 +7,8 @@ import { ApiResult } from "../types/result"
 import { ValidatePathResult } from "../types/file"
 
 export interface FileAPI {
-  selectFile(filters: Electron.FileFilter[]): Promise<string | null>
-  selectFolder(): Promise<string | null>
+  selectFile(filters: Electron.FileFilter[]): Promise<ApiResult<string | null>>
+  selectFolder(): Promise<ApiResult<string | null>>
   validatePath(filePath: string, expectType?: string): Promise<ValidatePathResult>
 }
 
@@ -16,7 +16,7 @@ export interface SaveDataUploadAPI {
   uploadSaveDataFolder(
     localSaveFolderPath: string,
     remoteSaveDataPath: string
-  ): Promise<{ success: boolean }>
+  ): Promise<ApiResult<void>>
 }
 
 export interface saveDataFolderAPI {
@@ -27,32 +27,32 @@ export interface SaveDataDownloadAPI {
   downloadSaveData(
     localSaveFolderPath: string,
     remoteSaveDataPath: string
-  ): Promise<{ success: boolean }>
+  ): Promise<ApiResult<void>>
 }
 
 export interface CredentialAPI {
-  upsertCredential(creds: Creds): Promise<{ success: boolean }>
+  upsertCredential(creds: Creds): Promise<ApiResult<void>>
   getCredential(): Promise<Creds | null>
-  validateCredential(creds: Creds): Promise<{ success: boolean; err?: AwsSdkError }>
+  validateCredential(creds: Creds): Promise<ApiResult<void> & { err?: AwsSdkError }>
 }
 
 export interface DatabaseAPI {
   listGames(searchWord: string, filter: FilterName, sort: SortName): Promise<Game[]>
-  getGameById(game: InputGameData): Promise<Game | null>
-  createGame(game: InputGameData): Promise<ApiResult>
-  updateGame(id: number, game: InputGameData): Promise<ApiResult>
-  deleteGame(id: number): Promise<ApiResult>
-  createSession(duration: number, gameId: number): Promise<ApiResult>
+  getGameById(id: number): Promise<Game | null>
+  createGame(game: InputGameData): Promise<ApiResult<void>>
+  updateGame(id: number, game: InputGameData): Promise<ApiResult<void>>
+  deleteGame(id: number): Promise<ApiResult<void>>
+  createSession(duration: number, gameId: number): Promise<ApiResult<void>>
 }
 
 export interface LoadImageAPI {
-  loadImageFromLocal(filePath: string): Promise<string | null>
-  loadImageFromWeb(url: string): Promise<string | null>
+  loadImageFromLocal(filePath: string): Promise<ApiResult<string>>
+  loadImageFromWeb(url: string): Promise<ApiResult<string>>
 }
 
 export interface LaunchGameAPI {
-  launchGame(filePath: string): Promise<ApiResult>
-  launchGameFromSteam(url: string, steamPath: string): Promise<ApiResult>
+  launchGame(filePath: string): Promise<ApiResult<void>>
+  launchGameFromSteam(url: string, steamPath: string): Promise<ApiResult<void>>
 }
 
 export interface API {
