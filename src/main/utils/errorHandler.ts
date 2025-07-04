@@ -1,4 +1,5 @@
 import { ApiResult } from "../../types/result"
+import { logger } from "./logger"
 
 export interface ErrorInfo {
   code: string
@@ -35,7 +36,7 @@ export function createErrorResult(error: Error | AppError | unknown, context?: s
 
   const contextMessage = context ? `${context}: ${errorMessage}` : errorMessage
 
-  console.error(`[${errorCode}] ${contextMessage}`)
+  logger.error(`[${errorCode}] ${contextMessage}`)
 
   return {
     success: false,

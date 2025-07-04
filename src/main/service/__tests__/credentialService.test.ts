@@ -26,7 +26,7 @@ const mockStoreInstance: any = {
   get: jest.fn(),
   store: {
     bucketName: "test-bucket",
-    region: "us-east-1", 
+    region: "us-east-1",
     endpoint: "https://test.endpoint.com",
     accessKeyId: "test-access-key"
   },

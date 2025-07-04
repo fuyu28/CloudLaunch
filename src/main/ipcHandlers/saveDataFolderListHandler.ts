@@ -26,6 +26,7 @@ import { ipcMain } from "electron"
 import { ListObjectsV2Command } from "@aws-sdk/client-s3"
 import { createR2Client } from "../r2Client"
 import { getCredential } from "../service/credentialService"
+import { logger } from "../utils/logger"
 
 export function registerSaveDataFolderListHandler(): void {
   /**
@@ -71,7 +72,7 @@ export function registerSaveDataFolderListHandler(): void {
       const dirs = res.CommonPrefixes?.map((cp) => cp.Prefix!.replace(/[\\/]+$/, "")) ?? null
       return dirs
     } catch (err) {
-      console.error(err)
+      logger.error("リモートセーブデータフォルダ一覧取得エラー:", err)
       return null
     }
   })

@@ -14,7 +14,8 @@
       "Bash(npx tsc:*)",
       "Bash(cat:*)",
       "Bash(npm test)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(rg:*)"
     ],
     "deny": []
   }

@@ -6,7 +6,7 @@ import { IoIosPlay } from "react-icons/io"
 import { MdEdit } from "react-icons/md"
 import { FaTrash } from "react-icons/fa"
 import { FaArrowLeftLong } from "react-icons/fa6"
-import toast from "react-hot-toast"
+import { handleApiError, withLoadingToast, showSuccessToast } from "@renderer/utils/errorHandler"
 import { visibleGamesAtom } from "@renderer/state/home"
 import DynamicImage from "@renderer/components/DynamicImage"
 import ConfirmModal from "@renderer/components/ConfirmModal"
@@ -59,11 +59,11 @@ export default function GameDetail(): React.JSX.Element {
     if (!game) return
     const result = await window.api.database.deleteGame(game.id)
     if (result.success) {
-      toast.success("ゲームを削除しました。")
+      showSuccessToast("ゲームを削除しました。")
       setFilteredGames((g) => g.filter((x) => x.id !== game.id))
       navigate("/", { replace: true })
     } else {
-      toast.error(result.message)
+      handleApiError(result)
     }
     setIsDeleteModalOpen(false)
   }, [game, navigate, setFilteredGames])
@@ -73,63 +73,47 @@ export default function GameDetail(): React.JSX.Element {
     setIsLaunching(true)
     const result = await window.api.game.launchGame(game.exePath)
     if (result.success) {
-      toast.success("ゲームを起動しました。")
+      showSuccessToast("ゲームを起動しました。")
     } else {
-      toast.error(result.message)
+      handleApiError(result)
     }
     setIsLaunching(false)
   }, [game])
 
   const handleUploadSaveData = useCallback(async (): Promise<void> => {
     if (!game || !game.saveFolderPath) {
-      toast.error("セーブデータフォルダが設定されていません。")
+      handleApiError({ success: false, message: "セーブデータフォルダが設定されていません。" })
       return
     }
     setIsUploading(true)
-    const loadingToastId = toast.loading("セーブデータをアップロード中…")
-    try {
-      const remotePath = `games/${game.title}/save_data`
-      const result = await window.api.saveData.upload.uploadSaveDataFolder(
-        game.saveFolderPath,
-        remotePath
-      )
-      if (result.success) {
-        toast.success("セーブデータのアップロードに成功しました。", { id: loadingToastId })
-      } else {
-        toast.error(result.message, { id: loadingToastId })
-      }
-    } catch (error) {
-      toast.error("セーブデータのアップロード中にエラーが発生しました。", { id: loadingToastId })
-      console.error("Failed to upload save data:", error)
-    } finally {
-      setIsUploading(false)
-    }
+    const remotePath = `games/${game.title}/save_data`
+
+    await withLoadingToast(
+      () => window.api.saveData.upload.uploadSaveDataFolder(game.saveFolderPath!, remotePath),
+      "セーブデータをアップロード中…",
+      "セーブデータのアップロードに成功しました。",
+      "セーブデータのアップロード"
+    )
+
+    setIsUploading(false)
   }, [game])
 
   const handleDownloadSaveData = useCallback(async (): Promise<void> => {
     if (!game || !game.saveFolderPath) {
-      toast.error("セーブデータフォルダが設定されていません。")
+      handleApiError({ success: false, message: "セーブデータフォルダが設定されていません。" })
       return
     }
     setIsDownloading(true)
-    const loadingToastId = toast.loading("セーブデータをダウンロード中…")
-    try {
-      const remotePath = `games/${game.title}/save_data`
-      const result = await window.api.saveData.download.downloadSaveData(
-        game.saveFolderPath,
-        remotePath
-      )
-      if (result.success) {
-        toast.success("セーブデータのダウンロードに成功しました。", { id: loadingToastId })
-      } else {
-        toast.error(result.message, { id: loadingToastId })
-      }
-    } catch (error) {
-      toast.error("セーブデータのダウンロード中にエラーが発生しました。", { id: loadingToastId })
-      console.error("Failed to download save data:", error)
-    } finally {
-      setIsDownloading(false)
-    }
+    const remotePath = `games/${game.title}/save_data`
+
+    await withLoadingToast(
+      () => window.api.saveData.download.downloadSaveData(game.saveFolderPath!, remotePath),
+      "セーブデータをダウンロード中…",
+      "セーブデータのダウンロードに成功しました。",
+      "セーブデータのダウンロード"
+    )
+
+    setIsDownloading(false)
   }, [game])
 
   const handleUpdateGame = useCallback(
@@ -137,7 +121,7 @@ export default function GameDetail(): React.JSX.Element {
       if (!game) return { success: false, message: "ゲームが見つかりません。" }
       const result = await window.api.database.updateGame(game.id, values)
       if (result.success) {
-        toast.success("ゲーム情報を更新しました。")
+        showSuccessToast("ゲーム情報を更新しました。")
         setFilteredGames((list) =>
           list.map((g) =>
             g.id === game.id
@@ -147,7 +131,7 @@ export default function GameDetail(): React.JSX.Element {
         )
         setIsEditModalOpen(false)
       } else {
-        toast.error(result.message)
+        handleApiError(result)
       }
       return result
     },

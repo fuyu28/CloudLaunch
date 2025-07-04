@@ -23,6 +23,7 @@ import { createR2Client } from "../r2Client"
 import { getCredential } from "../service/credentialService"
 import { ApiResult } from "../../types/result"
 import { handleAwsSdkError } from "../utils/awsSdkErrorHandler"
+import { logger } from "../utils/logger"
 
 /**
  * ディレクトリを再帰的にスキャンしてすべてのファイルパスを取得
@@ -85,7 +86,7 @@ export function registerUploadSaveDataFolderHandlers(): void {
         }
         return { success: true }
       } catch (error: unknown) {
-        console.error(error)
+        logger.error("セーブデータアップロードエラー:", error)
         const awsSdkError = handleAwsSdkError(error)
         if (awsSdkError) {
           return { success: false, message: `アップロードに失敗しました: ${awsSdkError.message}` }

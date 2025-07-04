@@ -29,6 +29,7 @@ import { createR2Client } from "../r2Client"
 import { getCredential } from "../service/credentialService"
 import { ApiResult } from "../../types/result"
 import { handleAwsSdkError } from "../utils/awsSdkErrorHandler"
+import { logger } from "../utils/logger"
 
 export function registerDownloadSaveDataHandler(): void {
   /**
@@ -107,7 +108,7 @@ export function registerDownloadSaveDataHandler(): void {
 
         return { success: true }
       } catch (err: unknown) {
-        console.error(err)
+        logger.error("セーブデータダウンロードエラー:", err)
         const awsSdkError = handleAwsSdkError(err)
         if (awsSdkError) {
           return { success: false, message: `ダウンロードに失敗しました: ${awsSdkError.message}` }

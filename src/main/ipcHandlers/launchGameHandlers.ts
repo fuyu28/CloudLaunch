@@ -31,6 +31,7 @@ import { ApiResult } from "../../types/result"
 import { PathType } from "../../types/file"
 import { validatePathWithType } from "../utils/file"
 import { createErrorResult, createAppError, ERROR_CODES } from "../utils/errorHandler"
+import { logger } from "../utils/logger"
 
 export function registerLaunchGameHandlers(): void {
   /**
@@ -90,7 +91,7 @@ export function registerLaunchGameHandlers(): void {
       })
 
       child.on("error", (err) => {
-        console.error("Spawn error:", err)
+        logger.error("ゲーム起動エラー:", err)
       })
 
       child.unref()
@@ -158,7 +159,7 @@ export function registerLaunchGameHandlers(): void {
           env: { ...process.env }
         })
 
-        child.on("error", (err) => console.error("Steam spawn error:", err))
+        child.on("error", (err) => logger.error("Steam経由ゲーム起動エラー:", err))
         child.unref()
         return { success: true }
       } catch (error) {

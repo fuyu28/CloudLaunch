@@ -16,7 +16,8 @@
 
 import React, { useState, useMemo, useEffect, useCallback } from "react"
 import { RxCross1 } from "react-icons/rx"
-import toast from "react-hot-toast"
+import { handleApiError, handleUnexpectedError } from "../utils/errorHandler"
+import { useFileSelection } from "../hooks/useFileSelection"
 import type { InputGameData } from "../../../types/game"
 import type { ApiResult } from "../../../types/result"
 
@@ -53,7 +54,7 @@ export default function GameFormModal({
     mode === "edit" && initialData ? initialData : initialValues
   )
   const [submitting, setSubmitting] = useState(false)
-  const [isBrowsing, setIsBrowsing] = useState(false) // 新しいstate
+  const { isBrowsing, selectFile, selectFolder } = useFileSelection()
 
   useEffect(() => {
     if (mode === "edit" && initialData) {
@@ -64,68 +65,22 @@ export default function GameFormModal({
   }, [initialData, isOpen, mode])
 
   const browseImage = useCallback(async () => {
-    setIsBrowsing(true) // 参照開始
-    try {
-      const result = await window.api.file.selectFile([
-        { name: "Image", extensions: ["png", "jpg", "jpeg", "gif"] }
-      ])
-      if (result.success) {
-        if (result.data !== null) {
-          setGameData((prev) => ({ ...prev, imagePath: result.data ?? "" }))
-        }
-      } else {
-        if (!result.success) {
-          toast.error(result.message)
-        } else {
-          toast.error("エラーが発生しました")
-        }
-      }
-    } finally {
-      setIsBrowsing(false) // 参照終了
-    }
-  }, [])
+    await selectFile([{ name: "Image", extensions: ["png", "jpg", "jpeg", "gif"] }], (filePath) => {
+      setGameData((prev) => ({ ...prev, imagePath: filePath }))
+    })
+  }, [selectFile])
 
   const browseExe = useCallback(async () => {
-    setIsBrowsing(true) // 参照開始
-    try {
-      const result = await window.api.file.selectFile([
-        { name: "Executable", extensions: ["exe", "app"] }
-      ])
-      if (result.success) {
-        if (result.data !== null) {
-          setGameData((prev) => ({ ...prev, exePath: result.data ?? "" }))
-        }
-      } else {
-        if (!result.success) {
-          toast.error(result.message)
-        } else {
-          toast.error("エラーが発生しました")
-        }
-      }
-    } finally {
-      setIsBrowsing(false) // 参照終了
-    }
-  }, [])
+    await selectFile([{ name: "Executable", extensions: ["exe", "app"] }], (filePath) => {
+      setGameData((prev) => ({ ...prev, exePath: filePath }))
+    })
+  }, [selectFile])
 
   const browseSaveFolder = useCallback(async () => {
-    setIsBrowsing(true) // 参照開始
-    try {
-      const result = await window.api.file.selectFolder()
-      if (result.success) {
-        if (result.data !== null) {
-          setGameData((prev) => ({ ...prev, saveFolderPath: result.data ?? "" }))
-        }
-      } else {
-        if (!result.success) {
-          toast.error(result.message)
-        } else {
-          toast.error("エラーが発生しました")
-        }
-      }
-    } finally {
-      setIsBrowsing(false) // 参照終了
-    }
-  }, [])
+    await selectFolder((folderPath) => {
+      setGameData((prev) => ({ ...prev, saveFolderPath: folderPath }))
+    })
+  }, [selectFolder])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const { name, value } = e.target
@@ -144,15 +99,10 @@ export default function GameFormModal({
         resetForm()
         onClose()
       } else {
-        if (!result.success) {
-          toast.error(result.message)
-        } else {
-          toast.error("エラーが発生しました")
-        }
+        handleApiError(result, "エラーが発生しました")
       }
-    } catch (err) {
-      console.error("予期しないエラー : ", err)
-      toast.error("予期しないエラーが発生しました")
+    } catch (error) {
+      handleUnexpectedError(error, "ゲーム情報の送信")
     } finally {
       setSubmitting(false)
     }

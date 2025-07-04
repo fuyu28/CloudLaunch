@@ -28,6 +28,7 @@ import { ipcMain } from "electron"
 import path from "path"
 import fs from "fs/promises"
 import { ApiResult } from "../../types/result"
+import { logger } from "../utils/logger"
 
 const mimeMap: Record<string, string> = {
   png: "image/png",
@@ -65,7 +66,7 @@ export function registerLoadImageHandler(): void {
         const base64 = buffer.toString("base64")
         return { success: true, data: `data:${mime};base64,${base64}` }
       } catch (e: unknown) {
-        console.error(`load-image failed ${e}`)
+        logger.error("ローカル画像読み込みエラー:", e)
         const message = e instanceof Error ? e.message : "不明なエラー"
         return { success: false, message: `ローカル画像の読み込みに失敗しました: ${message}` }
       }
@@ -109,7 +110,7 @@ export function registerLoadImageHandler(): void {
       const base64 = buffer.toString("base64")
       return { success: true, data: `data:${contentType};base64,${base64}` }
     } catch (e: unknown) {
-      console.error(e)
+      logger.error("Web画像読み込みエラー:", e)
       const message = e instanceof Error ? e.message : "不明なエラー"
       return { success: false, message: `Web画像の読み込みに失敗しました: ${message}` }
     }

@@ -1,6 +1,7 @@
 // awsErrorHandler.ts
 import { S3ServiceException } from "@aws-sdk/client-s3"
 import { AwsSdkError } from "../../types/error"
+import { logger } from "./logger"
 
 /**
  * AWS SDK のエラーを一元処理する．
@@ -9,7 +10,7 @@ import { AwsSdkError } from "../../types/error"
  * @returns エラーコードとエラーメッセージ
  */
 export function handleAwsSdkError(error: unknown): AwsSdkError {
-  //eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const err = error as any
 
   if (error instanceof S3ServiceException) {
@@ -25,7 +26,7 @@ export function handleAwsSdkError(error: unknown): AwsSdkError {
       default:
         if (err.Code !== undefined) return { Code: err.Code, message: "その他のエラーです。" }
         else {
-          console.error(err)
+          logger.error("AWS SDK エラー:", err)
           return { Code: err.Code, message: "その他のエラーです。" }
         }
     }
@@ -36,7 +37,7 @@ export function handleAwsSdkError(error: unknown): AwsSdkError {
         message: "ネットワークエラーです。エンドポイントとネットワークの接続を確認してください。"
       }
     else {
-      console.error(err)
+      logger.error("AWS SDK エラー:", err)
       return { Code: err.code, message: `その他のエラーです。(コード: ${err.code ?? "不明"})` }
     }
   }

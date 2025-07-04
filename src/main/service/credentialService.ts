@@ -15,6 +15,7 @@ import Store from "electron-store"
 import type { Creds } from "../../types/creds"
 import { ApiResult } from "../../types/result"
 import keytar from "keytar"
+import { logger } from "../utils/logger"
 
 interface StoreSchema {
   bucketName: string
@@ -46,7 +47,7 @@ export async function setCredential(creds: Creds): Promise<ApiResult> {
     await keytar.setPassword(SERVICE, "secretAccessKey", creds.secretAccessKey)
     return { success: true }
   } catch (err) {
-    console.error(err)
+    logger.error("認証情報設定エラー:", err)
     return { success: false, message: `認証情報の設定に失敗しました: ${err}` }
   }
 }
@@ -88,7 +89,7 @@ export async function getCredential(): Promise<ApiResult<Creds>> {
       }
     }
   } catch (err) {
-    console.error("Failed to get credential from store:", err)
+    logger.error("認証情報取得エラー:", err)
 
     // keytarのエラーに関する詳細なメッセージを提供
     let errorMessage = "認証情報の取得に失敗しました。"

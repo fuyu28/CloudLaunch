@@ -19,6 +19,7 @@ import { Prisma } from "@prisma/client"
 import type { FilterName, SortName } from "../../types/menu"
 import type { InputGameData } from "../../types/game"
 import { ApiResult } from "../../types/result"
+import { logger } from "../utils/logger"
 
 const filterMap: Record<FilterName, Prisma.GameWhereInput> = {
   all: {},
@@ -58,7 +59,7 @@ export function registerDatabaseHandlers(): void {
           orderBy
         })
       } catch (error) {
-        console.error(error)
+        logger.error("ゲーム一覧取得エラー:", error)
         return []
       }
     }
@@ -70,7 +71,7 @@ export function registerDatabaseHandlers(): void {
         where: { id }
       })
     } catch (error) {
-      console.error(error)
+      logger.error("ゲーム詳細取得エラー:", error)
       return null
     }
   })
@@ -88,7 +89,7 @@ export function registerDatabaseHandlers(): void {
       })
       return { success: true }
     } catch (error) {
-      console.error(error)
+      logger.error("ゲーム作成エラー:", error)
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
         return { success: false, message: `ゲーム「${game.title}」は既に存在します。` }
       }
@@ -114,7 +115,7 @@ export function registerDatabaseHandlers(): void {
         })
         return { success: true }
       } catch (error) {
-        console.error(error)
+        logger.error("ゲーム更新エラー:", error)
         if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
           return { success: false, message: `ゲーム「${game.title}」は既に存在します。` }
         }
@@ -130,7 +131,7 @@ export function registerDatabaseHandlers(): void {
       })
       return { success: true }
     } catch (error) {
-      console.error(error)
+      logger.error("ゲーム削除エラー:", error)
       return { success: false, message: "ゲームの削除に失敗しました。" }
     }
   })
@@ -163,7 +164,7 @@ export function registerDatabaseHandlers(): void {
         })
         return { success: true }
       } catch (error) {
-        console.error(error)
+        logger.error("プレイセッション作成エラー:", error)
         return { success: false, message: "プレイ時間の記録に失敗しました。" }
       }
     }
