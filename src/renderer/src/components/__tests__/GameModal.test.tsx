@@ -11,7 +11,6 @@
 
 /// <reference types="jest" />
 /// <reference types="@testing-library/jest-dom" />
-/// <reference path="./types.d.ts" />
 
 import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"

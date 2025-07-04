@@ -24,12 +24,81 @@
 import { join, dirname, relative } from "path"
 import { promises as fs } from "fs"
 import { ipcMain } from "electron"
-import { GetObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3"
-import { createR2Client } from "../r2Client"
-import { getCredential } from "../service/credentialService"
+import { GetObjectCommand, ListObjectsV2Command, S3Client } from "@aws-sdk/client-s3"
 import { ApiResult } from "../../types/result"
-import { handleAwsSdkError } from "../utils/awsSdkErrorHandler"
-import { logger } from "../utils/logger"
+import { withFileOperationErrorHandling } from "../utils/ipcErrorHandler"
+import { validateCredentialsForR2 } from "../utils/credentialValidator"
+
+/**
+ * リモートパス配下のすべてのオブジェクトキーを取得する関数
+ *
+ * ページネーション対応により、大量のオブジェクトが存在する場合でも
+ * すべてのキーを取得できます。
+ *
+ * @param r2Client S3 クライアント
+ * @param bucketName バケット名
+ * @param remotePath リモートパス（プレフィックス）
+ * @returns Promise<string[]> オブジェクトキーの配列
+ */
+async function getAllObjectKeys(
+  r2Client: S3Client,
+  bucketName: string,
+  remotePath: string
+): Promise<string[]> {
+  const allKeys: string[] = []
+  let token: string | undefined = undefined
+
+  do {
+    const listResult = await r2Client.send(
+      new ListObjectsV2Command({
+        Bucket: bucketName,
+        Prefix: remotePath.replace(/\/+$/, "") + "/",
+        ContinuationToken: token
+      })
+    )
+
+    listResult.Contents?.forEach((obj) => {
+      if (obj.Key) allKeys.push(obj.Key)
+    })
+
+    token = listResult.NextContinuationToken
+  } while (token)
+
+  return allKeys
+}
+
+/**
+ * 単一ファイルをダウンロードする関数
+ *
+ * ストリーミング処理により、メモリ効率的にファイルをダウンロードします。
+ *
+ * @param r2Client S3 クライアント
+ * @param bucketName バケット名
+ * @param key オブジェクトキー
+ * @param outputPath 出力ファイルパス
+ * @returns Promise<void>
+ */
+async function downloadFile(
+  r2Client: S3Client,
+  bucketName: string,
+  key: string,
+  outputPath: string
+): Promise<void> {
+  const getResult = await r2Client.send(
+    new GetObjectCommand({
+      Bucket: bucketName,
+      Key: key
+    })
+  )
+
+  const bodyStream = getResult.Body as NodeJS.ReadableStream
+  const fileHandle = await fs.open(outputPath, "w")
+
+  await new Promise<void>((resolve, reject) => {
+    const writeStream = fileHandle.createWriteStream()
+    bodyStream.pipe(writeStream).on("finish", resolve).on("error", reject)
+  }).finally(() => fileHandle.close())
+}
 
 export function registerDownloadSaveDataHandler(): void {
   /**
@@ -55,69 +124,33 @@ export function registerDownloadSaveDataHandler(): void {
    */
   ipcMain.handle(
     "download-save-data",
-    async (_event, localPath: string, remotePath: string): Promise<ApiResult> => {
-      try {
-        const r2Client = await createR2Client()
-        const credentialResult = await getCredential()
-        if (!credentialResult.success || !credentialResult.data) {
-          return {
-            success: false,
-            message: credentialResult.success
-              ? "R2/S3 クレデンシャルが設定されていません"
-              : credentialResult.message
-          }
+    withFileOperationErrorHandling(
+      async (_event, localPath: string, remotePath: string): Promise<ApiResult> => {
+        // 認証情報の検証と R2 クライアントの作成
+        const validationResult = await validateCredentialsForR2()
+        if (!validationResult.success) {
+          return validationResult
         }
-        const creds = credentialResult.data
 
-        const allKeys: string[] = []
-        let token: string | undefined = undefined
-        do {
-          const listResult = await r2Client.send(
-            new ListObjectsV2Command({
-              Bucket: creds.bucketName,
-              Prefix: remotePath.replace(/\/+$/, "") + "/",
-              ContinuationToken: token
-            })
-          )
-          listResult.Contents?.forEach((obj) => {
-            if (obj.Key) allKeys.push(obj.Key)
-          })
-          token = listResult.NextContinuationToken
-        } while (token)
+        const { credentials, r2Client } = validationResult.data!
 
+        // リモートオブジェクトの一覧取得
+        const allKeys = await getAllObjectKeys(r2Client, credentials.bucketName, remotePath)
+
+        // 各ファイルのダウンロード
         for (const key of allKeys) {
           const relativePath = relative(remotePath, key)
           const outputPath = join(localPath, relativePath)
 
+          // ディレクトリの作成
           await fs.mkdir(dirname(outputPath), { recursive: true })
 
-          const getResult = await r2Client.send(
-            new GetObjectCommand({
-              Bucket: creds.bucketName,
-              Key: key
-            })
-          )
-
-          const bodyStream = getResult.Body as NodeJS.ReadableStream
-          const fileHandle = await fs.open(outputPath, "w")
-          await new Promise<void>((resolve, reject) => {
-            const writeStream = fileHandle.createWriteStream()
-            bodyStream.pipe(writeStream).on("finish", resolve).on("error", reject)
-          }).finally(() => fileHandle.close())
+          // ファイルのダウンロード
+          await downloadFile(r2Client, credentials.bucketName, key, outputPath)
         }
 
         return { success: true }
-      } catch (err: unknown) {
-        logger.error("セーブデータダウンロードエラー:", err)
-        const awsSdkError = handleAwsSdkError(err)
-        if (awsSdkError) {
-          return { success: false, message: `ダウンロードに失敗しました: ${awsSdkError.message}` }
-        }
-        if (err instanceof Error) {
-          return { success: false, message: `ダウンロードに失敗しました: ${err.message}` }
-        }
-        return { success: false, message: "ダウンロード中に不明なエラーが発生しました。" }
       }
-    }
+    )
   )
 }

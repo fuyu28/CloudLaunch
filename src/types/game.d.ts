@@ -1,8 +1,8 @@
-export type GameType = {
+export type Game = {
   id: string
   title: string
   publisher: string
-  saveFolderPath: string
+  saveFolderPath: string | null
   exePath: string
   imagePath: string | null
   createdAt: Date
@@ -10,6 +10,8 @@ export type GameType = {
   totalPlayTime: number
   lastPlayed: Date | null
 }
+
+export type GameType = Game
 
 export type InputGameData = {
   title: string

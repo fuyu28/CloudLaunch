@@ -14,10 +14,12 @@
  * - react-hot-toast エラー通知
  */
 
-import React, { useState, useMemo, useEffect, useCallback } from "react"
-import { RxCross1 } from "react-icons/rx"
+import React, { useState, useEffect, useCallback } from "react"
 import { handleApiError, handleUnexpectedError } from "../utils/errorHandler"
 import { useFileSelection } from "../hooks/useFileSelection"
+import { useGameFormValidation } from "../hooks/useGameFormValidation"
+import { GameFormFields } from "./GameFormFields"
+import { BaseModal } from "./BaseModal"
 import type { InputGameData } from "../../../types/game"
 import type { ApiResult } from "../../../types/result"
 
@@ -55,6 +57,7 @@ export default function GameFormModal({
   )
   const [submitting, setSubmitting] = useState(false)
   const { isBrowsing, selectFile, selectFolder } = useFileSelection()
+  const { canSubmit } = useGameFormValidation(gameData)
 
   useEffect(() => {
     if (mode === "edit" && initialData) {
@@ -118,152 +121,41 @@ export default function GameFormModal({
     onClose()
   }
 
-  const canSubmit = useMemo(
-    () =>
-      gameData.title.trim() !== "" &&
-      gameData.publisher.trim() !== "" &&
-      gameData.exePath.trim() !== "",
-    [gameData]
+  const footer = (
+    <div className="justify-end">
+      <button type="button" className="btn" onClick={handleCancel} disabled={submitting}>
+        キャンセル
+      </button>
+      <button
+        type="submit"
+        className="btn btn-primary"
+        onClick={handleSubmit}
+        disabled={submitting || !canSubmit}
+      >
+        {`${modeMap[mode]}${submitting ? "中…" : ""}`}
+      </button>
+    </div>
   )
 
   return (
-    <>
-      <input
-        type="checkbox"
-        id="game-form-modal"
-        className="modal-toggle"
-        checked={isOpen}
-        readOnly
-      />
-      <div className="modal cursor-pointer">
-        <div className="modal-box relative max-w-lg" onClick={(e) => e.stopPropagation()}>
-          <h3 className="text-xl font-bold mb-4">
-            {mode === "add" ? "ゲームの登録" : "ゲーム情報を編集"}
-          </h3>
-          {/* 閉じるボタン */}
-          <button
-            className="btn btn-sm btn-circle absolute right-2 top-2"
-            onClick={onClose}
-            type="button"
-          >
-            <RxCross1 />
-          </button>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* タイトル */}
-            <div>
-              <label className="label">
-                <span className="label-text">タイトル</span>
-              </label>
-              <input
-                type="text"
-                name="title"
-                value={gameData.title}
-                onChange={handleChange}
-                className="input input-bordered w-full"
-                required
-              />
-            </div>
-            {/* ブランド */}
-            <div>
-              <label className="label">
-                <span className="label-text">ブランド</span>
-              </label>
-              <input
-                type="text"
-                name="publisher"
-                value={gameData.publisher}
-                onChange={handleChange}
-                className="input input-bordered w-full"
-                required
-              />
-            </div>
-            {/* サムネイルパス */}
-            <div>
-              <label className="label">
-                <span className="label-text">サムネイル画像の場所</span>
-              </label>
-              <div className="flex">
-                <input
-                  type="text"
-                  name="imagePath"
-                  value={gameData.imagePath ?? ""}
-                  onChange={handleChange}
-                  className="input input-bordered flex-1"
-                />
-                <button
-                  type="button"
-                  className="btn ml-2"
-                  onClick={browseImage}
-                  disabled={isBrowsing}
-                >
-                  参照
-                </button>
-              </div>
-            </div>
-            {/* 実行ファイルパス */}
-            <div>
-              <label className="label">
-                <span className="label-text">実行ファイルの場所</span>
-              </label>
-              <div className="flex">
-                <input
-                  type="text"
-                  name="exePath"
-                  value={gameData.exePath}
-                  onChange={handleChange}
-                  className="input input-bordered flex-1"
-                  required
-                />
-                <button
-                  type="button"
-                  className="btn ml-2"
-                  onClick={browseExe}
-                  disabled={isBrowsing}
-                >
-                  参照
-                </button>
-              </div>
-            </div>
-            {/* セーブデータのパス */}
-            <div>
-              <label className="label">
-                <span className="label-text">セーブデータフォルダの場所</span>
-              </label>
-              <div className="flex">
-                <input
-                  type="text"
-                  name="saveFolderPath"
-                  value={gameData.saveFolderPath}
-                  onChange={handleChange}
-                  className="input input-bordered flex-1"
-                />
-                <button
-                  type="button"
-                  className="btn ml-2"
-                  onClick={browseSaveFolder}
-                  disabled={isBrowsing}
-                >
-                  参照
-                </button>
-              </div>
-            </div>
-            {/* モーダルアクション */}
-            <div className="modal-action justify-end">
-              <button type="button" className="btn" onClick={handleCancel} disabled={submitting}>
-                キャンセル
-              </button>
-              <button
-                type="submit"
-                className="btn btn-primary"
-                onClick={handleSubmit}
-                disabled={submitting || !canSubmit}
-              >
-                {`${modeMap[mode]}${submitting ? "中…" : ""}`}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </>
+    <BaseModal
+      id="game-form-modal"
+      isOpen={isOpen}
+      onClose={onClose}
+      title={mode === "add" ? "ゲームの登録" : "ゲーム情報を編集"}
+      size="lg"
+      footer={footer}
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <GameFormFields
+          gameData={gameData}
+          onChange={handleChange}
+          onBrowseImage={browseImage}
+          onBrowseExe={browseExe}
+          onBrowseSaveFolder={browseSaveFolder}
+          disabled={submitting || isBrowsing}
+        />
+      </form>
+    </BaseModal>
   )
 }

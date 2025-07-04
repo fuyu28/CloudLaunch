@@ -19,11 +19,9 @@ import { readdir, readFile } from "fs/promises"
 import { join, relative } from "path"
 import { ipcMain } from "electron"
 import { PutObjectCommand } from "@aws-sdk/client-s3"
-import { createR2Client } from "../r2Client"
-import { getCredential } from "../service/credentialService"
 import { ApiResult } from "../../types/result"
-import { handleAwsSdkError } from "../utils/awsSdkErrorHandler"
-import { logger } from "../utils/logger"
+import { withFileOperationErrorHandling } from "../utils/ipcErrorHandler"
+import { validateCredentialsForR2 } from "../utils/credentialValidator"
 
 /**
  * ディレクトリを再帰的にスキャンしてすべてのファイルパスを取得
@@ -53,49 +51,53 @@ async function getFilePathsRecursive(dir: string): Promise<string[]> {
   return Array.prototype.concat(...paths)
 }
 
+/**
+ * ファイルパスから S3 キーを作成する関数
+ *
+ * ローカルファイルパスの相対パスを S3 オブジェクトキーに変換します。
+ * Windows のバックスラッシュをスラッシュに変換して、
+ * クロスプラットフォーム対応を行います。
+ *
+ * @param remotePath S3 のベースパス
+ * @param relativePath ローカルファイルの相対パス
+ * @returns S3 オブジェクトキー
+ */
+function createS3KeyFromFilePath(remotePath: string, relativePath: string): string {
+  return join(remotePath, relativePath).replace(/\\/g, "/")
+}
+
 export function registerUploadSaveDataFolderHandlers(): void {
   ipcMain.handle(
     "upload-save-data-folder",
-    async (_event, localPath: string, remotePath: string): Promise<ApiResult> => {
-      try {
-        const r2Client = await createR2Client()
-        const credsResult = await getCredential()
-        if (!credsResult.success || !credsResult.data) {
-          return {
-            success: false,
-            message: credsResult.success
-              ? "R2/S3 クレデンシャルが設定されていません"
-              : credsResult.message
-          }
+    withFileOperationErrorHandling(
+      async (_event, localPath: string, remotePath: string): Promise<ApiResult> => {
+        // 認証情報の検証と R2 クライアントの作成
+        const validationResult = await validateCredentialsForR2()
+        if (!validationResult.success) {
+          return validationResult
         }
-        const creds = credsResult.data
 
+        const { credentials, r2Client } = validationResult.data!
+
+        // ファイルパスの取得
         const filePaths = await getFilePathsRecursive(localPath)
 
+        // 各ファイルのアップロード
         for (const filePath of filePaths) {
           const fileBody = await readFile(filePath)
           const relativePath = relative(localPath, filePath)
-          const r2Key = join(remotePath, relativePath).replace(/\\/g, "/")
+          const r2Key = createS3KeyFromFilePath(remotePath, relativePath)
 
           const cmd = new PutObjectCommand({
-            Bucket: creds.bucketName,
+            Bucket: credentials.bucketName,
             Key: r2Key,
             Body: fileBody
           })
           await r2Client.send(cmd)
         }
+
         return { success: true }
-      } catch (error: unknown) {
-        logger.error("セーブデータアップロードエラー:", error)
-        const awsSdkError = handleAwsSdkError(error)
-        if (awsSdkError) {
-          return { success: false, message: `アップロードに失敗しました: ${awsSdkError.message}` }
-        }
-        if (error instanceof Error) {
-          return { success: false, message: `アップロードに失敗しました: ${error.message}` }
-        }
-        return { success: false, message: "アップロード中に不明なエラーが発生しました。" }
       }
-    }
+    )
   )
 }
