@@ -5,6 +5,8 @@
     "src/renderer/src/**/*",
     "src/renderer/src/**/*.tsx",
     "src/preload/*.d.ts",
+    "src/preload/index.d.ts",
+    "src/preload/preload.d.ts",
     "src/types/**/*"
   ],
   "compilerOptions": {
@@ -13,6 +15,7 @@
     "baseUrl": ".",
     "paths": {
       "@renderer/*": ["src/renderer/src/*"]
-    }
+    },
+    "types": ["jest", "@types/jest", "@testing-library/jest-dom"]
   }
 }

@@ -17,8 +17,8 @@
 import React, { useState, useMemo, useEffect, useCallback } from "react"
 import { RxCross1 } from "react-icons/rx"
 import toast from "react-hot-toast"
-import type { InputGameData } from "src/types/game"
-import type { ApiResult } from "src/types/result"
+import type { InputGameData } from "../../../types/game"
+import type { ApiResult } from "../../../types/result"
 
 type GameFormModalProps = {
   mode: "add" | "edit"
@@ -74,7 +74,11 @@ export default function GameFormModal({
           setGameData((prev) => ({ ...prev, imagePath: result.data ?? "" }))
         }
       } else {
-        toast.error(result.message)
+        if (!result.success) {
+          toast.error(result.message)
+        } else {
+          toast.error("エラーが発生しました")
+        }
       }
     } finally {
       setIsBrowsing(false) // 参照終了
@@ -92,7 +96,11 @@ export default function GameFormModal({
           setGameData((prev) => ({ ...prev, exePath: result.data ?? "" }))
         }
       } else {
-        toast.error(result.message)
+        if (!result.success) {
+          toast.error(result.message)
+        } else {
+          toast.error("エラーが発生しました")
+        }
       }
     } finally {
       setIsBrowsing(false) // 参照終了
@@ -108,7 +116,11 @@ export default function GameFormModal({
           setGameData((prev) => ({ ...prev, saveFolderPath: result.data ?? "" }))
         }
       } else {
-        toast.error(result.message)
+        if (!result.success) {
+          toast.error(result.message)
+        } else {
+          toast.error("エラーが発生しました")
+        }
       }
     } finally {
       setIsBrowsing(false) // 参照終了
@@ -132,7 +144,11 @@ export default function GameFormModal({
         resetForm()
         onClose()
       } else {
-        toast.error(result.message)
+        if (!result.success) {
+          toast.error(result.message)
+        } else {
+          toast.error("エラーが発生しました")
+        }
       }
     } catch (err) {
       console.error("予期しないエラー : ", err)

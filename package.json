@@ -18,7 +18,13 @@
     "build:unpack": "npm run build && electron-builder --dir",
     "build:win": "npm run build && electron-builder --win",
     "build:mac": "electron-vite build && electron-builder --mac",
-    "build:linux": "electron-vite build && electron-builder --linux"
+    "build:linux": "electron-vite build && electron-builder --linux",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:vitest": "vitest",
+    "test:vitest:ui": "vitest --ui",
+    "test:vitest:coverage": "vitest --coverage"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.828.0",
@@ -45,10 +51,15 @@
     "@electron-toolkit/tsconfig": "^1.0.1",
     "@faker-js/faker": "^9.8.0",
     "@tailwindcss/vite": "^4.1.10",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/jest": "^30.0.0",
     "@types/node": "^22.15.32",
     "@types/react": "^19.1.1",
     "@types/react-dom": "^19.1.2",
     "@vitejs/plugin-react": "^4.3.4",
+    "@vitest/ui": "^3.2.4",
     "daisyui": "^5.0.43",
     "electron": "^35.1.5",
     "electron-builder": "^25.1.8",
@@ -57,12 +68,17 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.19",
+    "happy-dom": "^18.0.1",
+    "jest": "^30.0.4",
+    "jest-environment-jsdom": "^30.0.4",
     "prettier": "^3.5.3",
     "tailwind-scrollbar": "^4.0.2",
     "tailwindcss": "^4.1.10",
+    "ts-jest": "^29.4.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3",
-    "vite": "^6.2.6"
+    "vite": "^6.2.6",
+    "vitest": "^3.2.4"
   },
   "prisma": {
     "seed": "node -r ts-node/register prisma/seed.ts"

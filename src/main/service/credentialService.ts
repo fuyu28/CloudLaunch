@@ -12,18 +12,28 @@
  */
 
 import Store from "electron-store"
-import type { Schema, Creds } from "../../types/creds"
+import type { Creds } from "../../types/creds"
 import { ApiResult } from "../../types/result"
 import keytar from "keytar"
 
-const store = new Store<Schema>({
+interface StoreSchema {
+  bucketName: string
+  region: string
+  endpoint: string
+  accessKeyId: string
+}
+
+const store = new Store<StoreSchema>({
   defaults: {
     bucketName: "",
     region: "auto",
     endpoint: "",
     accessKeyId: ""
   }
-})
+}) as Store<StoreSchema> & {
+  set<K extends keyof StoreSchema>(key: K, value: StoreSchema[K]): void
+  get<K extends keyof StoreSchema>(key: K): StoreSchema[K]
+}
 
 const SERVICE = "StorageDeck"
 
@@ -70,10 +80,10 @@ export async function getCredential(): Promise<ApiResult<Creds>> {
     return {
       success: true,
       data: {
-        bucketName,
-        region,
-        endpoint,
-        accessKeyId,
+        bucketName: bucketName as string,
+        region: region as string,
+        endpoint: endpoint as string,
+        accessKeyId: accessKeyId as string,
         secretAccessKey: secret
       }
     }

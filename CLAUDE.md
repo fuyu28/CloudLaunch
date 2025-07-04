@@ -2,7 +2,11 @@
 
 必ず日本語で出力してください。
 
-コードを作成した後は`npx run format`を行ってください。
+タスクを終了する前に`npx run format`, `npm run typecheck`, `npm run lint`を行ってください。
+その際、エラーが発生していれば修正してください。
+
+また、anyは極力使用しないでください。しかし、どうしても必要な場合であれば、`// eslint-disable-next-line [エラー名]` を使用して一時的にeslintをオフにしてください。
+そのため、eslintのコンフィグに特定のエラーをオフにすることは絶対にやめてください。
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 

@@ -19,7 +19,7 @@ export interface SaveDataUploadAPI {
   ): Promise<ApiResult<void>>
 }
 
-export interface saveDataFolderAPI {
+export interface SaveDataFolderAPI {
   listRemoteSaveDataFolders(): Promise<string[] | null>
 }
 

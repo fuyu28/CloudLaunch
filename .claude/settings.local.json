@@ -7,7 +7,14 @@
       "Bash(npx prisma:*)",
       "Bash(grep:*)",
       "Bash(ls:*)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "Bash(mkdir:*)",
+      "Bash(npm run test:*)",
+      "Bash(npx jest:*)",
+      "Bash(npx tsc:*)",
+      "Bash(cat:*)",
+      "Bash(npm test)",
+      "Bash(find:*)"
     ],
     "deny": []
   }
