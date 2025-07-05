@@ -1,5 +1,5 @@
-appId: com.electron.app
-productName: electron-vite-test
+appId: com.fuyu28.cloudlaunch
+productName: Cloud Launch
 directories:
   buildResources: build
 files:
@@ -10,13 +10,20 @@ files:
   - "!{.env,.env.*,.npmrc,pnpm-lock.yaml}"
   - "!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}"
 asarUnpack:
-  - resources/**
+  - "./node_modules/.prisma/**"
+  - "./node_modules/@prisma/**"
+extraResources:
+  - "./node_modules/.prisma/**"
+  - "./node_modules/@prisma/**"
+  - from: "out/app.db"
+    to: "app.db"
 win:
-  executableName: electron-vite-test
+  executableName: CloudLaunch
+
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
-  uninstallDisplayName: ${productName}
+  uninstallDisplayName: ${productName} Uninstaller
   createDesktopShortcut: always
 mac:
   entitlementsInherit: build/entitlements.mac.plist
@@ -40,6 +47,6 @@ appImage:
 npmRebuild: false
 publish:
   provider: generic
-  url: https://example.com/auto-updates
+  url: "https://example.com/auto-updates"
 electronDownload:
-  mirror: https://npmmirror.com/mirrors/electron/
+  mirror: "https://npmmirror.com/mirrors/electron/"
