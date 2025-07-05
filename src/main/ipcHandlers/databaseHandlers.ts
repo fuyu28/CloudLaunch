@@ -16,18 +16,18 @@ import { Game } from "@prisma/client"
 import { ipcMain } from "electron"
 import { prisma } from "../db"
 import { Prisma } from "@prisma/client"
-import type { FilterName, SortName } from "../../types/menu"
+import type { FilterOption, SortOption } from "../../types/menu"
 import type { InputGameData } from "../../types/game"
 import { ApiResult } from "../../types/result"
 import { logger } from "../utils/logger"
 
-const filterMap: Record<FilterName, Prisma.GameWhereInput> = {
+const filterMap: Record<FilterOption, Prisma.GameWhereInput> = {
   all: {},
   unplayed: { playStatus: "unplayed" },
   playing: { playStatus: "playing" },
   played: { playStatus: "played" }
 }
-const sortMap: Record<SortName, { [key: string]: "asc" | "desc" }> = {
+const sortMap: Record<SortOption, { [key: string]: "asc" | "desc" }> = {
   title: { title: "asc" },
   recentlyPlayed: { lastPlayed: "desc" },
   longestPlayed: { totalPlayTime: "desc" },
@@ -37,7 +37,7 @@ const sortMap: Record<SortName, { [key: string]: "asc" | "desc" }> = {
 export function registerDatabaseHandlers(): void {
   ipcMain.handle(
     "list-games",
-    async (_event, searchWord: string, filter: FilterName, sort: SortName): Promise<Game[]> => {
+    async (_event, searchWord: string, filter: FilterOption, sort: SortOption): Promise<Game[]> => {
       try {
         // 文字検索
         const searchCondition: Prisma.GameWhereInput = searchWord

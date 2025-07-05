@@ -8,9 +8,9 @@ import FloatingButton from "@renderer/components/FloatingButton"
 import { searchWordAtom, filterAtom, sortAtom, visibleGamesAtom } from "../state/home"
 import { useDebounce } from "../hooks/useDebounce"
 import { useLoadingState } from "../hooks/useLoadingState"
-import type { InputGameData } from "src/types/game"
-import type { ApiResult } from "src/types/result"
-import type { SortName, FilterName } from "src/types/menu"
+import { useGameActions } from "../hooks/useGameActions"
+import { CONFIG, MESSAGES } from "../../../constants"
+import type { SortOption, FilterOption } from "src/types/menu"
 
 export default function Home(): React.ReactElement {
   const [searchWord, setSearchWord] = useAtom(searchWordAtom)
@@ -19,12 +19,21 @@ export default function Home(): React.ReactElement {
   const [visibleGames, setVisibleGames] = useAtom(visibleGamesAtom)
   const [isModalOpen, setIsModalOpen] = useState(false)
 
-  // 検索語をデバウンス（300ms遅延）
-  const debouncedSearchWord = useDebounce(searchWord, 300)
+  // 検索語をデバウンス
+  const debouncedSearchWord = useDebounce(searchWord, CONFIG.TIMING.SEARCH_DEBOUNCE_MS)
 
   // ローディング状態管理
   const gameListLoading = useLoadingState()
   const gameActionLoading = useLoadingState()
+
+  // ゲーム操作フック
+  const { createGameAndRefreshList } = useGameActions({
+    searchWord: debouncedSearchWord,
+    filter,
+    sort,
+    onGamesUpdate: setVisibleGames,
+    onModalClose: () => setIsModalOpen(false)
+  })
 
   useEffect(() => {
     let cancelled = false
@@ -33,7 +42,7 @@ export default function Home(): React.ReactElement {
       const games = await gameListLoading.executeWithLoading(
         () => window.api.database.listGames(debouncedSearchWord, filter, sort),
         {
-          errorMessage: "ゲーム一覧の取得に失敗しました",
+          errorMessage: MESSAGES.GAME.LIST_FETCH_FAILED,
           showToast: true
         }
       )
@@ -49,30 +58,7 @@ export default function Home(): React.ReactElement {
     } // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearchWord, filter, sort])
 
-  const handleAddGame = async (values: InputGameData): Promise<ApiResult<void>> => {
-    const result = await gameActionLoading.executeWithLoading(
-      async () => {
-        const createResult = await window.api.database.createGame(values)
-        if (!createResult.success) {
-          throw new Error(createResult.message)
-        }
-
-        // ゲーム一覧を再取得
-        const games = await window.api.database.listGames(debouncedSearchWord, filter, sort)
-        setVisibleGames(games)
-        setIsModalOpen(false)
-
-        return createResult
-      },
-      {
-        loadingMessage: "ゲームを追加しています...",
-        successMessage: "ゲームを追加しました",
-        showToast: true
-      }
-    )
-
-    return result || { success: false, message: "ゲームの追加に失敗しました" }
-  }
+  const handleAddGame = createGameAndRefreshList
 
   const handleLaunchGame = useCallback(
     async (exePath: string) => {
@@ -85,9 +71,9 @@ export default function Home(): React.ReactElement {
           return result
         },
         {
-          loadingMessage: "ゲームを起動しています...",
-          successMessage: "ゲームが起動しました",
-          errorMessage: "ゲームの起動に失敗しました",
+          loadingMessage: MESSAGES.GAME.LAUNCHING,
+          successMessage: MESSAGES.GAME.LAUNCHED,
+          errorMessage: MESSAGES.GAME.LAUNCH_FAILED,
           showToast: true
         }
       )
@@ -114,7 +100,7 @@ export default function Home(): React.ReactElement {
           <span className="text-sm leading-tight">ソート順 :</span>
           <select
             value={sort}
-            onChange={(e) => setSort(e.target.value as SortName)}
+            onChange={(e) => setSort(e.target.value as SortOption)}
             className="select select-bordered text-sm w-40 h-9"
           >
             <option value="title">タイトル順</option>
@@ -125,7 +111,7 @@ export default function Home(): React.ReactElement {
           <span className="text-sm leading-tight">プレイ状況 :</span>
           <select
             value={filter}
-            onChange={(e) => setFilter(e.target.value as FilterName)}
+            onChange={(e) => setFilter(e.target.value as FilterOption)}
             className="select select-bordered text-sm w-30 h-9"
           >
             <option value="all">すべて</option>

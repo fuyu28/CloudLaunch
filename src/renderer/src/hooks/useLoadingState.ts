@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react"
-import toast from "react-hot-toast"
+import { useToastHandler, executeWithToast, type ToastOptions } from "./useToastHandler"
 
 export interface LoadingState {
   isLoading: boolean
@@ -12,20 +12,13 @@ export function useLoadingState(initialLoading = false): {
   setLoading: (loading: boolean) => void
   setError: (error: string | null) => void
   reset: () => void
-  executeWithLoading: <T>(
-    asyncFn: () => Promise<T>,
-    options?: {
-      loadingMessage?: string
-      successMessage?: string
-      errorMessage?: string
-      showToast?: boolean
-    }
-  ) => Promise<T | null>
+  executeWithLoading: <T>(asyncFn: () => Promise<T>, options?: ToastOptions) => Promise<T | null>
 } {
   const [state, setState] = useState<LoadingState>({
     isLoading: initialLoading,
     error: null
   })
+  const toastHandler = useToastHandler()
 
   const setLoading = useCallback((loading: boolean) => {
     setState((prev) => ({ ...prev, isLoading: loading }))
@@ -40,61 +33,22 @@ export function useLoadingState(initialLoading = false): {
   }, [])
 
   const executeWithLoading = useCallback(
-    async <T>(
-      asyncFn: () => Promise<T>,
-      options?: {
-        loadingMessage?: string
-        successMessage?: string
-        errorMessage?: string
-        showToast?: boolean
-      }
-    ): Promise<T | null> => {
-      const { loadingMessage, successMessage, errorMessage, showToast = true } = options || {}
-
-      let toastId: string | undefined
-
+    async <T>(asyncFn: () => Promise<T>, options?: ToastOptions): Promise<T | null> => {
       try {
         setLoading(true)
         setError(null)
 
-        if (showToast && loadingMessage) {
-          toastId = toast.loading(loadingMessage)
-        }
-
-        const result = await asyncFn()
-
-        if (showToast) {
-          if (successMessage) {
-            if (toastId) {
-              toast.success(successMessage, { id: toastId })
-            } else {
-              toast.success(successMessage)
-            }
-          } else if (toastId) {
-            toast.dismiss(toastId)
-          }
-        }
-
+        const result = await executeWithToast(asyncFn, options || {}, toastHandler)
         return result
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error)
         setError(errorMsg)
-
-        if (showToast) {
-          const displayMessage = errorMessage || errorMsg
-          if (toastId) {
-            toast.error(displayMessage, { id: toastId })
-          } else {
-            toast.error(displayMessage)
-          }
-        }
-
         return null
       } finally {
         setLoading(false)
       }
     },
-    [setLoading, setError]
+    [setLoading, setError, toastHandler]
   )
 
   return {

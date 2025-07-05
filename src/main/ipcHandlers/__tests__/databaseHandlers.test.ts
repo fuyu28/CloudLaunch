@@ -39,7 +39,7 @@ jest.mock("electron", () => ({
 
 import { ipcMain } from "electron"
 import { registerDatabaseHandlers } from "../databaseHandlers"
-import type { FilterName, SortName } from "../../../types/menu"
+import type { FilterOption, SortOption } from "../../../types/menu"
 
 describe("databaseHandlers", () => {
   // モックされたIPC handlers
@@ -86,8 +86,8 @@ describe("databaseHandlers", () => {
       const result = await mockHandlers["list-games"](
         {},
         "", // searchWord
-        "all" as FilterName,
-        "title" as SortName
+        "all" as FilterOption,
+        "title" as SortOption
       )
 
       expect(mockPrisma.game.findMany).toHaveBeenCalledWith({
@@ -105,8 +105,8 @@ describe("databaseHandlers", () => {
       const result = await mockHandlers["list-games"](
         {},
         "テストゲーム1",
-        "all" as FilterName,
-        "title" as SortName
+        "all" as FilterOption,
+        "title" as SortOption
       )
 
       expect(mockPrisma.game.findMany).toHaveBeenCalledWith({
@@ -129,7 +129,7 @@ describe("databaseHandlers", () => {
     it("プレイステータスでフィルタできる", async () => {
       mockPrisma.game.findMany.mockResolvedValue([mockGames[0]])
 
-      await mockHandlers["list-games"]({}, "", "unplayed" as FilterName, "title" as SortName)
+      await mockHandlers["list-games"]({}, "", "unplayed" as FilterOption, "title" as SortOption)
 
       expect(mockPrisma.game.findMany).toHaveBeenCalledWith({
         where: {
@@ -142,7 +142,12 @@ describe("databaseHandlers", () => {
     it("最近プレイした順でソートできる", async () => {
       mockPrisma.game.findMany.mockResolvedValue(mockGames)
 
-      await mockHandlers["list-games"]({}, "", "all" as FilterName, "recentlyPlayed" as SortName)
+      await mockHandlers["list-games"](
+        {},
+        "",
+        "all" as FilterOption,
+        "recentlyPlayed" as SortOption
+      )
 
       expect(mockPrisma.game.findMany).toHaveBeenCalledWith({
         where: {
@@ -159,8 +164,8 @@ describe("databaseHandlers", () => {
       const result = await mockHandlers["list-games"](
         {},
         "",
-        "all" as FilterName,
-        "title" as SortName
+        "all" as FilterOption,
+        "title" as SortOption
       )
 
       expect(result).toEqual([])

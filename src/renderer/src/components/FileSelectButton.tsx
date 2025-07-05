@@ -23,6 +23,7 @@
  */
 
 import React from "react"
+import { MESSAGES } from "../../../constants"
 
 /**
  * ファイル選択ボタンコンポーネントのprops
@@ -65,16 +66,19 @@ export function FileSelectButton({
   placeholder = "",
   name,
   required = false,
-  browseButtonText = "参照"
+  browseButtonText = MESSAGES.UI.BROWSE
 }: FileSelectButtonProps): React.JSX.Element {
+  const inputId = name || label.replace(/\s+/g, "-").toLowerCase()
+
   return (
     <div>
-      <label className="label">
+      <label className="label" htmlFor={inputId}>
         <span className="label-text">{label}</span>
       </label>
       <div className="flex">
         <input
           type="text"
+          id={inputId}
           name={name}
           value={value}
           onChange={onChange}

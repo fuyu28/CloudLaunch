@@ -18,18 +18,38 @@
 
 ```
 src/
+├── constants/         # 定数管理（NEW）
+│   ├── messages.ts    # UI・エラーメッセージ統一管理
+│   ├── config.ts      # 設定値・デフォルト値の定数化
+│   ├── patterns.ts    # 正規表現パターンの共通化
+│   └── index.ts       # 統一エクスポート
+├── utils/             # 共通ユーティリティ（NEW）
+│   ├── stringUtils.ts # 文字列操作・サニタイズ関数
+│   ├── validationUtils.ts # バリデーション関数の統一
+│   ├── pathUtils.ts   # パス操作・ファイル処理関数
+│   └── index.ts       # 統一エクスポート
+├── types/             # 共有型定義（EXPANDED）
+│   ├── validation.ts  # バリデーション関連型の統一
+│   ├── path.ts        # パス関連型の整理
+│   ├── common.ts      # 共通型のエクスポート
+│   ├── result.ts      # API結果型
+│   ├── error.ts       # エラー型
+│   └── ...
 ├── main/              # Electron メインプロセス
 │   ├── ipcHandlers/   # IPC通信ハンドラー
 │   ├── service/       # ビジネスロジックサービス
 │   └── utils/         # ユーティリティ関数
 ├── preload/           # セキュリティブリッジ
 │   └── api/           # レンダラー向けAPI定義
-├── renderer/          # React フロントエンド
-│   ├── components/    # 再利用可能コンポーネント
-│   ├── pages/         # ページコンポーネント
-│   ├── state/         # Jotai 状態管理
-│   └── utils/         # フロントエンドユーティリティ
-└── types/             # 共有型定義
+└── renderer/          # React フロントエンド
+    ├── components/    # 再利用可能コンポーネント
+    ├── pages/         # ページコンポーネント
+    ├── state/         # Jotai 状態管理
+    ├── hooks/         # カスタムフック（EXPANDED）
+    │   ├── useGameActions.ts  # ゲーム操作ロジック
+    │   ├── useToastHandler.ts # トースト処理
+    │   └── ...
+    └── utils/         # フロントエンドユーティリティ
 ```
 
 ### ファイル命名規約
@@ -98,9 +118,10 @@ export async function validatePathWithType(
 
 ### 型安全性
 
-- `any` の使用は最小限に抑制
+- `any` の使用は極力避ける（必要な場合は `// eslint-disable-next-line` で一時的に許可）
 - 外部API応答には適切な型ガードを実装
 - union型を活用して状態を型安全に管理
+- 共通型定義は `src/types/` ディレクトリを活用
 
 ```typescript
 // Good
@@ -112,21 +133,64 @@ type ApiResult<T = void> =
 function handleResponse(response: any) { ... }
 ```
 
+### 定数・メッセージの管理
+
+- ハードコーディングされた文字列・数値は `src/constants/` の定数を使用
+- マジック文字列・数値の撲滅
+
+```typescript
+// Good
+import { MESSAGES, CONFIG } from "../constants"
+toast.loading(MESSAGES.GAME.ADDING)
+setTimeout(callback, CONFIG.TIMING.SEARCH_DEBOUNCE_MS)
+
+// Bad
+toast.loading("ゲームを追加しています...")
+setTimeout(callback, 300)
+```
+
+### ユーティリティ関数の活用
+
+- 共通的な処理は `src/utils/` のユーティリティ関数を使用
+- 重複コードの削除
+
+```typescript
+// Good
+import { sanitizeGameTitle, validateRequired } from "../utils"
+const sanitized = sanitizeGameTitle(gameTitle)
+const validation = validateRequired(title, "タイトル")
+
+// Bad
+const sanitized = gameTitle.replace(/[<>:"/\\|?*]/g, "_")
+if (!title || title.trim() === "") {
+  return "タイトルは必須です"
+}
+```
+
 ### エラーハンドリング
 
 - エラー変数名は `error` に統一（`err` ではなく）
 - 具体的なエラー型を使用
-- ユーザーフレンドリーなエラーメッセージを提供
+- `src/utils/errorHandler.ts` の統一エラーハンドラーを活用
+- エラーメッセージは `MESSAGES` 定数を使用
 
 ```typescript
+import { MESSAGES } from "../constants"
+import { handleApiError } from "../utils/errorHandler"
+
 try {
   // 処理
+  const result = await window.api.database.createGame(data)
+  if (!result.success) {
+    handleApiError(result, MESSAGES.GAME.ADD_FAILED)
+    return
+  }
 } catch (error) {
   console.error(error)
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
     // Prisma固有のエラー処理
   }
-  return { success: false, message: "ユーザー向けメッセージ" }
+  return { success: false, message: MESSAGES.GAME.ADD_FAILED }
 }
 ```
 
@@ -140,31 +204,49 @@ try {
  */
 
 import React, { useState, useEffect } from "react"
+import { MESSAGES } from '../constants'  // 定数の活用
+import { useGameActions, useToastHandler } from '../hooks'  // カスタムフックの活用
 
 type ComponentProps = {
   // props定義
 }
 
 export default function ComponentName({ props }: ComponentProps) {
-  // 1. State
+  // 1. Custom Hooks（カスタムフックを優先使用）
+  const gameActions = useGameActions()
+  const toastHandler = useToastHandler()
+
+  // 2. State
   const [state, setState] = useState()
 
-  // 2. Effects
+  // 3. Effects
   useEffect(() => {
     // 副作用
   }, [])
 
-  // 3. Event handlers
+  // 4. Event handlers
   const handleEvent = () => {
     // ハンドラー
   }
 
-  // 4. Render
+  // 5. Render
   return (
     // JSX
   )
 }
 ```
+
+### カスタムフック活用規約
+
+- **複雑なロジック**は専用カスタムフックに分離
+- **責務の明確化**：1つのフックは1つの責務
+- **再利用性**：複数コンポーネントで使用される処理はフック化
+
+#### 推奨カスタムフック
+
+- `useGameActions`: ゲーム操作ロジック
+- `useToastHandler`: トースト処理
+- `useLoadingState`: ローディング状態管理
 
 ### Hooks 使用規約
 
@@ -172,6 +254,12 @@ export default function ComponentName({ props }: ComponentProps) {
 - `useEffect`: 副作用（API呼び出し、イベントリスナー）
 - `useCallback`: 関数のメモ化（依存配列を適切に設定）
 - `useMemo`: 値のメモ化（重い計算の最適化）
+
+### 責務分離原則
+
+- **単一責任**：コンポーネントは1つの責務のみ
+- **50行制限**：コンポーネント本体は50行以下を目標
+- **カスタムフック分離**：複雑な処理は専用フックに移動
 
 ## エラーハンドリング規約
 
@@ -183,17 +271,25 @@ type ApiResult<T = void> = { success: true; data: T } | { success: false; messag
 
 ### エラーメッセージ
 
+- **必ず `MESSAGES` 定数を使用**
 - 日本語で記述
 - ユーザーが理解できる内容
 - 可能な場合は解決方法を含める
 
 ```typescript
 // Good
-"認証情報が見つかりません。設定画面で認証情報を設定してください。"
+import { MESSAGES } from "../constants"
+return { success: false, message: MESSAGES.AUTH.CREDENTIAL_NOT_FOUND }
 
 // Bad
-"Credential not found"
+return { success: false, message: "認証情報が見つかりません" }
 ```
+
+### メッセージ定数の管理
+
+- 新しいメッセージは `src/constants/messages.ts` に追加
+- カテゴリ別に整理（GAME, AUTH, SAVE_DATA, etc.）
+- 一貫性のあるトーン・敬語レベルを維持
 
 ## IPC通信規約
 
@@ -241,6 +337,8 @@ export function registerHandlers(): void {
 
 ## コードレビューチェックリスト
 
+### 基本チェック
+
 - [ ] ファイルレベルコメントが記述されている
 - [ ] 複雑な関数にJSDocコメントがある
 - [ ] 適切なエラーハンドリングが実装されている
@@ -248,6 +346,22 @@ export function registerHandlers(): void {
 - [ ] 命名規約に従っている
 - [ ] 型安全性が保たれている
 - [ ] テスト可能な構造になっている
+
+### リファクタリング成果活用チェック
+
+- [ ] **定数使用**: ハードコーディングされた文字列・数値が `src/constants/` の定数に置き換えられている
+- [ ] **ユーティリティ活用**: 重複する処理が `src/utils/` のユーティリティ関数を使用している
+- [ ] **型定義統一**: 適切な型が `src/types/` から使用されている
+- [ ] **責務分離**: コンポーネントが50行以下で単一責任を守っている
+- [ ] **カスタムフック**: 複雑なロジックが専用フックに分離されている
+- [ ] **エラーハンドリング**: 統一されたエラーハンドラーとメッセージ定数を使用している
+
+### 品質保証チェック
+
+- [ ] `npm run typecheck` でエラーなし
+- [ ] `npm run lint` で警告なし
+- [ ] `npm run format` で整形済み
+- [ ] `npm run test` で関連テストが通過
 
 ## 推奨ツール・設定
 

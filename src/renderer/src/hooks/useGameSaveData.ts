@@ -23,6 +23,7 @@
 
 import { useState, useCallback } from "react"
 import { handleApiError, withLoadingToast } from "@renderer/utils/errorHandler"
+import { createRemotePath } from "../../../utils"
 import type { Game } from "../../../types/game"
 
 /**
@@ -122,23 +123,6 @@ export function useGameSaveData(): GameSaveDataResult {
     isUploading,
     isDownloading
   }
-}
-
-/**
- * ゲームタイトルからリモートパスを生成する
- *
- * @param gameTitle ゲームタイトル
- * @returns リモートパス
- */
-function createRemotePath(gameTitle: string): string {
-  // ファイルシステムで問題となる文字をサニタイズ
-  const sanitizedTitle = gameTitle
-    .replace(/[<>:"/\\|?*]/g, "_") // 特殊文字を置換
-    .replace(/\s+/g, "_") // 連続スペースをアンダースコアに
-    .replace(/_{2,}/g, "_") // 連続アンダースコアを単一に
-    .trim()
-
-  return `games/${sanitizedTitle}/save_data`
 }
 
 export default useGameSaveData

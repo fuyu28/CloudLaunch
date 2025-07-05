@@ -8,6 +8,8 @@
  * - ファイル選択ロジックの再利用
  */
 
+/// <reference types="../../../preload/index.d.ts" />
+
 import { useState, useCallback } from "react"
 import { handleApiError } from "../utils/errorHandler"
 
@@ -38,7 +40,9 @@ export function useFileSelection(): {
           handleApiError(
             {
               success: false,
-              message: result.success ? "ファイルが選択されませんでした" : result.message
+              message: result.success
+                ? "ファイルが選択されませんでした"
+                : (result as { success: false; message: string }).message
             },
             "ファイルの選択に失敗しました"
           )
@@ -60,7 +64,9 @@ export function useFileSelection(): {
         handleApiError(
           {
             success: false,
-            message: result.success ? "フォルダが選択されませんでした" : result.message
+            message: result.success
+              ? "フォルダが選択されませんでした"
+              : (result as { success: false; message: string }).message
           },
           "フォルダの選択に失敗しました"
         )

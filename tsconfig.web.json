@@ -7,7 +7,9 @@
     "src/preload/*.d.ts",
     "src/preload/index.d.ts",
     "src/preload/preload.d.ts",
-    "src/types/**/*"
+    "src/types/**/*",
+    "src/utils/**/*",
+    "src/constants/**/*"
   ],
   "compilerOptions": {
     "composite": true,

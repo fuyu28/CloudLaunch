@@ -20,12 +20,17 @@ import type { ApiResult } from "../../../../types/result"
 import { toast } from "react-hot-toast"
 
 // React Hot Toastのモック
-jest.mock("react-hot-toast", () => ({
-  toast: {
+jest.mock("react-hot-toast", () => {
+  const mockToast = {
     error: jest.fn(),
-    success: jest.fn()
+    success: jest.fn(),
+    loading: jest.fn()
   }
-}))
+  return {
+    toast: mockToast,
+    default: mockToast
+  }
+})
 
 describe("GameModal", () => {
   const mockOnClose = jest.fn()
@@ -91,7 +96,7 @@ describe("GameModal", () => {
     it("閉じるボタンがクリックされたらonCloseが呼ばれる", async () => {
       render(<GameModal {...defaultProps} />)
 
-      const closeButton = screen.getByRole("button", { name: /close/i })
+      const closeButton = screen.getByRole("button", { name: "モーダルを閉じる" })
       await user.click(closeButton)
 
       expect(mockOnClose).toHaveBeenCalledTimes(1)

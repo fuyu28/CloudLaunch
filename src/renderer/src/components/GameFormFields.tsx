@@ -64,11 +64,12 @@ export function GameFormFields({
     <div className="space-y-4">
       {/* タイトル */}
       <div>
-        <label className="label">
+        <label className="label" htmlFor="title">
           <span className="label-text">タイトル</span>
         </label>
         <input
           type="text"
+          id="title"
           name="title"
           value={gameData.title}
           onChange={onChange}
@@ -80,11 +81,12 @@ export function GameFormFields({
 
       {/* ブランド */}
       <div>
-        <label className="label">
+        <label className="label" htmlFor="publisher">
           <span className="label-text">ブランド</span>
         </label>
         <input
           type="text"
+          id="publisher"
           name="publisher"
           value={gameData.publisher}
           onChange={onChange}

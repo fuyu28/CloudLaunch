@@ -122,7 +122,7 @@ export default function GameFormModal({
   }
 
   const footer = (
-    <div className="justify-end">
+    <div className="flex justify-end space-x-2">
       <button type="button" className="btn" onClick={handleCancel} disabled={submitting}>
         キャンセル
       </button>

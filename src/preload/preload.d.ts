@@ -1,7 +1,7 @@
 import { Game } from "@prisma/client"
 import type { Creds } from "../types/creds"
 import { AwsSdkError } from "../types/error"
-import { FilterName, SortName } from "../types/menu"
+import { FilterOption, SortOption } from "../types/menu"
 import { InputGameData } from "../types/game"
 import { ApiResult } from "../types/result"
 import { ValidatePathResult } from "../types/file"
@@ -37,7 +37,7 @@ export interface CredentialAPI {
 }
 
 export interface DatabaseAPI {
-  listGames(searchWord: string, filter: FilterName, sort: SortName): Promise<Game[]>
+  listGames(searchWord: string, filter: FilterOption, sort: SortOption): Promise<Game[]>
   getGameById(id: string): Promise<Game | null>
   createGame(game: InputGameData): Promise<ApiResult<void>>
   updateGame(id: string, game: InputGameData): Promise<ApiResult<void>>

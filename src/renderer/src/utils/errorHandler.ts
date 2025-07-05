@@ -17,12 +17,19 @@ import type { ApiResult } from "../../../types/result"
  * @param fallbackMessage - result.messageが空の場合のフォールバックメッセージ
  * @param toastId - 既存のトーストIDを指定する場合（ローディング表示の更新など）
  */
-export function handleApiError(
-  result: ApiResult,
+export function handleApiError<T = void>(
+  result: ApiResult<T>,
   fallbackMessage: string = "エラーが発生しました",
   toastId?: string
 ): void {
-  const message = result.success ? fallbackMessage : result.message || fallbackMessage
+  let message: string
+
+  if (result.success) {
+    message = fallbackMessage
+  } else {
+    // result.success === false の場合、result.message が存在する
+    message = (result as { success: false; message: string }).message || fallbackMessage
+  }
 
   if (toastId) {
     toast.error(message, { id: toastId })
@@ -83,7 +90,7 @@ export async function withLoadingToast<T>(
     if (result.success) {
       showSuccessToast(successMessage, loadingToastId)
     } else {
-      handleApiError(result, undefined, loadingToastId)
+      handleApiError(result, "エラーが発生しました", loadingToastId)
     }
 
     return result
