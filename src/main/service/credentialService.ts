@@ -1,20 +1,43 @@
+/**
+ * @fileoverview クラウドストレージ認証情報管理サービス
+ *
+ * このサービスは、R2/S3クラウドストレージへの接続に必要な認証情報を安全に管理します。
+ * - セキュアキーチェーン（keytar）: secretAccessKeyの暗号化保存
+ * - electron-store: その他の設定情報（endpoint, region, bucketName等）の保存
+ *
+ * セキュリティ考慮事項：
+ * - 秘密鍵はOSのキーチェーンに保存され、平文でディスクに書き込まれません
+ * - アクセスキーIDなどの機密性の低い情報のみelectron-storeに保存
+ * - 認証情報取得時の詳細なエラーハンドリング（権限エラー、キーチェーン不存在など）
+ */
+
 import Store from "electron-store"
-import type { Schema, Creds } from "../../types/creds"
+import type { Creds } from "../../types/creds"
 import { ApiResult } from "../../types/result"
+import keytar from "keytar"
+import { logger } from "../utils/logger"
+import { MESSAGES } from "../../constants/messages"
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const keytar = require("keytar")
+interface StoreSchema {
+  bucketName: string
+  region: string
+  endpoint: string
+  accessKeyId: string
+}
 
-const store = new Store<Schema>({
+const store = new Store<StoreSchema>({
   defaults: {
     bucketName: "",
     region: "auto",
     endpoint: "",
     accessKeyId: ""
   }
-})
+}) as Store<StoreSchema> & {
+  set<K extends keyof StoreSchema>(key: K, value: StoreSchema[K]): void
+  get<K extends keyof StoreSchema>(key: K): StoreSchema[K]
+}
 
-const SERVICE = "StorageDeck"
+const SERVICE = "CloudLaunch"
 
 export async function setCredential(creds: Creds): Promise<ApiResult> {
   try {
@@ -22,30 +45,72 @@ export async function setCredential(creds: Creds): Promise<ApiResult> {
     store.set("region", creds.region)
     store.set("endpoint", creds.endpoint)
     store.set("accessKeyId", creds.accessKeyId)
+  } catch (error) {
+    logger.error(MESSAGES.CREDENTIAL_SERVICE.SET_FAILED(String(error)))
+    return { success: false, message: MESSAGES.CREDENTIAL_SERVICE.SET_FAILED(String(error)) }
+  }
+  try {
     await keytar.setPassword(SERVICE, "secretAccessKey", creds.secretAccessKey)
     return { success: true }
-  } catch (err) {
-    console.error(err)
-    return { success: false, message: `認証情報の設定に失敗しました: ${err}` }
+  } catch (error) {
+    logger.error(MESSAGES.CREDENTIAL_SERVICE.SET_FAILED(String(error)))
+    return { success: false, message: MESSAGES.CREDENTIAL_SERVICE.SET_FAILED(String(error)) }
   }
 }
 
-export async function getCredential(): Promise<Creds | null> {
+export async function getCredential(): Promise<ApiResult<Creds>> {
   try {
-    const secret = await keytar.getPassword(SERVICE, "secretAccessKey")
-    if (secret !== null) {
+    // keytarからsecretAccessKeyを取得
+    const secretAccessKey = await keytar.getPassword(SERVICE, "secretAccessKey")
+
+    // electron-storeから他の認証情報を取得
+    const bucketName = store.get("bucketName")
+    const region = store.get("region")
+    const endpoint = store.get("endpoint")
+    const accessKeyId = store.get("accessKeyId")
+
+    // 必要な認証情報が不足していないかチェック
+    if (!bucketName || !region || !endpoint || !accessKeyId || !secretAccessKey) {
       return {
-        bucketName: store.get("bucketName"),
-        region: store.get("region"),
-        endpoint: store.get("endpoint"),
-        accessKeyId: store.get("accessKeyId"),
-        secretAccessKey: secret
+        success: false,
+        message: MESSAGES.AUTH.CREDENTIAL_NOT_FOUND
       }
-    } else {
-      return null
+    }
+
+    return {
+      success: true,
+      data: {
+        bucketName,
+        region,
+        endpoint,
+        accessKeyId,
+        secretAccessKey
+      }
     }
   } catch (err) {
-    console.error("Failed to get credential from store:", err)
-    return null
+    logger.error(MESSAGES.CREDENTIAL_SERVICE.GET_FAILED, err)
+
+    // keytarのエラーに関する詳細なメッセージを提供
+    let errorMessage: string = MESSAGES.CREDENTIAL_SERVICE.GET_FAILED
+
+    if (err instanceof Error) {
+      // keytarの一般的なエラーパターンをチェック
+      if (err.message.includes("The specified item could not be found")) {
+        errorMessage = MESSAGES.CREDENTIAL_SERVICE.GET_FAILED
+      } else if (err.message.includes("Access denied")) {
+        errorMessage = MESSAGES.CREDENTIAL_SERVICE.GET_FAILED
+      } else if (err.message.includes("The keychain does not exist")) {
+        errorMessage = MESSAGES.CREDENTIAL_SERVICE.KEYCHAIN_NOT_FOUND
+      } else {
+        errorMessage = MESSAGES.CREDENTIAL_SERVICE.GET_ERROR(err.message)
+      }
+    } else if (typeof err === "string") {
+      errorMessage = MESSAGES.CREDENTIAL_SERVICE.GET_ERROR(String(err))
+    }
+
+    return {
+      success: false,
+      message: errorMessage
+    }
   }
 }

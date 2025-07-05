@@ -20,7 +20,7 @@ enum PlayStatus {
 }
 
 model Game {
-  id             Int           @id @default(autoincrement())
+  id             String        @id @default(uuid())
   title          String
   publisher      String
   imagePath      String?
@@ -31,12 +31,25 @@ model Game {
   totalPlayTime  Int           @default(0)
   lastPlayed     DateTime?
   sessions       PlaySession[]
+  uploads        Upload[]
 }
 
 model PlaySession {
-  id       Int      @id @default(autoincrement())
-  gameId   Int
+  id       String   @id @default(uuid())
   game     Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  gameId   String
   playedAt DateTime @default(now())
   duration Int
+  upload   Upload?  @relation(fields: [uploadId], references: [id])
+  uploadId String?
+}
+
+model Upload {
+  id           String        @id @default(uuid())
+  clientId     String?
+  comment      String
+  createdAt    DateTime      @default(now())
+  game         Game          @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  gameId       String
+  playSessions PlaySession[]
 }

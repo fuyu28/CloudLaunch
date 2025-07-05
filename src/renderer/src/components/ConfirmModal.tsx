@@ -1,4 +1,5 @@
 import React from "react"
+import { BaseModal } from "./BaseModal"
 
 type ConfirmModalProps = {
   id: string
@@ -21,23 +22,28 @@ export default function ConfirmModal({
   onConfirm,
   onCancel
 }: ConfirmModalProps): React.JSX.Element {
+  const footer = (
+    <div className="justify-end">
+      <button className="btn btn-outline" onClick={onCancel}>
+        {cancelText}
+      </button>
+      <button className="btn btn-primary" onClick={onConfirm}>
+        {confirmText}
+      </button>
+    </div>
+  )
+
   return (
-    <>
-      <input type="checkbox" id={id} className="modal-toggle" checked={isOpen} readOnly />
-      <div className="modal cursor-pointer">
-        <div className="modal-box relative max-w-lg" onClick={(e) => e.stopPropagation()}>
-          <h3 className="text-xl font-bold mb-4">{title}</h3>
-          <p className="mb-6 whitespace-pre-line">{message}</p>
-          <div className="modal-action justify-end">
-            <label htmlFor={id} className="btn btn-outline" onClick={onCancel}>
-              {cancelText}
-            </label>
-            <label htmlFor={id} className="btn btn-primary" onClick={onConfirm}>
-              {confirmText}
-            </label>
-          </div>
-        </div>
-      </div>
-    </>
+    <BaseModal
+      id={id}
+      isOpen={isOpen}
+      title={title}
+      onClose={onCancel}
+      size="lg"
+      showCloseButton={false}
+      footer={footer}
+    >
+      <p className="mb-6 whitespace-pre-line">{message}</p>
+    </BaseModal>
   )
 }

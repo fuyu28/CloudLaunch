@@ -1,10 +1,16 @@
 {
   "extends": "@electron-toolkit/tsconfig/tsconfig.node.json",
-  "include": ["electron.vite.config.*", "src/main/**/*", "src/preload/**/*", "src/types/**/*"],
+  "include": [
+    "electron.vite.config.*",
+    "src/main/**/*",
+    "src/preload/**/*",
+    "src/types/**/*",
+    "src/constants/**/*"
+  ],
   "compilerOptions": {
     "moduleResolution": "bundler",
     "module": "esnext",
     "composite": true,
-    "types": ["electron-vite/node"]
+    "types": ["electron-vite/node", "jest", "@types/jest"]
   }
 }

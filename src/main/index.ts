@@ -3,6 +3,7 @@ import { join } from "path"
 import { electronApp, optimizer, is } from "@electron-toolkit/utils"
 import icon from "../../resources/icon.png?asset"
 import { registerAllHandlers } from "./registerHandlers"
+import { logger } from "./utils/logger"
 
 function createWindow(): void {
   // Create the browser window.
@@ -54,7 +55,7 @@ app.whenReady().then(() => {
   registerAllHandlers()
 
   // IPC test
-  ipcMain.on("ping", () => console.log("pong"))
+  ipcMain.on("ping", () => logger.debug("pong"))
 
   createWindow()
 

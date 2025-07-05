@@ -1,7 +1,7 @@
 import { Game } from "@prisma/client"
 import type { Creds } from "../types/creds"
 import { AwsSdkError } from "../types/error"
-import { FilterName, SortName } from "../types/menu"
+import { FilterOption, SortOption } from "../types/menu"
 import { InputGameData } from "../types/game"
 import { ApiResult } from "../types/result"
 import { ValidatePathResult } from "../types/file"
@@ -19,7 +19,7 @@ export interface SaveDataUploadAPI {
   ): Promise<ApiResult<void>>
 }
 
-export interface saveDataFolderAPI {
+export interface SaveDataFolderAPI {
   listRemoteSaveDataFolders(): Promise<string[] | null>
 }
 
@@ -32,17 +32,17 @@ export interface SaveDataDownloadAPI {
 
 export interface CredentialAPI {
   upsertCredential(creds: Creds): Promise<ApiResult<void>>
-  getCredential(): Promise<Creds | null>
+  getCredential(): Promise<ApiResult<Creds>>
   validateCredential(creds: Creds): Promise<ApiResult<void> & { err?: AwsSdkError }>
 }
 
 export interface DatabaseAPI {
-  listGames(searchWord: string, filter: FilterName, sort: SortName): Promise<Game[]>
-  getGameById(id: number): Promise<Game | null>
+  listGames(searchWord: string, filter: FilterOption, sort: SortOption): Promise<Game[]>
+  getGameById(id: string): Promise<Game | null>
   createGame(game: InputGameData): Promise<ApiResult<void>>
-  updateGame(id: number, game: InputGameData): Promise<ApiResult<void>>
-  deleteGame(id: number): Promise<ApiResult<void>>
-  createSession(duration: number, gameId: number): Promise<ApiResult<void>>
+  updateGame(id: string, game: InputGameData): Promise<ApiResult<void>>
+  deleteGame(id: string): Promise<ApiResult<void>>
+  createSession(duration: number, gameId: string): Promise<ApiResult<void>>
 }
 
 export interface LoadImageAPI {

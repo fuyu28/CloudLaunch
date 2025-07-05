@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useCallback } from "react"
-import toast from "react-hot-toast"
 import { useAtom } from "jotai"
 import { CiSearch } from "react-icons/ci"
 import { IoIosAdd } from "react-icons/io"
@@ -7,9 +6,11 @@ import GameCard from "@renderer/components/GameCard"
 import GameFormModal from "@renderer/components/GameModal"
 import FloatingButton from "@renderer/components/FloatingButton"
 import { searchWordAtom, filterAtom, sortAtom, visibleGamesAtom } from "../state/home"
-import type { InputGameData } from "src/types/game"
-import type { ApiResult } from "src/types/result"
-import type { SortName, FilterName } from "src/types/menu"
+import { useDebounce } from "../hooks/useDebounce"
+import { useLoadingState } from "../hooks/useLoadingState"
+import { useGameActions } from "../hooks/useGameActions"
+import { CONFIG, MESSAGES } from "../../../constants"
+import type { SortOption, FilterOption } from "src/types/menu"
 
 export default function Home(): React.ReactElement {
   const [searchWord, setSearchWord] = useAtom(searchWordAtom)
@@ -18,54 +19,67 @@ export default function Home(): React.ReactElement {
   const [visibleGames, setVisibleGames] = useAtom(visibleGamesAtom)
   const [isModalOpen, setIsModalOpen] = useState(false)
 
+  // 検索語をデバウンス
+  const debouncedSearchWord = useDebounce(searchWord, CONFIG.TIMING.SEARCH_DEBOUNCE_MS)
+
+  // ローディング状態管理
+  const gameListLoading = useLoadingState()
+  const gameActionLoading = useLoadingState()
+
+  // ゲーム操作フック
+  const { createGameAndRefreshList } = useGameActions({
+    searchWord: debouncedSearchWord,
+    filter,
+    sort,
+    onGamesUpdate: setVisibleGames,
+    onModalClose: () => setIsModalOpen(false)
+  })
+
   useEffect(() => {
     let cancelled = false
-    async function fetchGames(): Promise<void> {
-      try {
-        const games = await window.api.database.listGames(searchWord, filter, sort)
-        if (!cancelled) {
-          setVisibleGames(games)
+
+    const fetchGames = async (): Promise<void> => {
+      const games = await gameListLoading.executeWithLoading(
+        () => window.api.database.listGames(debouncedSearchWord, filter, sort),
+        {
+          errorMessage: MESSAGES.GAME.LIST_FETCH_FAILED,
+          showToast: true
         }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (e: any) {
-        if (!cancelled) {
-          toast.error(e.message ?? "ゲーム一覧の取得に失敗しました")
-        }
+      )
+
+      if (!cancelled && games) {
+        setVisibleGames(games)
       }
     }
+
     fetchGames()
     return () => {
       cancelled = true
     } // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchWord, filter, sort])
+  }, [debouncedSearchWord, filter, sort])
 
-  const handleAddGame = async (values: InputGameData): Promise<ApiResult<void>> => {
-    const result = await window.api.database.createGame(values)
-    if (result.success) {
-      toast.success("ゲームを追加しました。")
-      const games = await window.api.database.listGames(searchWord, filter, sort)
-      setVisibleGames(games)
-      setIsModalOpen(false)
-    } else {
-      toast.error(result.message)
-    }
-    return result
-  }
+  const handleAddGame = createGameAndRefreshList
 
-  const handleLaunchGame = useCallback(async (exePath: string) => {
-    const loadingToastId = toast.loading("ゲームを起動しています…")
-    try {
-      const result = await window.api.game.launchGame(exePath)
-      if (result.success) {
-        toast.success("ゲームが起動しました", { id: loadingToastId })
-      } else {
-        toast.error(result.message, { id: loadingToastId })
-      }
-    } catch (error) {
-      toast.error("ゲームの起動に失敗しました", { id: loadingToastId })
-      console.error("Failed to launch game:", error)
-    }
-  }, [])
+  const handleLaunchGame = useCallback(
+    async (exePath: string) => {
+      await gameActionLoading.executeWithLoading(
+        async () => {
+          const result = await window.api.game.launchGame(exePath)
+          if (!result.success) {
+            throw new Error(result.message)
+          }
+          return result
+        },
+        {
+          loadingMessage: MESSAGES.GAME.LAUNCHING,
+          successMessage: MESSAGES.GAME.LAUNCHED,
+          errorMessage: MESSAGES.GAME.LAUNCH_FAILED,
+          showToast: true
+        }
+      )
+    },
+    [gameActionLoading]
+  )
 
   return (
     <div className="flex flex-col h-full min-h-0 relative">
@@ -86,7 +100,7 @@ export default function Home(): React.ReactElement {
           <span className="text-sm leading-tight">ソート順 :</span>
           <select
             value={sort}
-            onChange={(e) => setSort(e.target.value as SortName)}
+            onChange={(e) => setSort(e.target.value as SortOption)}
             className="select select-bordered text-sm w-40 h-9"
           >
             <option value="title">タイトル順</option>
@@ -97,7 +111,7 @@ export default function Home(): React.ReactElement {
           <span className="text-sm leading-tight">プレイ状況 :</span>
           <select
             value={filter}
-            onChange={(e) => setFilter(e.target.value as FilterName)}
+            onChange={(e) => setFilter(e.target.value as FilterOption)}
             className="select select-bordered text-sm w-30 h-9"
           >
             <option value="all">すべて</option>

@@ -1,19 +1,16 @@
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect } from "react"
 import { useValidateCreds } from "@renderer/hooks/useValidCreds"
 import { useParams, useNavigate, Navigate } from "react-router-dom"
 import { useAtom, useAtomValue } from "jotai"
-import { IoIosPlay } from "react-icons/io"
-import { MdEdit } from "react-icons/md"
-import { FaTrash } from "react-icons/fa"
 import { FaArrowLeftLong } from "react-icons/fa6"
-import toast from "react-hot-toast"
 import { visibleGamesAtom } from "@renderer/state/home"
+import { isValidCredsAtom } from "@renderer/state/credentials"
+import { useGameSaveData } from "@renderer/hooks/useGameSaveData"
+import { useGameEdit } from "@renderer/hooks/useGameEdit"
 import DynamicImage from "@renderer/components/DynamicImage"
 import ConfirmModal from "@renderer/components/ConfirmModal"
 import GameFormModal from "@renderer/components/GameModal"
-import { InputGameData } from "src/types/game"
-import { ApiResult } from "src/types/result"
-import { isValidCredsAtom } from "@renderer/state/credentials"
+import GameActionButtons from "@renderer/components/GameActionButtons"
 
 export default function GameDetail(): React.JSX.Element {
   const { id } = useParams<{ id: string }>()
@@ -22,137 +19,42 @@ export default function GameDetail(): React.JSX.Element {
   const isValidCreds = useAtomValue(isValidCredsAtom)
   const validateCreds = useValidateCreds()
 
+  const game = filteredGames.find((g) => g.id === id)
+
+  // カスタムフック
+  const { uploadSaveData, downloadSaveData, isUploading, isDownloading } = useGameSaveData()
+  const {
+    editData,
+    isEditModalOpen,
+    isDeleteModalOpen,
+    isLaunching,
+    openEdit,
+    closeEdit,
+    openDelete,
+    closeDelete,
+    handleUpdateGame,
+    handleDeleteGame,
+    handleLaunchGame
+  } = useGameEdit(game, navigate, setFilteredGames)
+
   useEffect(() => {
     validateCreds()
   }, [validateCreds])
 
-  const [isLaunching, setIsLaunching] = useState(false)
-  const [isUploading, setIsUploading] = useState(false)
-  const [isDownloading, setIsDownloading] = useState(false)
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-  const [editData, setEditData] = useState<InputGameData | null>(null)
-
-  const game = filteredGames.find((g) => g.id === Number(id))
-
   const handleBack = useCallback(() => navigate(-1), [navigate])
 
-  const closeEditModal = useCallback(() => setIsEditModalOpen(false), [])
-
-  const closeDeleteModal = useCallback(() => setIsDeleteModalOpen(false), [])
-
-  const openEdit = useCallback(() => {
-    if (!game) return
-    const { title, publisher, imagePath, exePath, saveFolderPath, playStatus } = game
-    setEditData({
-      title,
-      publisher,
-      imagePath: imagePath ?? undefined,
-      exePath,
-      saveFolderPath: saveFolderPath ?? undefined,
-      playStatus
-    })
-    setIsEditModalOpen(true)
-  }, [game])
-
-  const confirmDelete = useCallback(async (): Promise<void> => {
-    if (!game) return
-    const result = await window.api.database.deleteGame(game.id)
-    if (result.success) {
-      toast.success("ゲームを削除しました。")
-      setFilteredGames((g) => g.filter((x) => x.id !== game.id))
-      navigate("/", { replace: true })
-    } else {
-      toast.error(result.message)
-    }
-    setIsDeleteModalOpen(false)
-  }, [game, navigate, setFilteredGames])
-
-  const handleLaunch = useCallback(async (): Promise<void> => {
-    if (!game) return
-    setIsLaunching(true)
-    const result = await window.api.game.launchGame(game.exePath)
-    if (result.success) {
-      toast.success("ゲームを起動しました。")
-    } else {
-      toast.error(result.message)
-    }
-    setIsLaunching(false)
-  }, [game])
-
+  // セーブデータ操作のコールバック
   const handleUploadSaveData = useCallback(async (): Promise<void> => {
-    if (!game || !game.saveFolderPath) {
-      toast.error("セーブデータフォルダが設定されていません。")
-      return
+    if (game) {
+      await uploadSaveData(game)
     }
-    setIsUploading(true)
-    const loadingToastId = toast.loading("セーブデータをアップロード中…")
-    try {
-      const remotePath = `games/${game.title}/save_data`
-      const result = await window.api.saveData.upload.uploadSaveDataFolder(
-        game.saveFolderPath,
-        remotePath
-      )
-      if (result.success) {
-        toast.success("セーブデータのアップロードに成功しました。", { id: loadingToastId })
-      } else {
-        toast.error(result.message, { id: loadingToastId })
-      }
-    } catch (error) {
-      toast.error("セーブデータのアップロード中にエラーが発生しました。", { id: loadingToastId })
-      console.error("Failed to upload save data:", error)
-    } finally {
-      setIsUploading(false)
-    }
-  }, [game])
+  }, [game, uploadSaveData])
 
   const handleDownloadSaveData = useCallback(async (): Promise<void> => {
-    if (!game || !game.saveFolderPath) {
-      toast.error("セーブデータフォルダが設定されていません。")
-      return
+    if (game) {
+      await downloadSaveData(game)
     }
-    setIsDownloading(true)
-    const loadingToastId = toast.loading("セーブデータをダウンロード中…")
-    try {
-      const remotePath = `games/${game.title}/save_data`
-      const result = await window.api.saveData.download.downloadSaveData(
-        game.saveFolderPath,
-        remotePath
-      )
-      if (result.success) {
-        toast.success("セーブデータのダウンロードに成功しました。", { id: loadingToastId })
-      } else {
-        toast.error(result.message, { id: loadingToastId })
-      }
-    } catch (error) {
-      toast.error("セーブデータのダウンロード中にエラーが発生しました。", { id: loadingToastId })
-      console.error("Failed to download save data:", error)
-    } finally {
-      setIsDownloading(false)
-    }
-  }, [game])
-
-  const handleUpdateGame = useCallback(
-    async (values: InputGameData): Promise<ApiResult<void>> => {
-      if (!game) return { success: false, message: "ゲームが見つかりません。" }
-      const result = await window.api.database.updateGame(game.id, values)
-      if (result.success) {
-        toast.success("ゲーム情報を更新しました。")
-        setFilteredGames((list) =>
-          list.map((g) =>
-            g.id === game.id
-              ? { ...g, ...values } // 更新後の値をマージ
-              : g
-          )
-        )
-        setIsEditModalOpen(false)
-      } else {
-        toast.error(result.message)
-      }
-      return result
-    },
-    [game, setFilteredGames]
-  )
+  }, [game, downloadSaveData])
 
   if (!id) {
     return <Navigate to="/" replace />
@@ -192,65 +94,18 @@ export default function GameDetail(): React.JSX.Element {
           </div>
 
           {/* ── 下部エリア ── */}
-          <div className="flex flex-col gap-4 mt-8">
-            {/* １行目：実行ボタン */}
-            <button
-              onClick={handleLaunch}
-              disabled={isLaunching}
-              className="btn btn-primary btn-lg w-full h-12 flex items-center justify-center gap-2"
-            >
-              {isLaunching ? (
-                <>
-                  <IoIosPlay className="animate-spin text-2xl" />
-                  <span className="text-lg">起動中…</span>
-                </>
-              ) : (
-                <>
-                  <IoIosPlay size={24} />
-                  <span className="text-lg font-medium">ゲームを起動</span>
-                </>
-              )}
-            </button>
-
-            {/* ２行目：編集／解除 */}
-            <div className="flex gap-2">
-              <button className="btn btn-outline btn-md flex-1 h-10" onClick={openEdit}>
-                <MdEdit /> 編集
-              </button>
-              <button
-                className="btn btn-error btn-md flex-1 h-10"
-                onClick={() => setIsDeleteModalOpen(true)}
-              >
-                <FaTrash /> 登録を解除
-              </button>
-            </div>
-
-            {/* ３行目：アップロード／ダウンロード */}
-            <div className="flex gap-2">
-              <button
-                className="btn btn-outline btn-md flex-1 h-10"
-                onClick={handleUploadSaveData}
-                disabled={isUploading || !game.saveFolderPath || !isValidCreds}
-              >
-                {isUploading ? (
-                  <span className="loading loading-spinner">アップロード中…</span>
-                ) : (
-                  "アップロード"
-                )}
-              </button>
-              <button
-                className="btn btn-outline btn-md flex-1 h-10"
-                onClick={handleDownloadSaveData}
-                disabled={isDownloading || !game.saveFolderPath || !isValidCreds}
-              >
-                {isDownloading ? (
-                  <span className="loading loading-spinner">ダウンロード中…</span>
-                ) : (
-                  "ダウンロード"
-                )}
-              </button>
-            </div>
-          </div>
+          <GameActionButtons
+            onLaunch={handleLaunchGame}
+            onEdit={openEdit}
+            onDelete={openDelete}
+            onUpload={handleUploadSaveData}
+            onDownload={handleDownloadSaveData}
+            isLaunching={isLaunching}
+            isUploading={isUploading}
+            isDownloading={isDownloading}
+            hasSaveFolder={!!game.saveFolderPath}
+            isValidCreds={isValidCreds}
+          />
         </div>
       </div>
       {/* ここに統計パネルやプレイ履歴カレンダーなどを追加 */}
@@ -264,8 +119,8 @@ export default function GameDetail(): React.JSX.Element {
         message={`${game.title} を削除しますか？\nこの操作は取り消せません`}
         cancelText="キャンセル"
         confirmText="削除する"
-        onConfirm={confirmDelete}
-        onCancel={closeDeleteModal}
+        onConfirm={handleDeleteGame}
+        onCancel={closeDelete}
       />
 
       {/* 編集 */}
@@ -274,7 +129,7 @@ export default function GameDetail(): React.JSX.Element {
         initialData={editData}
         isOpen={isEditModalOpen}
         onSubmit={handleUpdateGame}
-        onClose={closeEditModal}
+        onClose={closeEdit}
       />
     </div>
   )

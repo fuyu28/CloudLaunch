@@ -4,7 +4,7 @@ import { IoIosPlay } from "react-icons/io"
 import DynamicImage from "./DynamicImage"
 
 type GameCardProps = {
-  id: number
+  id: string
   title: string
   publisher: string
   imagePath: string
@@ -28,36 +28,47 @@ export default function GameCard({
         hover:shadow-xl
       "
     >
-      <button
-        className="group relative h-40 w-full bg-gray-100"
-        onClick={() => onLaunchGame(exePath)}
-      >
-        {imagePath && (
-          <DynamicImage
-            src={imagePath}
-            alt={title}
-            className="h-full w-full object-cover"
-            loading="lazy"
-            onError={(e) => {
-              const img = e.currentTarget as HTMLImageElement
-              img.onerror = null
-              img.style.opacity = "0"
-            }}
-          />
-        )}
-        <div
-          className="
+      <Link to={`/games/${id}`}>
+        <div className="group relative h-40 w-full bg-gray-100">
+          {imagePath && (
+            <DynamicImage
+              src={imagePath}
+              alt={title}
+              className="h-full w-full object-cover"
+              loading="lazy"
+              onError={(e) => {
+                const img = e.currentTarget as HTMLImageElement
+                img.onerror = null
+                img.style.opacity = "0"
+              }}
+            />
+          )}
+          <div
+            className="
             absolute inset-0
             flex items-center justify-center
-            opacity-0 group-hover:opacity-100 transition-opacity
+            opacity-0 group-hover:opacity-100
+            transition-opacity
           "
-        >
-          <div className="bg-white/80  rounded-full p-2 shadow-md">
-            <IoIosPlay size={40} className="pl-1 text-gray-700" />
+          >
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault()
+                onLaunchGame(exePath)
+              }}
+              aria-label="ゲームを起動"
+              className="bg-white/80
+              rounded-full p-2 shadow-md
+              flex items-center justify-center
+              hover:bg-white/90 focus:outline-none
+              focus:ring-2 focus:ring-primary
+              transition"
+            >
+              <IoIosPlay size={32} className="pl-1 text-gray-600" />
+            </button>
           </div>
         </div>
-      </button>
-      <Link to={`/games/${id}`}>
         <div className="p-2 h-20">
           <h3 className="text-base font-semibold line-clamp-2">{title}</h3>
           <p className="text-sm text-gray-500 line-clamp-2">{publisher}</p>
