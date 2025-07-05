@@ -13,7 +13,7 @@
     "typecheck": "npm run typecheck:node && npm run typecheck:web",
     "start": "electron-vite preview",
     "dev": "electron-vite dev",
-    "prisma:migrate:prod": "cross-env DATABASE_URL=\"file:out/app.db\" npx prisma migrate deploy",
+    "prisma:migrate:prod": "cross-env DATABASE_URL=\"file:../out/app.db\" npx prisma migrate deploy",
     "prisma:generate": "npx prisma generate",
     "prepackage": "npm run prisma:migrate:prod && npm run prisma:generate",
     "build": "npm run typecheck && electron-vite build",
