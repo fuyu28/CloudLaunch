@@ -30,8 +30,9 @@ import * as path from "path"
 import { ApiResult } from "../../types/result"
 import { PathType } from "../../types/file"
 import { validatePathWithType } from "../utils/file"
-import { createErrorResult, createAppError, ERROR_CODES } from "../utils/errorHandler"
+import { createErrorResult, createAppError } from "../utils/errorHandler"
 import { logger } from "../utils/logger"
+import { MESSAGES } from "../../constants"
 
 export function registerLaunchGameHandlers(): void {
   /**
@@ -64,11 +65,11 @@ export function registerLaunchGameHandlers(): void {
 
         switch (res.errorType) {
           case PathType.NotFound:
-            message = "ファイルが見つかりません。パスを確認してください。"
+            message = MESSAGES.FILE.NOT_FOUND
             errorCode = "FILE_NOT_FOUND"
             break
           case PathType.NoPermission:
-            message = "ファイルへのアクセス権がありません。権限設定を確認してください。"
+            message = MESSAGES.FILE.ACCESS_DENIED
             errorCode = "PERMISSION_DENIED"
             break
           case PathType.File:
@@ -78,7 +79,7 @@ export function registerLaunchGameHandlers(): void {
             errorCode = "VALIDATION_ERROR"
         }
 
-        throw createAppError(errorCode as keyof typeof ERROR_CODES, message, `Path: ${filePath}`)
+        throw createAppError(errorCode as keyof typeof MESSAGES.ERROR, message, `Path: ${filePath}`)
       }
 
       // 2. プロセス起動
@@ -131,7 +132,7 @@ export function registerLaunchGameHandlers(): void {
         // 1. URL フォーマット検証 & gameId 抽出
         const match = url.match(/^steam:\/\/rungameid\/([0-9]+)$/)
         if (!match) {
-          throw createAppError("VALIDATION_ERROR", "Invalid Steam URL", `URL: ${url}`)
+          throw createAppError("UNEXPECTED", MESSAGES.VALIDATION.INVALID_STEAM_URL, `URL: ${url}`)
         }
         const runGameId = match[1]
 
@@ -140,12 +141,12 @@ export function registerLaunchGameHandlers(): void {
         if (!val.ok) {
           const message =
             val.errorType === PathType.NotFound
-              ? "Steam 実行ファイルが見つかりません"
-              : "Steam へのアクセス権がありません"
+              ? MESSAGES.STEAM.EXE_NOT_FOUND
+              : MESSAGES.STEAM.ACCESS_DENIED
           const errorCode =
             val.errorType === PathType.NotFound ? "FILE_NOT_FOUND" : "PERMISSION_DENIED"
           throw createAppError(
-            errorCode as keyof typeof ERROR_CODES,
+            errorCode as keyof typeof MESSAGES.ERROR,
             message,
             `Steam Path: ${steamPath}`
           )
@@ -163,7 +164,7 @@ export function registerLaunchGameHandlers(): void {
         child.unref()
         return { success: true }
       } catch (error) {
-        return createErrorResult(error, "Steam経由でのゲーム起動")
+        return createErrorResult(error, MESSAGES.GAME.LAUNCH_FAILED)
       }
     }
   )

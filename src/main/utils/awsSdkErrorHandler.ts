@@ -2,6 +2,7 @@
 import { S3ServiceException } from "@aws-sdk/client-s3"
 import { AwsSdkError } from "../../types/error"
 import { logger } from "./logger"
+import { MESSAGES } from "../../constants"
 
 /**
  * AWS SDK のエラーを一元処理する．
@@ -26,19 +27,19 @@ export function handleAwsSdkError(error: unknown): AwsSdkError {
       default:
         if (err.Code !== undefined) return { Code: err.Code, message: "その他のエラーです。" }
         else {
-          logger.error("AWS SDK エラー:", err)
-          return { Code: err.Code, message: "その他のエラーです。" }
+          logger.error(MESSAGES.AWS.NETWORK_ERROR, err)
+          return { Code: err.Code, message: MESSAGES.ERROR.GENERAL }
         }
     }
   } else {
     if (err.code === "ENOTFOUND")
       return {
         Code: err.code,
-        message: "ネットワークエラーです。エンドポイントとネットワークの接続を確認してください。"
+        message: MESSAGES.AWS.NETWORK_ERROR
       }
     else {
-      logger.error("AWS SDK エラー:", err)
-      return { Code: err.code, message: `その他のエラーです。(コード: ${err.code ?? "不明"})` }
+      logger.error(MESSAGES.AWS.NETWORK_ERROR, err)
+      return { Code: err.code, message: MESSAGES.ERROR.GENERAL }
     }
   }
 }

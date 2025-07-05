@@ -16,6 +16,7 @@ import type { Creds } from "../../types/creds"
 import { ApiResult } from "../../types/result"
 import keytar from "keytar"
 import { logger } from "../utils/logger"
+import { MESSAGES } from "../../constants/messages"
 
 interface StoreSchema {
   bucketName: string
@@ -36,7 +37,7 @@ const store = new Store<StoreSchema>({
   get<K extends keyof StoreSchema>(key: K): StoreSchema[K]
 }
 
-const SERVICE = "StorageDeck"
+const SERVICE = "CloudLaunch"
 
 export async function setCredential(creds: Creds): Promise<ApiResult> {
   try {
@@ -44,25 +45,23 @@ export async function setCredential(creds: Creds): Promise<ApiResult> {
     store.set("region", creds.region)
     store.set("endpoint", creds.endpoint)
     store.set("accessKeyId", creds.accessKeyId)
+  } catch (error) {
+    logger.error(MESSAGES.CREDENTIAL_SERVICE.SET_FAILED(String(error)))
+    return { success: false, message: MESSAGES.CREDENTIAL_SERVICE.SET_FAILED(String(error)) }
+  }
+  try {
     await keytar.setPassword(SERVICE, "secretAccessKey", creds.secretAccessKey)
     return { success: true }
-  } catch (err) {
-    logger.error("認証情報設定エラー:", err)
-    return { success: false, message: `認証情報の設定に失敗しました: ${err}` }
+  } catch (error) {
+    logger.error(MESSAGES.CREDENTIAL_SERVICE.SET_FAILED(String(error)))
+    return { success: false, message: MESSAGES.CREDENTIAL_SERVICE.SET_FAILED(String(error)) }
   }
 }
 
 export async function getCredential(): Promise<ApiResult<Creds>> {
   try {
     // keytarからsecretAccessKeyを取得
-    const secret = await keytar.getPassword(SERVICE, "secretAccessKey")
-
-    if (secret === null) {
-      return {
-        success: false,
-        message: "認証情報が見つかりません。まず認証情報を設定してください。"
-      }
-    }
+    const secretAccessKey = await keytar.getPassword(SERVICE, "secretAccessKey")
 
     // electron-storeから他の認証情報を取得
     const bucketName = store.get("bucketName")
@@ -71,44 +70,42 @@ export async function getCredential(): Promise<ApiResult<Creds>> {
     const accessKeyId = store.get("accessKeyId")
 
     // 必要な認証情報が不足していないかチェック
-    if (!bucketName || !region || !endpoint || !accessKeyId) {
+    if (!bucketName || !region || !endpoint || !accessKeyId || !secretAccessKey) {
       return {
         success: false,
-        message: "認証情報が不完全です。すべての設定項目を確認してください。"
+        message: MESSAGES.AUTH.CREDENTIAL_NOT_FOUND
       }
     }
 
     return {
       success: true,
       data: {
-        bucketName: bucketName as string,
-        region: region as string,
-        endpoint: endpoint as string,
-        accessKeyId: accessKeyId as string,
-        secretAccessKey: secret
+        bucketName,
+        region,
+        endpoint,
+        accessKeyId,
+        secretAccessKey
       }
     }
   } catch (err) {
-    logger.error("認証情報取得エラー:", err)
+    logger.error(MESSAGES.CREDENTIAL_SERVICE.GET_FAILED, err)
 
     // keytarのエラーに関する詳細なメッセージを提供
-    let errorMessage = "認証情報の取得に失敗しました。"
+    let errorMessage: string = MESSAGES.CREDENTIAL_SERVICE.GET_FAILED
 
     if (err instanceof Error) {
       // keytarの一般的なエラーパターンをチェック
       if (err.message.includes("The specified item could not be found")) {
-        errorMessage =
-          "認証情報がシステムキーチェーンに見つかりません。認証情報を再設定してください。"
+        errorMessage = MESSAGES.CREDENTIAL_SERVICE.GET_FAILED
       } else if (err.message.includes("Access denied")) {
-        errorMessage =
-          "システムキーチェーンへのアクセスが拒否されました。アプリケーションの権限を確認してください。"
+        errorMessage = MESSAGES.CREDENTIAL_SERVICE.GET_FAILED
       } else if (err.message.includes("The keychain does not exist")) {
-        errorMessage = "システムキーチェーンが存在しません。OSの設定を確認してください。"
+        errorMessage = MESSAGES.CREDENTIAL_SERVICE.KEYCHAIN_NOT_FOUND
       } else {
-        errorMessage = `認証情報の取得エラー: ${err.message}`
+        errorMessage = MESSAGES.CREDENTIAL_SERVICE.GET_ERROR(err.message)
       }
     } else if (typeof err === "string") {
-      errorMessage = `認証情報の取得エラー: ${err}`
+      errorMessage = MESSAGES.CREDENTIAL_SERVICE.GET_ERROR(String(err))
     }
 
     return {

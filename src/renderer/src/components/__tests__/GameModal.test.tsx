@@ -24,9 +24,11 @@ jest.mock("react-hot-toast", () => {
   const mockToast = {
     error: jest.fn(),
     success: jest.fn(),
-    loading: jest.fn()
+    loading: jest.fn(),
+    dismiss: jest.fn()
   }
   return {
+    __esModule: true,
     toast: mockToast,
     default: mockToast
   }

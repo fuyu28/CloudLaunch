@@ -20,6 +20,7 @@ import type { FilterOption, SortOption } from "../../types/menu"
 import type { InputGameData } from "../../types/game"
 import { ApiResult } from "../../types/result"
 import { logger } from "../utils/logger"
+import { MESSAGES } from "../../constants"
 
 const filterMap: Record<FilterOption, Prisma.GameWhereInput> = {
   all: {},
@@ -52,12 +53,11 @@ export function registerDatabaseHandlers(): void {
         // ソート順指定
         const orderBy = sortMap[sort]
 
-        return prisma.game.findMany({
-          where: {
-            AND: [searchCondition, filterCondition]
-          },
+        const games = await prisma.game.findMany({
+          where: { AND: [searchCondition, filterCondition] },
           orderBy
         })
+        return games
       } catch (error) {
         logger.error("ゲーム一覧取得エラー:", error)
         return []
@@ -91,9 +91,9 @@ export function registerDatabaseHandlers(): void {
     } catch (error) {
       logger.error("ゲーム作成エラー:", error)
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-        return { success: false, message: `ゲーム「${game.title}」は既に存在します。` }
+        return { success: false, message: MESSAGES.GAME.ALREADY_EXISTS(game.title) }
       }
-      return { success: false, message: "ゲームの作成に失敗しました。" }
+      return { success: false, message: MESSAGES.GAME.ADD_FAILED }
     }
   })
 
@@ -117,9 +117,9 @@ export function registerDatabaseHandlers(): void {
       } catch (error) {
         logger.error("ゲーム更新エラー:", error)
         if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-          return { success: false, message: `ゲーム「${game.title}」は既に存在します。` }
+          return { success: false, message: MESSAGES.GAME.ALREADY_EXISTS(game.title) }
         }
-        return { success: false, message: "ゲームの更新に失敗しました。" }
+        return { success: false, message: MESSAGES.GAME.UPDATE_FAILED }
       }
     }
   )
@@ -132,7 +132,7 @@ export function registerDatabaseHandlers(): void {
       return { success: true }
     } catch (error) {
       logger.error("ゲーム削除エラー:", error)
-      return { success: false, message: "ゲームの削除に失敗しました。" }
+      return { success: false, message: MESSAGES.GAME.DELETE_FAILED }
     }
   })
 
@@ -164,8 +164,8 @@ export function registerDatabaseHandlers(): void {
         })
         return { success: true }
       } catch (error) {
-        logger.error("プレイセッション作成エラー:", error)
-        return { success: false, message: "プレイ時間の記録に失敗しました。" }
+        logger.error(MESSAGES.GAME.PLAY_TIME_RECORD_FAILED, error)
+        return { success: false, message: MESSAGES.GAME.PLAY_TIME_RECORD_FAILED }
       }
     }
   )

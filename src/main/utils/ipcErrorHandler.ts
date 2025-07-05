@@ -24,6 +24,7 @@ import { IpcMainInvokeEvent } from "electron"
 import { ApiResult } from "../../types/result"
 import { handleAwsSdkError } from "./awsSdkErrorHandler"
 import { logger } from "./logger"
+import { MESSAGES } from "../../constants"
 
 /**
  * IPC ハンドラー関数の型定義
@@ -132,7 +133,7 @@ export function withFileOperationErrorHandling<T extends unknown[] = unknown[], 
   handler: IpcHandler<T, R>
 ): IpcHandler<T, R> {
   return withErrorHandling(handler, {
-    errorPrefix: "ファイル操作中にエラーが発生しました",
-    unknownErrorMessage: "ファイル操作中に不明なエラーが発生しました"
+    errorPrefix: MESSAGES.IPC_ERROR.FILE_OPERATION_FAILED,
+    unknownErrorMessage: MESSAGES.IPC_ERROR.FILE_OPERATION_UNKNOWN
   })
 }

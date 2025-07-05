@@ -1,4 +1,5 @@
 import { createAppError } from "./errorHandler"
+import { MESSAGES } from "../../constants"
 
 export interface ValidationResult {
   isValid: boolean
@@ -63,7 +64,7 @@ export function validateSteamUrl(value: string): ValidationResult {
   if (!steamUrlPattern.test(value)) {
     return {
       isValid: false,
-      errors: ["有効なSteam URLを入力してください（例: steam://rungameid/123456）"]
+      errors: [MESSAGES.VALIDATION.INVALID_STEAM_URL]
     }
   }
   return { isValid: true, errors: [] }
@@ -138,7 +139,7 @@ export function validateCredentialInput(input: {
 export function throwValidationError(validationResult: ValidationResult, context?: string): never {
   if (!validationResult.isValid) {
     const message = validationResult.errors.join(", ")
-    throw createAppError("VALIDATION_ERROR", message, context)
+    throw createAppError("UNEXPECTED", message, context)
   }
-  throw new Error("Validation passed but throwValidationError was called")
+  throw new Error(MESSAGES.ERROR.UNEXPECTED)
 }

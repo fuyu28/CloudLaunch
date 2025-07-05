@@ -1,5 +1,6 @@
 import { ApiResult } from "../../types/result"
 import { logger } from "./logger"
+import { MESSAGES } from "../../constants"
 
 export interface ErrorInfo {
   code: string
@@ -28,10 +29,10 @@ export function createErrorResult(error: Error | AppError | unknown, context?: s
     errorCode = error.code
   } else if (error instanceof Error) {
     errorMessage = error.message
-    errorCode = "UNKNOWN_ERROR"
+    errorCode = MESSAGES.ERROR.UNEXPECTED
   } else {
     errorMessage = String(error)
-    errorCode = "UNKNOWN_ERROR"
+    errorCode = MESSAGES.ERROR.UNEXPECTED
   }
 
   const contextMessage = context ? `${context}: ${errorMessage}` : errorMessage
@@ -53,20 +54,10 @@ export function handleAsyncError<T>(
     .catch((error) => createErrorResult(error, context) as ApiResult<T>)
 }
 
-export const ERROR_CODES = {
-  FILE_NOT_FOUND: "FILE_NOT_FOUND",
-  PERMISSION_DENIED: "PERMISSION_DENIED",
-  VALIDATION_ERROR: "VALIDATION_ERROR",
-  DATABASE_ERROR: "DATABASE_ERROR",
-  NETWORK_ERROR: "NETWORK_ERROR",
-  SPAWN_ERROR: "SPAWN_ERROR",
-  CREDENTIAL_ERROR: "CREDENTIAL_ERROR"
-} as const
-
 export function createAppError(
-  code: keyof typeof ERROR_CODES,
+  code: keyof typeof MESSAGES.ERROR,
   message: string,
   details?: string
 ): AppError {
-  return new AppError(ERROR_CODES[code], message, details)
+  return new AppError(MESSAGES.ERROR[code], message, details)
 }

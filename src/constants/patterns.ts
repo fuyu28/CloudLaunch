@@ -17,8 +17,19 @@ export const PATTERNS = {
   /** S3バケット名の有効性チェック */
   BUCKET_NAME: /^[a-z0-9][a-z0-9.-]*[a-z0-9]$/,
 
+  // URLバリデーション
+  /** 有効なURLのパターン */
+  URL_VALIDATION:
+    /^(https?:\/\/)?(?:localhost|(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6})(?::[0-9]{1,5})?(?:\/[^\s]*)?$/,
+
+  // ファイル拡張子
+  /** 画像ファイルの拡張子パターン */
+  IMAGE_FILE_EXTENSIONS: /\.(jpg|jpeg|png|gif|bmp|webp)$/i,
+  /** 実行ファイルの拡張子パターン */
+  EXE_FILE_EXTENSIONS: /\.(exe|msi)$/i,
+
   // Steam関連
-  /** Steam URLパターン（steam://rungameid/123456 形式） */
+  /** Steam URLパターン（steam:\/\/rungameid\/123456 形式） */
   STEAM_URL: /^steam:\/\/rungameid\/([0-9]+)$/,
 
   // ファイル名サニタイズ

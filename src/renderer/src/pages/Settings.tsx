@@ -1,33 +1,18 @@
-import { useEffect, useState } from "react"
-import { useValidateCreds } from "@renderer/hooks/useValidCreds"
+import { useEffect } from "react"
 import { useSettingsForm } from "@renderer/hooks/useSettingsForm"
+import { useConnectionStatus } from "@renderer/hooks/useConnectionStatus"
 import { FaCheck, FaSyncAlt, FaTimes } from "react-icons/fa"
 import SettingsFormField from "@renderer/components/SettingsFormField"
 
 export default function Settings(): React.JSX.Element {
   // カスタムフック
-  const validateCreds = useValidateCreds()
   const { formData, updateField, canSubmit, isSaving, handleSave, fieldErrors } = useSettingsForm()
-
-  // 接続ステータス管理
-  const [status, setStatus] = useState<"loading" | "success" | "error">("loading")
-  const [statusMessage, setStatusMessage] = useState<string | null>(null)
+  const { status, message, check } = useConnectionStatus()
 
   // 初回マウント時に接続チェック
   useEffect(() => {
-    const checkConnection = async (): Promise<void> => {
-      setStatus("loading")
-      const ok = await validateCreds()
-      if (ok) {
-        setStatus("success")
-      } else {
-        setStatus("error")
-        setStatusMessage("クレデンシャルが有効ではありません")
-      }
-    }
-
-    checkConnection()
-  }, [validateCreds])
+    check()
+  }, [check])
 
   return (
     <div className="relative container mx-auto px-6 mt-10">
@@ -42,11 +27,7 @@ export default function Settings(): React.JSX.Element {
               {status === "success" && <FaCheck className="text-green-600 dark:text-green-400" />}
               {status === "error" && <FaTimes className="text-red-600 dark:text-red-400" />}
               <span className="text-gray-800 dark:text-gray-200">
-                {status === "loading"
-                  ? "接続確認中..."
-                  : status === "success"
-                    ? "接続OK"
-                    : statusMessage}
+                {status === "loading" ? "接続確認中..." : status === "success" ? "接続OK" : message}
               </span>
             </div>
           </h2>

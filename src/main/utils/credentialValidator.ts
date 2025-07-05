@@ -16,6 +16,7 @@ import { createR2Client } from "../r2Client"
 import { getCredential } from "../service/credentialService"
 import { ApiResult } from "../../types/result"
 import { Creds as Credential } from "../../types/creds"
+import { MESSAGES } from "../../constants"
 
 /**
  * 認証情報検証結果の型定義
@@ -78,7 +79,7 @@ export async function validateCredentialsForR2(): Promise<ApiResult<ValidatedCre
       message:
         error instanceof Error
           ? `認証情報の検証中にエラーが発生しました: ${error.message}`
-          : "認証情報の検証中に不明なエラーが発生しました"
+          : MESSAGES.CREDENTIAL_SERVICE.VALIDATION_UNKNOWN
     }
   }
 }
@@ -144,7 +145,7 @@ export function validateCredentialFormat(credentials: Credential): ApiResult<voi
   if (credentials.accessKeyId.length < 10) {
     return {
       success: false,
-      message: "アクセスキー ID の形式が正しくありません"
+      message: MESSAGES.VALIDATION.INVALID_ACCESS_KEY_FORMAT
     }
   }
 
@@ -152,7 +153,7 @@ export function validateCredentialFormat(credentials: Credential): ApiResult<voi
   if (credentials.secretAccessKey.length < 20) {
     return {
       success: false,
-      message: "シークレットアクセスキーの形式が正しくありません"
+      message: MESSAGES.VALIDATION.INVALID_SECRET_KEY_FORMAT
     }
   }
 

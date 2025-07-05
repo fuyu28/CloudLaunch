@@ -23,6 +23,7 @@ import { validatePathWithType } from "../utils/file"
 import { ValidatePathResult } from "../../types/file"
 import { ApiResult } from "../../types/result"
 import { logger } from "../utils/logger"
+import { MESSAGES } from "../../constants"
 
 export function registerFileDialogHandlers(): void {
   /**
@@ -49,8 +50,8 @@ export function registerFileDialogHandlers(): void {
         return { success: true, data: canceled ? null : filePaths[0] }
       } catch (e: unknown) {
         logger.error("ファイル選択エラー:", e)
-        const message = e instanceof Error ? e.message : "不明なエラー"
-        return { success: false, message: `ファイル選択中にエラーが発生しました: ${message}` }
+        const message = e instanceof Error ? e.message : MESSAGES.IPC_ERROR.UNKNOWN
+        return { success: false, message: MESSAGES.IPC_ERROR.FILE_SELECTION_FAILED(message) }
       }
     }
   )
@@ -74,8 +75,8 @@ export function registerFileDialogHandlers(): void {
       return { success: true, data: canceled ? null : filePaths[0] }
     } catch (e: unknown) {
       logger.error("フォルダ選択エラー:", e)
-      const message = e instanceof Error ? e.message : "不明なエラー"
-      return { success: false, message: `フォルダ選択中にエラーが発生しました: ${message}` }
+      const message = e instanceof Error ? e.message : MESSAGES.IPC_ERROR.UNKNOWN
+      return { success: false, message: MESSAGES.IPC_ERROR.FOLDER_SELECTION_FAILED(message) }
     }
   })
 

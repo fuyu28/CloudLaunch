@@ -13,6 +13,7 @@ import { setCredential, getCredential } from "../credentialService"
 import type { Creds } from "../../../types/creds"
 import * as keytar from "keytar"
 import Store from "electron-store"
+import { MESSAGES } from "../../../constants"
 
 // モックの設定
 jest.mock("keytar")
@@ -66,7 +67,7 @@ describe("credentialService", () => {
       expect(mockStoreInstance.set).toHaveBeenCalledWith("endpoint", "https://test.endpoint.com")
       expect(mockStoreInstance.set).toHaveBeenCalledWith("accessKeyId", "test-access-key")
       expect(mockKeytar.setPassword).toHaveBeenCalledWith(
-        "StorageDeck",
+        "CloudLaunch",
         "secretAccessKey",
         "test-secret-key"
       )
@@ -74,6 +75,7 @@ describe("credentialService", () => {
     })
 
     it("keytarでエラーが発生した場合、エラーメッセージを返す", async () => {
+      const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {})
       const error = new Error("Keytar error")
       mockKeytar.setPassword.mockRejectedValue(error)
 
@@ -81,8 +83,10 @@ describe("credentialService", () => {
 
       expect(result).toEqual({
         success: false,
-        message: "認証情報の設定に失敗しました: Error: Keytar error"
+        message: MESSAGES.CREDENTIAL_SERVICE.SET_FAILED("Error: Keytar error")
       })
+
+      consoleSpy.mockRestore()
     })
 
     it("electron-storeでエラーが発生した場合、エラーメッセージを返す", async () => {
@@ -95,7 +99,7 @@ describe("credentialService", () => {
 
       expect(result).toEqual({
         success: false,
-        message: "認証情報の設定に失敗しました: Error: Store error"
+        message: MESSAGES.CREDENTIAL_SERVICE.SET_FAILED("Error: Store error")
       })
     })
   })
@@ -118,7 +122,7 @@ describe("credentialService", () => {
 
       const result = await getCredential()
 
-      expect(mockKeytar.getPassword).toHaveBeenCalledWith("StorageDeck", "secretAccessKey")
+      expect(mockKeytar.getPassword).toHaveBeenCalledWith("CloudLaunch", "secretAccessKey")
       expect(result).toEqual({
         success: true,
         data: {
@@ -138,7 +142,7 @@ describe("credentialService", () => {
 
       expect(result).toEqual({
         success: false,
-        message: "認証情報が見つかりません。まず認証情報を設定してください。"
+        message: MESSAGES.AUTH.CREDENTIAL_NOT_FOUND
       })
     })
 
@@ -153,7 +157,7 @@ describe("credentialService", () => {
 
       expect(result).toEqual({
         success: false,
-        message: "認証情報が不完全です。すべての設定項目を確認してください。"
+        message: MESSAGES.AUTH.CREDENTIAL_INVALID
       })
     })
 
@@ -203,7 +207,7 @@ describe("credentialService", () => {
 
         expect(result).toEqual({
           success: false,
-          message: "認証情報の取得エラー: Unknown error"
+          message: MESSAGES.CREDENTIAL_SERVICE.GET_ERROR("Unknown error")
         })
       })
 
@@ -214,7 +218,7 @@ describe("credentialService", () => {
 
         expect(result).toEqual({
           success: false,
-          message: "認証情報の取得エラー: String error"
+          message: MESSAGES.CREDENTIAL_SERVICE.GET_ERROR("String error")
         })
       })
 
@@ -225,7 +229,7 @@ describe("credentialService", () => {
 
         expect(result).toEqual({
           success: false,
-          message: "認証情報の取得に失敗しました。"
+          message: MESSAGES.CREDENTIAL_SERVICE.GET_FAILED
         })
       })
     })

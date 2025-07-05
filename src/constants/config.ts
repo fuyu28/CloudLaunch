@@ -24,7 +24,11 @@ export const CONFIG = {
     /** アクセスキーIDの最小文字数 */
     ACCESS_KEY_MIN_LENGTH: 10,
     /** シークレットアクセスキーの最小文字数 */
-    SECRET_KEY_MIN_LENGTH: 20
+    SECRET_KEY_MIN_LENGTH: 20,
+    /** ゲームタイトルの最大文字数 */
+    TITLE_MAX_LENGTH: 100,
+    /** パブリッシャー名の最大文字数 */
+    PUBLISHER_MAX_LENGTH: 100
   },
 
   // デフォルト値
@@ -53,10 +57,20 @@ export const CONFIG = {
     EXECUTABLE_EXTENSIONS: ["exe", "app"] as const
   },
 
+  // ファイルサイズ関連
+  FILE_SIZE: {
+    /** 最大アップロードサイズ (MB) */
+    MAX_UPLOAD_SIZE_MB: 100,
+    /** 最大画像サイズ (MB) */
+    MAX_IMAGE_SIZE_MB: 10
+  },
+
   // AWS S3/R2関連
-  S3: {
-    /** リスト取得時の最大キー数 */
-    MAX_KEYS: 1
+  AWS: {
+    /** デフォルトリージョン */
+    DEFAULT_REGION: "auto",
+    /** リクエストタイムアウト (ms) */
+    REQUEST_TIMEOUT_MS: 30000
   },
 
   // Steam関連

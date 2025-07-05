@@ -29,6 +29,7 @@ import path from "path"
 import fs from "fs/promises"
 import { ApiResult } from "../../types/result"
 import { logger } from "../utils/logger"
+import { MESSAGES } from "../../constants"
 
 const mimeMap: Record<string, string> = {
   png: "image/png",
@@ -102,7 +103,10 @@ export function registerLoadImageHandler(): void {
 
       const contentType = res.headers.get("content-type") || ""
       if (!/^image\/(png|jpeg|gif)$/.test(contentType)) {
-        return { success: false, message: `非対応の画像形式です: ${contentType}` }
+        return {
+          success: false,
+          message: MESSAGES.IPC_ERROR.WEB_IMAGE_LOAD_FAILED(`非対応の画像形式です: ${contentType}`)
+        }
       }
 
       const arrayBuffer = await res.arrayBuffer()
@@ -111,8 +115,8 @@ export function registerLoadImageHandler(): void {
       return { success: true, data: `data:${contentType};base64,${base64}` }
     } catch (e: unknown) {
       logger.error("Web画像読み込みエラー:", e)
-      const message = e instanceof Error ? e.message : "不明なエラー"
-      return { success: false, message: `Web画像の読み込みに失敗しました: ${message}` }
+      const message = e instanceof Error ? e.message : MESSAGES.IPC_ERROR.UNKNOWN
+      return { success: false, message: MESSAGES.IPC_ERROR.WEB_IMAGE_LOAD_FAILED(message) }
     }
   })
 }

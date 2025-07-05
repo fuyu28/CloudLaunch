@@ -40,6 +40,7 @@ jest.mock("electron", () => ({
 import { ipcMain } from "electron"
 import { registerDatabaseHandlers } from "../databaseHandlers"
 import type { FilterOption, SortOption } from "../../../types/menu"
+import { logger } from "../../utils/logger"
 
 describe("databaseHandlers", () => {
   // モックされたIPC handlers
@@ -158,8 +159,8 @@ describe("databaseHandlers", () => {
     })
 
     it("データベースエラー時は空配列を返す", async () => {
-      const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {})
-      mockPrisma.game.findMany.mockRejectedValue(new Error("DB Error"))
+      const logSpy = jest.spyOn(logger, "error").mockImplementation(() => {})
+      mockPrisma.game.findMany.mockImplementationOnce(() => Promise.reject(new Error("DB Error")))
 
       const result = await mockHandlers["list-games"](
         {},
@@ -168,8 +169,9 @@ describe("databaseHandlers", () => {
         "title" as SortOption
       )
 
+      expect(logSpy).toHaveBeenCalledWith("ゲーム一覧取得エラー:", expect.any(Error))
       expect(result).toEqual([])
-      consoleSpy.mockRestore()
+      logSpy.mockRestore()
     })
   })
 })

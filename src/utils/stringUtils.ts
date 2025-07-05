@@ -63,7 +63,10 @@ export function normalizeWhitespace(value: string): string {
  * @returns ケバブケース文字列
  */
 export function camelToKebab(camelCase: string): string {
-  return camelCase.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, "$1-$2").toLowerCase()
+  return camelCase
+    .replace(/([a-z0-9])([A-Z])/g, "$1-$2") // 小文字・数字の後の大文字の前にハイフンを追加
+    .replace(/([A-Z])([A-Z][a-z])/g, "$1-$2") // 連続する大文字の間にハイフンを追加
+    .toLowerCase()
 }
 
 /**
@@ -77,5 +80,11 @@ export function truncateString(text: string, maxLength: number, ellipsis = "..."
   if (text.length <= maxLength) {
     return text
   }
+
+  // 最大長が省略記号の長さ以下の場合は省略記号のみ返す
+  if (maxLength <= ellipsis.length) {
+    return ellipsis
+  }
+
   return text.slice(0, maxLength - ellipsis.length) + ellipsis
 }
