@@ -55,8 +55,15 @@ export interface LaunchGameAPI {
   launchGameFromSteam(url: string, steamPath: string): Promise<ApiResult<void>>
 }
 
+export interface WindowAPI {
+  minimize(): Promise<void>
+  toggleMaximize(): Promise<void>
+  close(): Promise<void>
+}
+
 export interface API {
   file: FileAPI
+  window: WindowAPI
   saveData: {
     upload: SaveDataUploadAPI
     download: SaveDataDownloadAPI

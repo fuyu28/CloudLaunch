@@ -3,6 +3,7 @@ import { join } from "path"
 import { electronApp, optimizer, is } from "@electron-toolkit/utils"
 import icon from "../../build/icon.ico?asset"
 import { registerAllHandlers } from "./registerHandlers"
+import { registerWindowHandler } from "./ipcHandlers/windowsHandler"
 import { logger } from "./utils/logger"
 
 function createWindow(): void {
@@ -12,6 +13,8 @@ function createWindow(): void {
     height: 750,
     show: false,
     autoHideMenuBar: true,
+    frame: false,
+    titleBarStyle: "hidden",
     ...(process.platform === "linux" ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, "../preload/index.js"),
@@ -23,6 +26,7 @@ function createWindow(): void {
     mainWindow.show()
   })
 
+  registerWindowHandler(mainWindow)
   mainWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url)
     return { action: "deny" }
