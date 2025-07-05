@@ -1,14 +1,38 @@
 appId: com.fuyu28.cloudlaunch
-productName: Cloud Launch
+productName: "Cloud Launch"
 directories:
   buildResources: build
 files:
-  - "!**/.vscode/*"
-  - "!src/*"
-  - "!electron.vite.config.{js,ts,mjs,cjs}"
-  - "!{.eslintcache,eslint.config.mjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}"
-  - "!{.env,.env.*,.npmrc,pnpm-lock.yaml}"
-  - "!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}"
+  # ──────────────── パッケージに含めたいもの ────────────────
+  # 1) electron-vite のビルド成果物
+  - "out/**/*"
+
+  # 2) ビルドリソース（NSIS スクリプトやアイコン）は build/ 以下
+  - "build/**/*"
+
+  # 3) 画像や静的ファイルなどランタイムで使う resources/
+  - "resources/**/*"
+
+  # ──────────────── それ以外は除外 ────────────────
+  # ソースコード一式
+  - "!src/**/*"
+  # Prisma スキーマ／マイグレーション（out/app.db を extraResources で同梱するため）
+  - "!prisma/**/*"
+  # ドキュメント／設定ファイル
+  - "!docs/**/*"
+  - "!*.md"
+  - "!jest.config.js"
+  - "!.eslintrc*"
+  - "!.prettierrc*"
+  - "!tsconfig*.json"
+  # 環境ファイルやロックファイル
+  - "!.env*"
+  - "!package-lock.json"
+  - "!dev-app-update.yml"
+  # CI／エディタ隠しフォルダ
+  - "!.git/**/*"
+  - "!.vscode/**/*"
+  - "!package-lock.json"
 asarUnpack:
   - "./node_modules/.prisma/**"
   - "./node_modules/@prisma/**"
@@ -19,8 +43,10 @@ extraResources:
     to: "app.db"
 win:
   executableName: CloudLaunch
-
 nsis:
+  include: "build/installer.nsh"
+  oneClick: false
+  allowToChangeInstallationDirectory: true
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
   uninstallDisplayName: ${productName} Uninstaller
