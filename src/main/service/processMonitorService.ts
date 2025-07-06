@@ -190,26 +190,31 @@ export class ProcessMonitorService extends EventEmitter {
       let processes: Array<{ name?: string; pid: number; cmd?: string }> = []
 
       try {
-        // まずps-listを試す
-        logger.info("ps-listを使用してプロセス一覧を取得中...")
-        processes = await psList()
-        logger.info(`ps-list: ${processes.length}個のプロセスを取得しました`)
+        // まずネイティブコマンドを試す
+        logger.info("ネイティブコマンドを使用してプロセス一覧を取得中...")
+        processes = await this.getProcessesNative()
+        logger.info(`ネイティブコマンド: ${processes.length}個のプロセスを取得しました`)
 
-        // ps-listでcmd情報が取得できているかチェック
+        // cmd情報があるプロセスの数をチェック
         const processesWithCmd = processes.filter((p) => p.cmd && p.cmd.trim().length > 0)
-        logger.info(`ps-listでcmd情報があるプロセス: ${processesWithCmd.length}個`)
-
-        // cmd情報が少ない場合は代替方法を使用
-        if (processesWithCmd.length < 10) {
-          logger.info("ps-listでcmd情報が不十分なため、代替方法を使用します")
-          processes = await this.getProcessesAlternative()
-          logger.info(`代替方法: ${processes.length}個のプロセスを取得しました`)
-        }
+        logger.info(`ネイティブコマンドでcmd情報があるプロセス: ${processesWithCmd.length}個`)
       } catch (error) {
-        // ps-listが失敗した場合は代替方法を使用
-        logger.warn("ps-listが失敗しました。代替方法を使用します:", error)
-        processes = await this.getProcessesAlternative()
-        logger.info(`代替方法: ${processes.length}個のプロセスを取得しました`)
+        // ネイティブコマンドが失敗した場合はps-listをフォールバックとして使用
+        logger.warn(
+          "ネイティブコマンドが失敗しました。ps-listをフォールバックとして使用します:",
+          error
+        )
+        try {
+          logger.info("ps-listを使用してプロセス一覧を取得中...")
+          processes = await psList()
+          logger.info(`ps-list (フォールバック): ${processes.length}個のプロセスを取得しました`)
+
+          const processesWithCmd = processes.filter((p) => p.cmd && p.cmd.trim().length > 0)
+          logger.info(`ps-listでcmd情報があるプロセス: ${processesWithCmd.length}個`)
+        } catch (fallbackError) {
+          logger.error("ps-listもフォールバックとして失敗しました:", fallbackError)
+          processes = []
+        }
       }
 
       // Gameテーブルのexeファイルを自動監視対象に追加
@@ -248,8 +253,15 @@ export class ProcessMonitorService extends EventEmitter {
               const processCmd = process.cmd.toLowerCase()
               const gameDirectory = path.dirname(gameExePath).toLowerCase()
 
-              // プロセスのコマンドラインに、ゲームのディレクトリパスが含まれているかチェック
-              if (processCmd.includes(gameDirectory)) {
+              // プロセスのパス（cmd）と ゲームの実行ファイルパスを正規化して比較
+              const normalizedProcessPath = processCmd.replace(/\\/g, "/")
+              const normalizedGamePath = gameExePath.replace(/\\/g, "/")
+
+              if (normalizedProcessPath === normalizedGamePath) {
+                bestMatch = true
+                logger.info(`プロセス検出 (パス完全一致): ${game.gameTitle} - ${process.cmd}`)
+                break
+              } else if (normalizedProcessPath.includes(gameDirectory.replace(/\\/g, "/"))) {
                 bestMatch = true
                 logger.info(
                   `プロセス検出 (ディレクトリ部分一致): ${game.gameTitle} - ${process.cmd}`
@@ -458,8 +470,15 @@ export class ProcessMonitorService extends EventEmitter {
               logger.info(`ゲームディレクトリ: ${gameDirectory}`)
               logger.info(`プロセスコマンド: ${processCmd}`)
 
-              // プロセスのコマンドラインに、ゲームのディレクトリパスが含まれているかチェック
-              if (processCmd.includes(gameDirectory)) {
+              // プロセスのパス（cmd）と ゲームの実行ファイルパスを正規化して比較
+              const normalizedProcessPath = processCmd.replace(/\\/g, "/")
+              const normalizedGamePath = gameExePath.replace(/\\/g, "/")
+
+              if (normalizedProcessPath === normalizedGamePath) {
+                bestMatch = true
+                logger.info(`自動監視追加 (パス完全一致): ${game.title} - ${process.cmd}`)
+                break
+              } else if (normalizedProcessPath.includes(gameDirectory.replace(/\\/g, "/"))) {
                 bestMatch = true
                 logger.info(`自動監視追加 (ディレクトリ部分一致): ${game.title} - ${process.cmd}`)
                 break
@@ -487,69 +506,99 @@ export class ProcessMonitorService extends EventEmitter {
   }
 
   /**
-   * 開発環境用の代替プロセス取得方法
+   * ネイティブコマンドを使用したプロセス取得方法
    * @returns プロセス一覧
    */
-  private async getProcessesAlternative(): Promise<
-    Array<{ name?: string; pid: number; cmd?: string }>
-  > {
+  private async getProcessesNative(): Promise<Array<{ name?: string; pid: number; cmd?: string }>> {
     try {
       if (process.platform === "win32") {
-        // Windowsの場合、wmicコマンドを使用してコマンドライン情報も取得
+        // Windows: PowerShellを使用してより詳細なプロセス情報を取得
         const { stdout } = await execAsync(
-          "wmic process get ProcessId,Name,CommandLine /format:csv"
+          'powershell "Get-Process | Select-Object ProcessName, Id, Path | ConvertTo-Csv -NoTypeInformation"'
         )
         const lines = stdout.trim().split("\n")
 
-        // ヘッダー行をスキップ（通常は最初の2行）
-        const processLines = lines.slice(2).filter((line) => line.trim())
+        // ヘッダー行をスキップ
+        const processLines = lines.slice(1).filter((line) => line.trim())
 
         const processes = processLines
           .map((line) => {
-            const parts = line.split(",")
-            if (parts.length >= 4) {
-              const cmdLine = parts[1] ? parts[1].trim() : ""
-              const name = parts[2] ? parts[2].trim() : ""
-              const pidStr = parts[3] ? parts[3].trim() : ""
-              const pid = parseInt(pidStr)
+            // CSVパースing（簡単な方法）
+            const match = line.match(/"([^"]*?)","(\d+)","([^"]*?)"/)
+            if (match) {
+              const name = match[1].toLowerCase()
+              const pid = parseInt(match[2])
+              const fullPath = match[3] ? match[3].toLowerCase().replace(/\\/g, "/") : ""
 
-              if (!isNaN(pid) && name) {
+              if (!isNaN(pid) && name && fullPath) {
                 return {
-                  name: name.toLowerCase(),
+                  name: name + ".exe", // 拡張子を追加
                   pid,
-                  cmd: cmdLine ? cmdLine.toLowerCase() : undefined
+                  cmd: fullPath
                 }
               }
             }
             return null
           })
           .filter(
-            (proc): proc is { name: string; pid: number; cmd: string | undefined } => proc !== null
+            (proc): proc is { name: string; pid: number; cmd: string } =>
+              proc !== null && proc.cmd !== ""
           )
 
-        logger.info(`Windows wmic: ${processes.length}個のプロセスを取得`)
+        logger.info(`Windows PowerShell: ${processes.length}個のプロセスを取得`)
+
+        // デバッグ用：実行ファイルのパスを表示
+        const exeProcesses = processes.filter((p) => p.name.includes("siglusengine"))
+        for (const proc of exeProcesses) {
+          logger.info(`SiglusEngine検出: ${proc.name} -> ${proc.cmd}`)
+        }
 
         return processes as Array<{ name?: string; pid: number; cmd?: string }>
-      } else {
-        // Unix系の場合、ps コマンドでコマンドライン情報も取得
-        const { stdout } = await execAsync("ps -eo pid,comm,cmd --no-headers")
-        const lines = stdout.trim().split("\n")
+      } else if (process.platform === "darwin") {
+        // macOS: ps コマンドでコマンドライン情報も取得
+        const { stdout } = await execAsync("ps -eo pid,comm,args")
+        const lines = stdout.trim().split("\n").slice(1) // ヘッダーをスキップ
+
         const processes = lines
           .map((line) => {
             const match = line.trim().match(/(\d+)\s+(\S+)\s+(.*)/)
             if (match) {
               const pid = parseInt(match[1])
-              const name = path.basename(match[2])
-              const cmd = match[3] ? match[3].toLowerCase() : undefined
-              return { name: name.toLowerCase(), pid, cmd }
+              const name = path.basename(match[2]).toLowerCase()
+              const cmd = match[3] ? match[3].toLowerCase() : ""
+              return { name, pid, cmd }
             }
             return null
           })
           .filter(
-            (proc): proc is { name: string; pid: number; cmd: string | undefined } =>
+            (proc): proc is { name: string; pid: number; cmd: string } =>
               proc !== null && proc.pid > 0
           )
 
+        logger.info(`macOS ps: ${processes.length}個のプロセスを取得`)
+        return processes as Array<{ name?: string; pid: number; cmd?: string }>
+      } else {
+        // Linux: ps コマンドでコマンドライン情報も取得
+        const { stdout } = await execAsync("ps -eo pid,comm,cmd --no-headers")
+        const lines = stdout.trim().split("\n")
+
+        const processes = lines
+          .map((line) => {
+            const match = line.trim().match(/(\d+)\s+(\S+)\s+(.*)/)
+            if (match) {
+              const pid = parseInt(match[1])
+              const name = path.basename(match[2]).toLowerCase()
+              const cmd = match[3] ? match[3].toLowerCase() : ""
+              return { name, pid, cmd }
+            }
+            return null
+          })
+          .filter(
+            (proc): proc is { name: string; pid: number; cmd: string } =>
+              proc !== null && proc.pid > 0
+          )
+
+        logger.info(`Linux ps: ${processes.length}個のプロセスを取得`)
         return processes as Array<{ name?: string; pid: number; cmd?: string }>
       }
     } catch (error) {
