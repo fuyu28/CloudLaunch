@@ -49,8 +49,8 @@ async function getAllObjectKeys(
   r2Client: S3Client,
   bucketName: string,
   remotePath: string
-): Promise<string[]> {
-  const allKeys: string[] = []
+): Promise<{ key: string; lastModified: Date }[]> {
+  const allObjects: { key: string; lastModified: Date }[] = []
   let token: string | undefined = undefined
 
   do {
@@ -63,13 +63,15 @@ async function getAllObjectKeys(
     )
 
     listResult.Contents?.forEach((obj) => {
-      if (obj.Key) allKeys.push(obj.Key)
+      if (obj.Key && obj.LastModified) {
+        allObjects.push({ key: obj.Key, lastModified: obj.LastModified })
+      }
     })
 
     token = listResult.NextContinuationToken
   } while (token)
 
-  return allKeys
+  return allObjects
 }
 
 /**
@@ -140,7 +142,8 @@ export function registerDownloadSaveDataHandler(): void {
         const { credentials, r2Client } = validationResult.data!
 
         // リモートオブジェクトの一覧取得
-        const allKeys = await getAllObjectKeys(r2Client, credentials.bucketName, remotePath)
+        const allObjects = await getAllObjectKeys(r2Client, credentials.bucketName, remotePath)
+        const allKeys = allObjects.map((obj) => obj.key)
 
         // 各ファイルのダウンロード
         for (const key of allKeys) {
@@ -183,14 +186,16 @@ export function registerDownloadSaveDataHandler(): void {
           const objects = await getAllObjectKeys(r2Client, bucketName, remotePath)
 
           if (objects.length === 0) {
-            return { success: false, message: "クラウドデータが存在しません" }
+            return { success: true, data: { exists: false } }
           }
 
-          // 最新のオブジェクトの詳細情報を取得
-          const latestObject = objects[0] // getAllObjectKeysは日付順でソートされる前提
+          // 最終更新日時で降順にソートして最新のオブジェクトを取得
+          objects.sort((a, b) => b.lastModified.getTime() - a.lastModified.getTime())
+          const latestObjectKey = objects[0].key
+
           const headCommand = new HeadObjectCommand({
             Bucket: bucketName,
-            Key: latestObject
+            Key: latestObjectKey
           })
 
           const headResult = await r2Client.send(headCommand)
@@ -206,7 +211,7 @@ export function registerDownloadSaveDataHandler(): void {
           }
         } catch (error) {
           if (error && typeof error === "object" && "name" in error && error.name === "NoSuchKey") {
-            return { success: false, message: "クラウドデータが存在しません" }
+            return { success: true, data: { exists: false } }
           }
           throw error
         }

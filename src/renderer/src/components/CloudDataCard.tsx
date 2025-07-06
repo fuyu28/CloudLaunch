@@ -62,7 +62,7 @@ export default function CloudDataCard({
       setIsLoading(true)
       const result = await window.api.saveData.download.getCloudDataInfo(gameId)
 
-      if (result.success && result.data) {
+      if (result.success && result.data?.exists) {
         setCloudData({
           exists: true,
           uploadedAt: result.data.uploadedAt,
@@ -125,13 +125,13 @@ export default function CloudDataCard({
             <div className="bg-base-200 p-3 rounded-lg">
               <div className="flex items-center gap-2 mb-2">
                 <FaCloudDownloadAlt className="text-success" />
-                <span className="font-medium">クラウドデータが存在します</span>
+                <span className="font-medium">
+                  クラウドデータが存在します
+                  {cloudData.uploadedAt && ` (${formatDate(cloudData.uploadedAt)})`}
+                </span>
               </div>
 
               <div className="space-y-1 text-sm text-base-content/70">
-                {cloudData.uploadedAt && (
-                  <div>アップロード日時: {formatDate(cloudData.uploadedAt)}</div>
-                )}
                 {cloudData.size && <div>ファイルサイズ: {formatFileSize(cloudData.size)}</div>}
                 {cloudData.comment && <div>コメント: {cloudData.comment}</div>}
               </div>

@@ -104,7 +104,7 @@ export default function GameDetail(): React.JSX.Element {
   }
 
   return (
-    <div className="min-h-screen bg-base-200 px-6 py-4">
+    <div className="bg-base-200 px-6 py-4">
       <button onClick={handleBack} className="btn btn-ghost mb-4">
         <FaArrowLeftLong />
         戻る

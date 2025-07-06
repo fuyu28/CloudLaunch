@@ -189,19 +189,6 @@ export default function PlayHeatmap({ sessions, gameId }: PlayHeatmapProps): Rea
               </div>
             ))}
           </div>
-
-          {/* 曜日ラベル */}
-          <div className="flex mt-2">
-            <div className="flex flex-col gap-1 text-xs text-base-content/60">
-              <div className="h-3"></div>
-              <div>月</div>
-              <div className="h-3"></div>
-              <div>水</div>
-              <div className="h-3"></div>
-              <div>金</div>
-              <div className="h-3"></div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
