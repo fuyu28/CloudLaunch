@@ -189,20 +189,28 @@ export class ProcessMonitorService extends EventEmitter {
       logger.info(`アプリパス: ${app.getAppPath()}`)
       let processes: Array<{ name?: string; pid: number; cmd?: string }> = []
 
-      // 開発環境判定を改善
-      const isDev = process.env.NODE_ENV === "development" || !app.isPackaged
-
-      if (isDev) {
-        // 開発環境では代替方法を使用
-        logger.info("開発環境: 代替プロセス取得方法を使用")
-        processes = await this.getProcessesAlternative()
-      } else {
-        // プロダクション環境ではps-listを使用
-        logger.info("プロダクション環境: ps-listを使用")
+      try {
+        // まずps-listを試す
+        logger.info("ps-listを使用してプロセス一覧を取得中...")
         processes = await psList()
-      }
+        logger.info(`ps-list: ${processes.length}個のプロセスを取得しました`)
 
-      logger.info(`${processes.length}個のプロセスを取得しました`)
+        // ps-listでcmd情報が取得できているかチェック
+        const processesWithCmd = processes.filter((p) => p.cmd && p.cmd.trim().length > 0)
+        logger.info(`ps-listでcmd情報があるプロセス: ${processesWithCmd.length}個`)
+
+        // cmd情報が少ない場合は代替方法を使用
+        if (processesWithCmd.length < 10) {
+          logger.info("ps-listでcmd情報が不十分なため、代替方法を使用します")
+          processes = await this.getProcessesAlternative()
+          logger.info(`代替方法: ${processes.length}個のプロセスを取得しました`)
+        }
+      } catch (error) {
+        // ps-listが失敗した場合は代替方法を使用
+        logger.warn("ps-listが失敗しました。代替方法を使用します:", error)
+        processes = await this.getProcessesAlternative()
+        logger.info(`代替方法: ${processes.length}個のプロセスを取得しました`)
+      }
 
       // Gameテーブルのexeファイルを自動監視対象に追加
       await this.autoAddGamesFromDatabase(processes)
@@ -220,7 +228,8 @@ export class ProcessMonitorService extends EventEmitter {
         for (const process of processes) {
           if (process.cmd) {
             const processCmd = process.cmd.toLowerCase()
-            if (processCmd.includes(gameExePath) || processCmd.includes(gameExeName)) {
+            // ゲームの実行ファイルパスがプロセスのコマンドラインに含まれているかチェック
+            if (processCmd.includes(gameExePath)) {
               isRunning = true
               logger.info(`プロセス検出 (パス一致): ${game.gameTitle} - ${process.cmd}`)
               break
@@ -228,17 +237,39 @@ export class ProcessMonitorService extends EventEmitter {
           }
         }
 
-        // 2. 実行ファイル名完全一致
+        // 2. ファイル名一致（パス一致しなかった場合のみ）
         if (!isRunning && processNames.has(gameExeName)) {
-          isRunning = true
-          logger.info(`プロセス検出 (ファイル名一致): ${game.gameTitle} - ${game.exeName}`)
-        }
+          // 同名のプロセスが複数のゲームで検出される可能性があるため、
+          // プロセスのパス情報を詳細に確認する
+          let bestMatch = false
 
-        // 3. .exeなしでの一致
-        const nameWithoutExt = gameExeName.replace(/\.exe$/, "")
-        if (!isRunning && processNames.has(nameWithoutExt)) {
-          isRunning = true
-          logger.info(`プロセス検出 (.exe無し一致): ${game.gameTitle} - ${nameWithoutExt}`)
+          for (const process of processes) {
+            if (process.name?.toLowerCase() === gameExeName && process.cmd) {
+              const processCmd = process.cmd.toLowerCase()
+              const gameDirectory = path.dirname(gameExePath).toLowerCase()
+
+              // プロセスのコマンドラインに、ゲームのディレクトリパスが含まれているかチェック
+              if (processCmd.includes(gameDirectory)) {
+                bestMatch = true
+                logger.info(
+                  `プロセス検出 (ディレクトリ部分一致): ${game.gameTitle} - ${process.cmd}`
+                )
+                break
+              }
+            }
+            if (process.cmd) {
+              logger.debug(`cmd: ${process.cmd}`)
+            }
+          }
+
+          if (bestMatch) {
+            isRunning = true
+          } else {
+            // フォールバック: ディレクトリ一致しない場合は検出しない
+            logger.info(
+              `プロセス検出スキップ (ディレクトリ不一致): ${game.gameTitle} - ${game.exeName}`
+            )
+          }
         }
 
         const now = new Date()
@@ -393,7 +424,6 @@ export class ProcessMonitorService extends EventEmitter {
         }
 
         const exeName = path.basename(game.exePath).toLowerCase()
-        const nameWithoutExt = exeName.replace(/\.exe$/, "")
         const gameExePath = game.exePath.toLowerCase()
 
         // プロセス一覧に含まれているかチェック
@@ -403,7 +433,8 @@ export class ProcessMonitorService extends EventEmitter {
         for (const process of processes) {
           if (process.cmd) {
             const processCmd = process.cmd.toLowerCase()
-            if (processCmd.includes(gameExePath) || processCmd.includes(exeName)) {
+            // ゲームの実行ファイルパスがプロセスのコマンドラインに含まれているかチェック
+            if (processCmd.includes(gameExePath)) {
               isRunning = true
               logger.info(`自動監視追加 (パス一致): ${game.title} - ${process.cmd}`)
               break
@@ -411,16 +442,37 @@ export class ProcessMonitorService extends EventEmitter {
           }
         }
 
-        // 2. 実行ファイル名完全一致
+        // 2. ファイル名一致（パス一致しなかった場合のみ）
         if (!isRunning && processNames.has(exeName)) {
-          isRunning = true
-          logger.info(`自動監視追加 (ファイル名一致): ${game.title} - ${exeName}`)
-        }
+          // 同名のプロセスが複数のゲームで検出される可能性があるため、
+          // プロセスのパス情報を詳細に確認する
+          let bestMatch = false
 
-        // 3. .exeなしでの一致
-        if (!isRunning && processNames.has(nameWithoutExt)) {
-          isRunning = true
-          logger.info(`自動監視追加 (.exe無し一致): ${game.title} - ${nameWithoutExt}`)
+          for (const process of processes) {
+            if (process.name?.toLowerCase() === exeName && process.cmd) {
+              const processCmd = process.cmd.toLowerCase()
+              const gameDirectory = path.dirname(gameExePath).toLowerCase()
+
+              // デバッグ情報を追加
+              logger.info(`ディレクトリ一致チェック: ${game.title}`)
+              logger.info(`ゲームディレクトリ: ${gameDirectory}`)
+              logger.info(`プロセスコマンド: ${processCmd}`)
+
+              // プロセスのコマンドラインに、ゲームのディレクトリパスが含まれているかチェック
+              if (processCmd.includes(gameDirectory)) {
+                bestMatch = true
+                logger.info(`自動監視追加 (ディレクトリ部分一致): ${game.title} - ${process.cmd}`)
+                break
+              }
+            }
+          }
+
+          if (bestMatch) {
+            isRunning = true
+          } else {
+            // フォールバック: ディレクトリ一致しない場合は自動監視に追加しない
+            logger.info(`自動監視スキップ (ディレクトリ不一致): ${game.title} - ${exeName}`)
+          }
         }
 
         // プロセスが実行中の場合、監視対象に追加
