@@ -10,8 +10,10 @@ import { credentialAPI } from "./api/credentialPreload"
 import { databaseAPI } from "./api/databasePreload"
 import { loadImageAPI } from "./api/loadImagePreload"
 import { launchGameAPI } from "./api/launchGamePreload"
+import { windowAPI } from "./api/windowPreload"
 
 const api = {
+  window: windowAPI,
   file: fileAPI,
   saveData: {
     upload: saveDataUploadAPI,

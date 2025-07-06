@@ -2,6 +2,7 @@ import React, { useRef } from "react"
 import { Outlet, NavLink, useLocation } from "react-router-dom"
 import { FiMenu } from "react-icons/fi"
 import { IoIosHome, IoIosSettings } from "react-icons/io"
+import { VscChromeClose, VscChromeMaximize, VscChromeMinimize } from "react-icons/vsc"
 import { Toaster } from "react-hot-toast"
 
 export default function MainLayout(): React.JSX.Element {
@@ -28,7 +29,7 @@ export default function MainLayout(): React.JSX.Element {
           h-full w-56
           bg-base-100
           border-r border-base-200
-          pt-14 pb-2 px-2
+          pt-10 pb-2 px-2
           rounded-tr-lg rounded-br-lg
           shadow-lg
           transform transition-transform duration-200 ease-out
@@ -80,20 +81,68 @@ export default function MainLayout(): React.JSX.Element {
 
       {/* メイン */}
       <div className="drawer-content flex flex-col h-screen">
-        <header className="flex items-center justify-between h-14 px-6 bg-base-100 shadow">
-          <label htmlFor="main-drawer" className="btn btn-ghost h-9 w-9 p-0 focus:outline-none">
-            <FiMenu size={24} />
+        {/* ↓ ここをカスタムタイトルバーに */}
+        <header
+          className="
+          relative
+          flex items-center
+          h-10 bg-base-100 shadow
+          select-none
+          [-webkit-app-region:drag]
+        "
+        >
+          {/* ドロワー開閉ボタンは no-drag */}
+          <label
+            htmlFor="main-drawer"
+            className="
+              absolute inset-y-0 left-0
+              flex items-center justify-center
+              h-full w-10
+              btn btn-ghost p-0 focus:outline-none
+              hover:bg-neutral/80 dark:hover:bg-neutral-focus
+              [-webkit-app-region:no-drag]
+            "
+          >
+            <FiMenu size={22} />
           </label>
+
+          {/* 中央タイトルもドラッグ可能 */}
           <h1 className="flex-1 text-center text-lg font-medium leading-none">
             {isHome ? "ホーム" : isSettings ? "設定" : ""}
           </h1>
+
+          {/* ウィンドウ操作ボタン群 */}
+          <div className="absolute inset-y-0 right-0 flex [-webkit-app-region:no-drag]">
+            <button
+              onClick={() => window.api.window.minimize()}
+              className="h-10 w-10 flex items-center justify-center hover:bg-gray-300/80 dark:hover:bg-neutral-focus"
+            >
+              {/* <FaRegWindowMinimize /> */}
+              <VscChromeMinimize />
+            </button>
+            <button
+              onClick={() => window.api.window.toggleMaximize()}
+              className="h-10 w-10 flex items-center justify-center hover:bg-gray-300/80 dark:hover:bg-neutral-focus"
+            >
+              {/* <FaRegWindowMaximize /> */}
+              <VscChromeMaximize />
+            </button>
+            <button
+              onClick={() => window.api.window.close()}
+              className="h-10 w-10 flex items-center justify-center hover:bg-red-500/90 hover:text-white"
+            >
+              {/* <FaRegWindowClose /> */}
+              <VscChromeClose />
+            </button>
+          </div>
         </header>
 
-        {/* ページ固有部分をここに描画 */}
+        {/* ページ固有部分 */}
         <main className="flex-1 pt-4 overflow-hidden min-h-0">
           <Outlet />
         </main>
       </div>
+
       <Toaster position="bottom-center" />
     </div>
   )
