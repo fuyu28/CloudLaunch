@@ -4,6 +4,7 @@ import { FiMenu } from "react-icons/fi"
 import { IoIosHome, IoIosSettings } from "react-icons/io"
 import { VscChromeClose, VscChromeMaximize, VscChromeMinimize } from "react-icons/vsc"
 import { Toaster } from "react-hot-toast"
+import PlayStatusBar from "@renderer/components/PlayStatusBar"
 
 export default function MainLayout(): React.JSX.Element {
   const location = useLocation()
@@ -99,7 +100,7 @@ export default function MainLayout(): React.JSX.Element {
               flex items-center justify-center
               h-full w-10
               btn btn-ghost p-0 focus:outline-none
-              hover:bg-neutral/80 dark:hover:bg-neutral-focus
+            hover:bg-gray-300/80 dark:hover:bg-neutral-focus
               [-webkit-app-region:no-drag]
             "
           >
@@ -117,21 +118,18 @@ export default function MainLayout(): React.JSX.Element {
               onClick={() => window.api.window.minimize()}
               className="h-10 w-10 flex items-center justify-center hover:bg-gray-300/80 dark:hover:bg-neutral-focus"
             >
-              {/* <FaRegWindowMinimize /> */}
               <VscChromeMinimize />
             </button>
             <button
               onClick={() => window.api.window.toggleMaximize()}
               className="h-10 w-10 flex items-center justify-center hover:bg-gray-300/80 dark:hover:bg-neutral-focus"
             >
-              {/* <FaRegWindowMaximize /> */}
               <VscChromeMaximize />
             </button>
             <button
               onClick={() => window.api.window.close()}
               className="h-10 w-10 flex items-center justify-center hover:bg-red-500/90 hover:text-white"
             >
-              {/* <FaRegWindowClose /> */}
               <VscChromeClose />
             </button>
           </div>
@@ -141,6 +139,9 @@ export default function MainLayout(): React.JSX.Element {
         <main className="flex-1 pt-4 overflow-hidden min-h-0">
           <Outlet />
         </main>
+
+        {/* プレイ状況バー */}
+        <PlayStatusBar />
       </div>
 
       <Toaster position="bottom-center" />

@@ -150,7 +150,7 @@ export default function Home(): React.ReactElement {
       <FloatingButton
         onClick={() => setIsModalOpen(true)}
         ariaLabel="ゲームを追加"
-        positionClass="bottom-6 right-6"
+        positionClass="bottom-16 right-6"
       >
         <IoIosAdd size={28} />
       </FloatingButton>

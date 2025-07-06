@@ -10,6 +10,7 @@ import { credentialAPI } from "./api/credentialPreload"
 import { databaseAPI } from "./api/databasePreload"
 import { loadImageAPI } from "./api/loadImagePreload"
 import { launchGameAPI } from "./api/launchGamePreload"
+import { processMonitorAPI } from "./api/processMonitorPreload"
 import { windowAPI } from "./api/windowPreload"
 
 const api = {
@@ -23,7 +24,8 @@ const api = {
   credential: credentialAPI,
   database: databaseAPI,
   loadImage: loadImageAPI,
-  game: launchGameAPI
+  game: launchGameAPI,
+  processMonitor: processMonitorAPI
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

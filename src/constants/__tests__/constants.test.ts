@@ -177,7 +177,7 @@ describe("constants", () => {
     it("UI 設定が適切な値である", () => {
       expect(CONFIG.UI).toBeDefined()
       expect(CONFIG.UI.CARD_WIDTH).toBe("220px")
-      expect(CONFIG.UI.FLOATING_BUTTON_POSITION).toBe("bottom-6 right-6")
+      expect(CONFIG.UI.FLOATING_BUTTON_POSITION).toBe("bottom-16 right-6")
       expect(CONFIG.UI.ICON_SIZE).toBe(28)
     })
 

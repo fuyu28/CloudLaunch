@@ -163,7 +163,8 @@ describe("executeWithToast", () => {
     showLoading: jest.fn(),
     showSuccess: jest.fn(),
     showError: jest.fn(),
-    dismiss: jest.fn()
+    dismiss: jest.fn(),
+    showToast: jest.fn()
   }
 
   beforeEach(() => {

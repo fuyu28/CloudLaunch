@@ -19,7 +19,7 @@ export type FloatingButtonProps = {
 export default function FloatingButton({
   children,
   onClick,
-  positionClass = "bottom-6 right-6",
+  positionClass = "bottom-16 right-6",
   btnColor = "btn-primary",
   className = "",
   ariaLabel

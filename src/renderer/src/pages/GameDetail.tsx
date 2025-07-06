@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useValidateCreds } from "@renderer/hooks/useValidCreds"
 import { useParams, useNavigate, Navigate } from "react-router-dom"
 import { useAtom, useAtomValue } from "jotai"
@@ -7,10 +7,13 @@ import { visibleGamesAtom } from "@renderer/state/home"
 import { isValidCredsAtom } from "@renderer/state/credentials"
 import { useGameSaveData } from "@renderer/hooks/useGameSaveData"
 import { useGameEdit } from "@renderer/hooks/useGameEdit"
+import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
 import DynamicImage from "@renderer/components/DynamicImage"
 import ConfirmModal from "@renderer/components/ConfirmModal"
 import GameFormModal from "@renderer/components/GameModal"
 import GameActionButtons from "@renderer/components/GameActionButtons"
+import PlaySessionModal from "@renderer/components/PlaySessionModal"
+import { useToastHandler } from "@renderer/hooks/useToastHandler"
 
 export default function GameDetail(): React.JSX.Element {
   const { id } = useParams<{ id: string }>()
@@ -18,6 +21,9 @@ export default function GameDetail(): React.JSX.Element {
   const [filteredGames, setFilteredGames] = useAtom(visibleGamesAtom)
   const isValidCreds = useAtomValue(isValidCredsAtom)
   const validateCreds = useValidateCreds()
+  const [isPlaySessionModalOpen, setIsPlaySessionModalOpen] = useState(false)
+  const { showToast } = useToastHandler()
+  const { formatSmart, formatDate } = useTimeFormat()
 
   const game = filteredGames.find((g) => g.id === id)
 
@@ -56,6 +62,38 @@ export default function GameDetail(): React.JSX.Element {
     }
   }, [game, downloadSaveData])
 
+  // プレイセッション追加関連のコールバック
+  const handleOpenPlaySessionModal = useCallback(() => {
+    setIsPlaySessionModalOpen(true)
+  }, [])
+
+  const handleClosePlaySessionModal = useCallback(() => {
+    setIsPlaySessionModalOpen(false)
+  }, [])
+
+  const handleAddPlaySession = useCallback(
+    async (duration: number): Promise<void> => {
+      if (!game) return
+
+      try {
+        const result = await window.api.database.createSession(duration, game.id)
+        if (result.success) {
+          showToast("プレイセッションを追加しました", "success")
+          // ゲーム情報を更新
+          const updatedGame = await window.api.database.getGameById(game.id)
+          if (updatedGame) {
+            setFilteredGames((prev) => prev.map((g) => (g.id === game.id ? updatedGame : g)))
+          }
+        } else {
+          showToast(result.message || "プレイセッションの追加に失敗しました", "error")
+        }
+      } catch {
+        showToast("プレイセッションの追加に失敗しました", "error")
+      }
+    },
+    [game, showToast, setFilteredGames]
+  )
+
   if (!id) {
     return <Navigate to="/" replace />
   }
@@ -88,8 +126,8 @@ export default function GameDetail(): React.JSX.Element {
 
             {/* メタ情報 */}
             <div className="flex flex-wrap text-sm text-gray-500 gap-4 mb-6">
-              <span>最終プレイ: {game.lastPlayed?.toDateString() ?? "なし"}</span>
-              <span>総プレイ時間: {game.totalPlayTime ?? 0} 分</span>
+              <span>最終プレイ: {game.lastPlayed ? formatDate(game.lastPlayed) : "なし"}</span>
+              <span>総プレイ時間: {formatSmart(game.totalPlayTime ?? 0)}</span>
             </div>
           </div>
 
@@ -100,6 +138,7 @@ export default function GameDetail(): React.JSX.Element {
             onDelete={openDelete}
             onUpload={handleUploadSaveData}
             onDownload={handleDownloadSaveData}
+            onAddSession={handleOpenPlaySessionModal}
             isLaunching={isLaunching}
             isUploading={isUploading}
             isDownloading={isDownloading}
@@ -130,6 +169,14 @@ export default function GameDetail(): React.JSX.Element {
         isOpen={isEditModalOpen}
         onSubmit={handleUpdateGame}
         onClose={closeEdit}
+      />
+
+      {/* プレイセッション追加 */}
+      <PlaySessionModal
+        isOpen={isPlaySessionModalOpen}
+        onClose={handleClosePlaySessionModal}
+        onSubmit={handleAddPlaySession}
+        gameTitle={game.title}
       />
     </div>
   )

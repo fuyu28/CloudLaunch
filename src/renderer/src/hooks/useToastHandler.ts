@@ -37,6 +37,8 @@ export interface ToastHandler {
   showError: (message: string, toastId?: string) => void
   /** トーストを削除 */
   dismiss: (toastId: string) => void
+  /** 汎用トースト表示 */
+  showToast: (message: string, type: "success" | "error" | "loading") => void
 }
 
 /**
@@ -74,11 +76,26 @@ export function useToastHandler(): ToastHandler {
     toast.dismiss(toastId)
   }, [])
 
+  const showToast = useCallback((message: string, type: "success" | "error" | "loading"): void => {
+    switch (type) {
+      case "success":
+        toast.success(message)
+        break
+      case "error":
+        toast.error(message)
+        break
+      case "loading":
+        toast.loading(message)
+        break
+    }
+  }, [])
+
   return {
     showLoading,
     showSuccess,
     showError,
-    dismiss
+    dismiss,
+    showToast
   }
 }
 

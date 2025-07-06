@@ -3,8 +3,7 @@ import { defineConfig, externalizeDepsPlugin } from "electron-vite"
 import react from "@vitejs/plugin-react"
 import tailwindcss from "@tailwindcss/vite"
 import { viteStaticCopy } from "vite-plugin-static-copy"
-
-export default defineConfig({
+var electron_vite_config_default = defineConfig({
   main: {
     plugins: [
       // 依存関係の外部化
@@ -16,7 +15,8 @@ export default defineConfig({
         targets: [
           {
             src: "node_modules/ps-list/vendor/**",
-            dest: "vendor" // 出力先 dist/vendor にコピーされる
+            dest: "vendor"
+            // 出力先 dist/vendor にコピーされる
           }
         ]
       })
@@ -49,3 +49,4 @@ export default defineConfig({
     }
   }
 })
+export { electron_vite_config_default as default }

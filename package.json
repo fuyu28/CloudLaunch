@@ -38,6 +38,7 @@
     "jotai": "^2.12.5",
     "keytar": "^7.9.0",
     "prisma": "^6.11.0",
+    "ps-list": "^8.1.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-hot-toast": "^2.5.2",
@@ -57,6 +58,7 @@
     "@testing-library/user-event": "^14.6.1",
     "@types/jest": "^30.0.0",
     "@types/node": "^22.15.32",
+    "@types/ps-list": "^6.0.0",
     "@types/react": "^19.1.1",
     "@types/react-dom": "^19.1.2",
     "@vitejs/plugin-react": "^4.3.4",
@@ -80,6 +82,7 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3",
     "vite": "^6.2.6",
+    "vite-plugin-static-copy": "^3.1.0",
     "vitest": "^3.2.4"
   },
   "prisma": {
