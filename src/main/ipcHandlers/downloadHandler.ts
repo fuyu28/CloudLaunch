@@ -24,7 +24,12 @@
 import { join, dirname, relative } from "path"
 import { promises as fs } from "fs"
 import { ipcMain } from "electron"
-import { GetObjectCommand, ListObjectsV2Command, S3Client } from "@aws-sdk/client-s3"
+import {
+  GetObjectCommand,
+  ListObjectsV2Command,
+  HeadObjectCommand,
+  S3Client
+} from "@aws-sdk/client-s3"
 import { ApiResult } from "../../types/result"
 import { withFileOperationErrorHandling } from "../utils/ipcErrorHandler"
 import { validateCredentialsForR2 } from "../utils/credentialValidator"
@@ -150,6 +155,61 @@ export function registerDownloadSaveDataHandler(): void {
         }
 
         return { success: true }
+      }
+    )
+  )
+
+  // クラウドデータ情報取得ハンドラー
+  ipcMain.handle(
+    "get-cloud-data-info",
+    withFileOperationErrorHandling(
+      async (
+        _event,
+        gameId: string
+      ): Promise<
+        ApiResult<{ exists: boolean; uploadedAt?: Date; size?: number; comment?: string }>
+      > => {
+        const credentialResult = await validateCredentialsForR2()
+        if (!credentialResult.success) {
+          return { success: false, message: credentialResult.message }
+        }
+
+        const { credentials, r2Client } = credentialResult.data!
+        const bucketName = credentials.bucketName
+        const remotePath = `saves/${gameId}/`
+
+        try {
+          // リモートパス配下のオブジェクトを検索
+          const objects = await getAllObjectKeys(r2Client, bucketName, remotePath)
+
+          if (objects.length === 0) {
+            return { success: false, message: "クラウドデータが存在しません" }
+          }
+
+          // 最新のオブジェクトの詳細情報を取得
+          const latestObject = objects[0] // getAllObjectKeysは日付順でソートされる前提
+          const headCommand = new HeadObjectCommand({
+            Bucket: bucketName,
+            Key: latestObject
+          })
+
+          const headResult = await r2Client.send(headCommand)
+
+          return {
+            success: true,
+            data: {
+              exists: true,
+              uploadedAt: headResult.LastModified,
+              size: headResult.ContentLength,
+              comment: headResult.Metadata?.comment || ""
+            }
+          }
+        } catch (error) {
+          if (error && typeof error === "object" && "name" in error && error.name === "NoSuchKey") {
+            return { success: false, message: "クラウドデータが存在しません" }
+          }
+          throw error
+        }
       }
     )
   )

@@ -13,6 +13,8 @@ import ConfirmModal from "@renderer/components/ConfirmModal"
 import GameFormModal from "@renderer/components/GameModal"
 import GameActionButtons from "@renderer/components/GameActionButtons"
 import PlaySessionModal from "@renderer/components/PlaySessionModal"
+import PlaySessionCard from "@renderer/components/PlaySessionCard"
+import CloudDataCard from "@renderer/components/CloudDataCard"
 import { useToastHandler } from "@renderer/hooks/useToastHandler"
 
 export default function GameDetail(): React.JSX.Element {
@@ -102,52 +104,74 @@ export default function GameDetail(): React.JSX.Element {
   }
 
   return (
-    <div className="min-h-screen bg-base-200 px-6">
+    <div className="min-h-screen bg-base-200 px-6 py-4">
       <button onClick={handleBack} className="btn btn-ghost mb-4">
         <FaArrowLeftLong />
+        戻る
       </button>
 
-      <div className="card card-side bg-base-100 shadow-xl p-4 flex flex-col lg:flex-row gap-6">
-        {/* 左：サムネイル */}
-        <figure className="flex-shrink-0 w-full lg:w-1/2 aspect-[4/3] bg-gray-50 rounded-lg overflow-hidden">
-          <DynamicImage
-            src={game.imagePath ?? ""}
-            alt={game.title}
-            className="w-full h-full object-contain text-black"
-          />
-        </figure>
+      {/* 上部：ゲーム情報カード */}
+      <div className="card bg-base-100 shadow-xl mb-6">
+        <div className="card-body">
+          <div className="flex flex-col lg:flex-row gap-6">
+            {/* 左：サムネイル */}
+            <figure className="flex-shrink-0 w-full lg:w-80 aspect-[4/3] bg-gray-50 rounded-lg overflow-hidden">
+              <DynamicImage
+                src={game.imagePath ?? ""}
+                alt={game.title}
+                className="w-full h-full object-contain text-black"
+              />
+            </figure>
 
-        {/* 右：情報＆アクション */}
-        <div className="flex-1 flex flex-col justify-between bg-base-100 p-4">
-          {/* ── 上部エリア ── */}
-          <div className="pt-4">
-            <h2 className="card-title text-3xl mb-1">{game.title}</h2>
-            <p className="text-lg text-gray-600 mb-4">{game.publisher}</p>
+            {/* 右：情報＆アクション */}
+            <div className="flex-1 flex flex-col justify-between">
+              {/* ゲーム情報 */}
+              <div>
+                <h1 className="text-3xl font-bold mb-2">{game.title}</h1>
+                <p className="text-lg text-base-content/70 mb-4">{game.publisher}</p>
 
-            {/* メタ情報 */}
-            <div className="flex flex-wrap text-sm text-gray-500 gap-4 mb-6">
-              <span>最終プレイ: {game.lastPlayed ? formatDate(game.lastPlayed) : "なし"}</span>
-              <span>総プレイ時間: {formatSmart(game.totalPlayTime ?? 0)}</span>
+                {/* メタ情報 */}
+                <div className="flex flex-wrap text-sm text-base-content/60 gap-4 mb-6">
+                  <span>最終プレイ: {game.lastPlayed ? formatDate(game.lastPlayed) : "なし"}</span>
+                  <span>総プレイ時間: {formatSmart(game.totalPlayTime ?? 0)}</span>
+                </div>
+              </div>
+
+              {/* アクションボタン */}
+              <div className="mt-4">
+                <GameActionButtons
+                  onLaunch={handleLaunchGame}
+                  onEdit={openEdit}
+                  onDelete={openDelete}
+                  isLaunching={isLaunching}
+                />
+              </div>
             </div>
           </div>
-
-          {/* ── 下部エリア ── */}
-          <GameActionButtons
-            onLaunch={handleLaunchGame}
-            onEdit={openEdit}
-            onDelete={openDelete}
-            onUpload={handleUploadSaveData}
-            onDownload={handleDownloadSaveData}
-            onAddSession={handleOpenPlaySessionModal}
-            isLaunching={isLaunching}
-            isUploading={isUploading}
-            isDownloading={isDownloading}
-            hasSaveFolder={!!game.saveFolderPath}
-            isValidCreds={isValidCreds}
-          />
         </div>
       </div>
-      {/* ここに統計パネルやプレイ履歴カレンダーなどを追加 */}
+
+      {/* 下部：機能カード群 */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        {/* プレイセッション管理カード */}
+        <PlaySessionCard
+          gameId={game.id}
+          gameTitle={game.title}
+          onAddSession={handleOpenPlaySessionModal}
+        />
+
+        {/* クラウドデータ管理カード */}
+        <CloudDataCard
+          gameId={game.id}
+          gameTitle={game.title}
+          hasSaveFolder={!!game.saveFolderPath}
+          isValidCreds={isValidCreds}
+          isUploading={isUploading}
+          isDownloading={isDownloading}
+          onUpload={handleUploadSaveData}
+          onDownload={handleDownloadSaveData}
+        />
+      </div>
 
       {/* モーダル */}
 

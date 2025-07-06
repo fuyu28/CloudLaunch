@@ -1,6 +1,6 @@
 import { ipcRenderer } from "electron"
 import { FilterOption, SortOption } from "../../types/menu"
-import { Game } from "@prisma/client"
+import { Game, PlaySession } from "@prisma/client"
 import { InputGameData } from "../../types/game"
 import { ApiResult } from "../../types/result"
 
@@ -14,5 +14,7 @@ export const databaseAPI = {
     ipcRenderer.invoke("update-game", id, game),
   deleteGame: (id: string): Promise<ApiResult<void>> => ipcRenderer.invoke("delete-game", id),
   createSession: (duration: number, gameId: string): Promise<ApiResult<void>> =>
-    ipcRenderer.invoke("create-session", duration, gameId)
+    ipcRenderer.invoke("create-session", duration, gameId),
+  getPlaySessions: (gameId: string): Promise<ApiResult<PlaySession[]>> =>
+    ipcRenderer.invoke("get-play-sessions", gameId)
 }

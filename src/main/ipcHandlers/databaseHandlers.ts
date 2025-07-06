@@ -12,7 +12,7 @@
  * ユーザーフレンドリーなメッセージを返します。
  */
 
-import { Game } from "@prisma/client"
+import { Game, PlaySession } from "@prisma/client"
 import { ipcMain } from "electron"
 import { prisma } from "../db"
 import { Prisma } from "@prisma/client"
@@ -75,6 +75,22 @@ export function registerDatabaseHandlers(): void {
       return null
     }
   })
+
+  ipcMain.handle(
+    "get-play-sessions",
+    async (_event, gameId: string): Promise<ApiResult<PlaySession[]>> => {
+      try {
+        const sessions = await prisma.playSession.findMany({
+          where: { gameId },
+          orderBy: { playedAt: "desc" }
+        })
+        return { success: true, data: sessions }
+      } catch (error) {
+        logger.error("プレイセッション取得エラー:", error)
+        return { success: false, message: "プレイセッションの取得に失敗しました" }
+      }
+    }
+  )
 
   ipcMain.handle("create-game", async (_event, game: InputGameData): Promise<ApiResult> => {
     try {
