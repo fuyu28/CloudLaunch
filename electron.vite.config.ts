@@ -2,20 +2,38 @@ import { resolve } from "path"
 import { defineConfig, externalizeDepsPlugin } from "electron-vite"
 import react from "@vitejs/plugin-react"
 import tailwindcss from "@tailwindcss/vite"
+import { viteStaticCopy } from "vite-plugin-static-copy"
 
 export default defineConfig({
   main: {
     plugins: [
-      // 依存関係を外部化する中で electron-store だけ除外
+      // 依存関係の外部化
       externalizeDepsPlugin({
-        exclude: ["electron-store"]
+        exclude: ["electron-store", "ps-list"]
+      }),
+      // ps-list のバイナリをコピー
+      viteStaticCopy({
+        targets: [
+          {
+            src: "node_modules/ps-list/vendor/**",
+            dest: "vendor" // 出力先 dist/vendor にコピーされる
+          }
+        ]
       })
     ]
   },
   preload: {
     plugins: [
       externalizeDepsPlugin({
-        exclude: ["electron-store"]
+        exclude: ["electron-store", "ps-list"]
+      }),
+      viteStaticCopy({
+        targets: [
+          {
+            src: "node_modules/ps-list/vendor/**",
+            dest: "vendor"
+          }
+        ]
       })
     ]
   },
@@ -27,7 +45,6 @@ export default defineConfig({
     },
     plugins: [react(), tailwindcss()],
     optimizeDeps: {
-      // dev モードのバンドルに electron-store を含める
       include: ["electron-store"]
     }
   }

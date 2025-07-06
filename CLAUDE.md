@@ -3,6 +3,7 @@
 必ず日本語で出力してください。
 
 タスクを終了する前に`npx run format`, `npm run typecheck`, `npm run lint`を行ってください。
+`npm run build`を行う必要はありません。
 また、作成されたテストを`npm run test`,`npm run test:vitest`等のテストコマンドを用いて実行してください。
 その際、エラーが発生していれば修正してください。
 

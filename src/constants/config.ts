@@ -44,7 +44,7 @@ export const CONFIG = {
     /** ゲームカードの幅 */
     CARD_WIDTH: "220px",
     /** フローティングボタンの位置 */
-    FLOATING_BUTTON_POSITION: "bottom-6 right-6",
+    FLOATING_BUTTON_POSITION: "bottom-16 right-6",
     /** アイコンサイズ */
     ICON_SIZE: 28
   },

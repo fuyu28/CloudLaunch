@@ -30,7 +30,7 @@
 import React from "react"
 import { IoIosPlay } from "react-icons/io"
 import { MdEdit } from "react-icons/md"
-import { FaTrash } from "react-icons/fa"
+import { FaTrash, FaClock } from "react-icons/fa"
 
 /**
  * ゲーム操作ボタンコンポーネントのprops
@@ -46,6 +46,8 @@ export interface GameActionButtonsProps {
   onUpload: () => void
   /** セーブデータダウンロード時のコールバック */
   onDownload: () => void
+  /** プレイセッション追加時のコールバック */
+  onAddSession: () => void
   /** ゲーム起動中かどうか */
   isLaunching?: boolean
   /** セーブデータアップロード中かどうか */
@@ -72,6 +74,7 @@ export function GameActionButtons({
   onDelete,
   onUpload,
   onDownload,
+  onAddSession,
   isLaunching = false,
   isUploading = false,
   isDownloading = false,
@@ -99,7 +102,12 @@ export function GameActionButtons({
         )}
       </button>
 
-      {/* ２行目：編集／削除 */}
+      {/* ２行目：プレイセッション追加 */}
+      <button className="btn btn-secondary btn-md w-full h-10" onClick={onAddSession}>
+        <FaClock /> プレイセッション追加
+      </button>
+
+      {/* ３行目：編集／削除 */}
       <div className="flex gap-2">
         <button className="btn btn-outline btn-md flex-1 h-10" onClick={onEdit}>
           <MdEdit /> 編集
@@ -109,7 +117,7 @@ export function GameActionButtons({
         </button>
       </div>
 
-      {/* ３行目：アップロード／ダウンロード */}
+      {/* ４行目：アップロード／ダウンロード */}
       <div className="flex gap-2">
         <button
           className="btn btn-outline btn-md flex-1 h-10"

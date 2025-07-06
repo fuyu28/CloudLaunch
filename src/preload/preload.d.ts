@@ -61,6 +61,22 @@ export interface WindowAPI {
   close(): Promise<void>
 }
 
+export interface MonitoringGameStatus {
+  gameId: string
+  gameTitle: string
+  exeName: string
+  isPlaying: boolean
+  playTime: number
+}
+
+export interface ProcessMonitorAPI {
+  startMonitoring(): Promise<ApiResult>
+  stopMonitoring(): Promise<ApiResult>
+  addGameToMonitor(gameId: string, gameTitle: string, exePath: string): Promise<ApiResult>
+  removeGameFromMonitor(gameId: string): Promise<ApiResult>
+  getMonitoringStatus(): Promise<MonitoringGameStatus[]>
+}
+
 export interface API {
   file: FileAPI
   window: WindowAPI
@@ -73,4 +89,5 @@ export interface API {
   database: DatabaseAPI
   loadImage: LoadImageAPI
   game: LaunchGameAPI
+  processMonitor: ProcessMonitorAPI
 }

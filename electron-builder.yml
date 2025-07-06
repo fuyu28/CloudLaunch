@@ -36,9 +36,11 @@ files:
 asarUnpack:
   - "./node_modules/.prisma/**"
   - "./node_modules/@prisma/**"
+  - "./node_modules/ps-list/**"
 extraResources:
   - "./node_modules/.prisma/**"
   - "./node_modules/@prisma/**"
+  - "./node_modules/ps-list/vendor/**"
   - from: "out/app.db"
     to: "app.db"
 win:
