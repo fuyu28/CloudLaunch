@@ -9,6 +9,7 @@ export type Game = {
   playStatus: "unplayed" | "playing" | "played"
   totalPlayTime: number
   lastPlayed: Date | null
+  currentChapter: string | null
 }
 
 export type GameType = Game
