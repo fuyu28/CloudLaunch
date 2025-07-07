@@ -5,7 +5,7 @@
  * クラウド上のデータ情報を表示するカードコンポーネントです。
  */
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useState, memo } from "react"
 import { FaUpload, FaDownload, FaCloud, FaCloudDownloadAlt, FaFile } from "react-icons/fa"
 import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
 
@@ -52,7 +52,7 @@ interface CloudDataCardProps {
  * @param props - コンポーネントのプロパティ
  * @returns クラウドデータカードコンポーネント
  */
-export default function CloudDataCard({
+function CloudDataCard({
   gameId,
   hasSaveFolder,
   isValidCreds,
@@ -66,54 +66,80 @@ export default function CloudDataCard({
   const [fileDetails, setFileDetails] = useState<CloudFileDetails | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isFileDetailsLoading, setIsFileDetailsLoading] = useState(false)
+  const [lastFetchedGameId, setLastFetchedGameId] = useState<string | null>(null)
 
   // ファイル詳細情報を取得
-  const fetchFileDetails = useCallback(async () => {
-    if (!isValidCreds || !gameId) return
+  const fetchFileDetails = useCallback(
+    async (forceRefresh = false) => {
+      if (!isValidCreds || !gameId) return
 
-    try {
-      setIsFileDetailsLoading(true)
-      const result = await window.api.saveData.download.getCloudFileDetails(gameId)
+      // 同じゲームIDで既にデータを取得済みの場合はスキップ（強制リフレッシュ以外）
+      if (!forceRefresh && lastFetchedGameId === gameId && fileDetails !== null) {
+        setIsLoading(false)
+        return
+      }
 
-      if (result.success && result.data) {
-        setFileDetails(result.data)
-        // ファイル詳細情報から基本情報も設定
-        if (result.data.exists) {
-          const latestFile = result.data.files.sort(
-            (a, b) => new Date(b.lastModified).getTime() - new Date(a.lastModified).getTime()
-          )[0]
+      try {
+        setIsFileDetailsLoading(true)
+        const result = await window.api.saveData.download.getCloudFileDetails(gameId)
 
-          setCloudData({
-            exists: true,
-            uploadedAt: latestFile?.lastModified,
-            size: result.data.totalSize,
-            comment: ""
-          })
+        if (result.success && result.data) {
+          setFileDetails(result.data)
+          setLastFetchedGameId(gameId)
+
+          // ファイル詳細情報から基本情報も設定
+          if (result.data.exists) {
+            const latestFile = result.data.files.sort(
+              (a, b) => new Date(b.lastModified).getTime() - new Date(a.lastModified).getTime()
+            )[0]
+
+            setCloudData({
+              exists: true,
+              uploadedAt: latestFile?.lastModified,
+              size: result.data.totalSize,
+              comment: ""
+            })
+          } else {
+            setCloudData({ exists: false })
+          }
         } else {
+          setFileDetails({ exists: false, totalSize: 0, files: [] })
           setCloudData({ exists: false })
+          setLastFetchedGameId(gameId)
         }
-      } else {
+      } catch (error) {
+        console.error("ファイル詳細情報の取得に失敗:", error)
         setFileDetails({ exists: false, totalSize: 0, files: [] })
         setCloudData({ exists: false })
+        setLastFetchedGameId(gameId)
+      } finally {
+        setIsFileDetailsLoading(false)
+        setIsLoading(false)
       }
-    } catch (error) {
-      console.error("ファイル詳細情報の取得に失敗:", error)
-      setFileDetails({ exists: false, totalSize: 0, files: [] })
+    },
+    [fileDetails, gameId, isValidCreds, lastFetchedGameId]
+  )
+
+  // gameIdが変わった場合に状態をリセット
+  useEffect(() => {
+    if (lastFetchedGameId !== gameId) {
+      setIsLoading(true)
       setCloudData({ exists: false })
-    } finally {
-      setIsFileDetailsLoading(false)
-      setIsLoading(false)
+      setFileDetails(null)
     }
-  }, [gameId, isValidCreds])
+  }, [gameId, lastFetchedGameId])
 
   useEffect(() => {
-    fetchFileDetails()
-  }, [fetchFileDetails])
+    // gameIdまたはisValidCredsが変わった場合のみ実行
+    if (gameId && isValidCreds) {
+      fetchFileDetails()
+    }
+  }, [gameId, isValidCreds, fetchFileDetails]) // fetchFileDetailsを依存配列から削除
 
   // アップロード完了後にデータを再取得
   const handleUpload = useCallback(async () => {
     await onUpload()
-    await fetchFileDetails()
+    await fetchFileDetails(true) // 強制リフレッシュ
   }, [onUpload, fetchFileDetails])
 
   // ファイルサイズをフォーマット
@@ -259,3 +285,6 @@ export default function CloudDataCard({
     </div>
   )
 }
+
+// propsが変わった場合のみ再レンダリング
+export default memo(CloudDataCard)

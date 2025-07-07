@@ -12,6 +12,7 @@ import { loadImageAPI } from "./api/loadImagePreload"
 import { launchGameAPI } from "./api/launchGamePreload"
 import { processMonitorAPI } from "./api/processMonitorPreload"
 import { windowAPI } from "./api/windowPreload"
+import { chapterPreload } from "./api/chapterPreload"
 
 const api = {
   window: windowAPI,
@@ -25,7 +26,8 @@ const api = {
   database: databaseAPI,
   loadImage: loadImageAPI,
   game: launchGameAPI,
-  processMonitor: processMonitorAPI
+  processMonitor: processMonitorAPI,
+  chapter: chapterPreload
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to
