@@ -23,7 +23,7 @@ export default function ConfirmModal({
   onCancel
 }: ConfirmModalProps): React.JSX.Element {
   const footer = (
-    <div className="justify-end">
+    <div className="justify-end space-x-2">
       <button className="btn btn-outline" onClick={onCancel}>
         {cancelText}
       </button>

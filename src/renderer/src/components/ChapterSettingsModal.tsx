@@ -8,6 +8,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { FaEdit, FaTrash, FaChevronUp, FaChevronDown, FaTimes, FaSave } from "react-icons/fa"
 import { Chapter } from "../../../types/chapter"
+import ConfirmModal from "./ConfirmModal"
 
 interface ChapterSettingsModalProps {
   /** モーダルの表示状態 */
@@ -37,6 +38,7 @@ export default function ChapterSettingsModal({
   const [editName, setEditName] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [deletingChapter, setDeletingChapter] = useState<Chapter | null>(null)
 
   // 章データを取得
   const fetchChapters = useCallback(async (): Promise<void> => {
@@ -104,30 +106,38 @@ export default function ChapterSettingsModal({
     }
   }, [editingChapter, editName, onChaptersUpdated])
 
-  // 章削除
-  const deleteChapter = useCallback(
-    async (chapterId: string): Promise<void> => {
-      if (!confirm("この章を削除しますか？この操作は取り消せません。")) return
+  // 章削除確認モーダルを開く
+  const openDeleteConfirmation = useCallback((chapter: Chapter) => {
+    setDeletingChapter(chapter)
+  }, [])
 
-      try {
-        setIsSaving(true)
-        const result = await window.api.chapter.deleteChapter(chapterId)
+  // 章削除確認モーダルを閉じる
+  const closeDeleteConfirmation = useCallback(() => {
+    setDeletingChapter(null)
+  }, [])
 
-        if (result.success) {
-          // ローカル状態を更新
-          setChapters((prev) => prev.filter((ch) => ch.id !== chapterId))
-          onChaptersUpdated?.()
-        } else {
-          console.error("章の削除に失敗:", result.message)
-        }
-      } catch (error) {
-        console.error("章の削除に失敗:", error)
-      } finally {
-        setIsSaving(false)
+  // 章削除実行
+  const confirmDeleteChapter = useCallback(async (): Promise<void> => {
+    if (!deletingChapter) return
+
+    try {
+      setIsSaving(true)
+      const result = await window.api.chapter.deleteChapter(deletingChapter.id)
+
+      if (result.success) {
+        // ローカル状態を更新
+        setChapters((prev) => prev.filter((ch) => ch.id !== deletingChapter.id))
+        setDeletingChapter(null)
+        onChaptersUpdated?.()
+      } else {
+        console.error("章の削除に失敗:", result.message)
       }
-    },
-    [onChaptersUpdated]
-  )
+    } catch (error) {
+      console.error("章の削除に失敗:", error)
+    } finally {
+      setIsSaving(false)
+    }
+  }, [deletingChapter, onChaptersUpdated])
 
   // 章の順序を上に移動
   const moveChapterUp = useCallback(
@@ -302,7 +312,7 @@ export default function ChapterSettingsModal({
                         </button>
                         <button
                           className="btn btn-ghost btn-sm btn-square text-error"
-                          onClick={() => deleteChapter(chapter.id)}
+                          onClick={() => openDeleteConfirmation(chapter)}
                           disabled={isSaving}
                         >
                           <FaTrash />
@@ -322,6 +332,17 @@ export default function ChapterSettingsModal({
           </button>
         </div>
       </div>
+
+      {/* 削除確認モーダル */}
+      <ConfirmModal
+        id="delete-chapter-modal"
+        isOpen={!!deletingChapter}
+        message={`「${deletingChapter?.name}」を削除しますか？\nこの操作は取り消せません。`}
+        cancelText="キャンセル"
+        confirmText="削除する"
+        onConfirm={confirmDeleteChapter}
+        onCancel={closeDeleteConfirmation}
+      />
     </div>
   )
 }
