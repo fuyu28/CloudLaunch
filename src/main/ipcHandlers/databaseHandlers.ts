@@ -83,6 +83,15 @@ export function registerDatabaseHandlers(): void {
       try {
         const sessions = await prisma.playSession.findMany({
           where: { gameId },
+          include: {
+            chapter: {
+              select: {
+                id: true,
+                name: true,
+                order: true
+              }
+            }
+          },
           orderBy: { playedAt: "desc" }
         })
         return { success: true, data: sessions }
@@ -224,6 +233,44 @@ export function registerDatabaseHandlers(): void {
       } catch (error) {
         logger.error(MESSAGES.GAME.PLAY_TIME_RECORD_FAILED, error)
         return { success: false, message: MESSAGES.GAME.PLAY_TIME_RECORD_FAILED }
+      }
+    }
+  )
+
+  ipcMain.handle(
+    "update-session-chapter",
+    async (_event, sessionId: string, chapterId: string | null): Promise<ApiResult> => {
+      try {
+        // セッションが存在するかチェック
+        const session = await prisma.playSession.findUnique({
+          where: { id: sessionId }
+        })
+
+        if (!session) {
+          return { success: false, message: "指定されたセッションが見つかりません" }
+        }
+
+        // chapterIdが指定されている場合、章が存在するかチェック
+        if (chapterId) {
+          const chapter = await prisma.chapter.findFirst({
+            where: { id: chapterId, gameId: session.gameId }
+          })
+
+          if (!chapter) {
+            return { success: false, message: "指定された章が見つかりません" }
+          }
+        }
+
+        // セッションの章を更新
+        await prisma.playSession.update({
+          where: { id: sessionId },
+          data: { chapterId: chapterId }
+        })
+
+        return { success: true }
+      } catch (error) {
+        logger.error("セッション章更新エラー:", error)
+        return { success: false, message: "セッションの章更新に失敗しました" }
       }
     }
   )

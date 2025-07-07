@@ -16,8 +16,12 @@ interface ChapterDisplayCardProps {
   gameTitle: string
   /** 現在の章ID */
   currentChapterId?: string
+  /** 章設定ボタンクリック時のコールバック */
+  onChapterSettings?: () => void
+  /** 章追加ボタンクリック時のコールバック */
+  onAddChapter?: () => void
   /** 章変更時のコールバック */
-  onChapterChange?: (chapterId: string) => void
+  onChapterChange?: () => void
 }
 
 /**
@@ -29,6 +33,8 @@ interface ChapterDisplayCardProps {
 export default function ChapterDisplayCard({
   gameId,
   currentChapterId,
+  onChapterSettings,
+  onAddChapter,
   onChapterChange
 }: ChapterDisplayCardProps): React.JSX.Element {
   const [chapters, setChapters] = useState<Chapter[]>([])
@@ -85,7 +91,7 @@ export default function ChapterDisplayCard({
         const result = await window.api.chapter.setCurrentChapter(gameId, previousChapter.id)
         if (result.success) {
           setCurrentChapter(previousChapter)
-          onChapterChange?.(previousChapter.id)
+          onChapterChange?.()
         } else {
           console.error("章の変更に失敗:", result.message)
         }
@@ -108,7 +114,7 @@ export default function ChapterDisplayCard({
         const result = await window.api.chapter.setCurrentChapter(gameId, nextChapter.id)
         if (result.success) {
           setCurrentChapter(nextChapter)
-          onChapterChange?.(nextChapter.id)
+          onChapterChange?.()
         } else {
           console.error("章の変更に失敗:", result.message)
         }
@@ -126,7 +132,7 @@ export default function ChapterDisplayCard({
         const result = await window.api.chapter.setCurrentChapter(gameId, chapter.id)
         if (result.success) {
           setCurrentChapter(chapter)
-          onChapterChange?.(chapter.id)
+          onChapterChange?.()
         } else {
           console.error("章の変更に失敗:", result.message)
         }
@@ -147,27 +153,6 @@ export default function ChapterDisplayCard({
     )
   }
 
-  if (chapters.length === 0) {
-    return (
-      <div className="bg-base-200 p-4 rounded-lg">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <FaBook className="text-info" />
-            <h4 className="font-semibold">章管理</h4>
-          </div>
-          <button className="btn btn-primary btn-sm">
-            <FaPlus />
-            章を追加
-          </button>
-        </div>
-        <div className="text-center text-base-content/60 py-8">
-          <p>章が設定されていません</p>
-          <p className="text-sm mt-2">「章を追加」ボタンから最初の章を作成してください</p>
-        </div>
-      </div>
-    )
-  }
-
   const currentIndex = chapters.findIndex((c) => c.id === currentChapter?.id)
   const isFirstChapter = currentIndex === 0
   const isLastChapter = currentIndex === chapters.length - 1
@@ -180,7 +165,7 @@ export default function ChapterDisplayCard({
             <FaBook className="text-info" />
             <h4 className="font-semibold">現在の章</h4>
           </div>
-          <button className="btn btn-outline btn-sm">
+          <button className="btn btn-outline btn-sm" onClick={onChapterSettings}>
             <FaCog />
             章設定
           </button>
@@ -234,7 +219,7 @@ export default function ChapterDisplayCard({
         </div>
         {/* 章追加ボタン */}
         <div className="mt-4 pt-4 border-t border-base-300">
-          <button className="btn btn-outline btn-sm w-full">
+          <button className="btn btn-outline btn-sm w-full" onClick={onAddChapter}>
             <FaPlus />
             新しい章を追加
           </button>

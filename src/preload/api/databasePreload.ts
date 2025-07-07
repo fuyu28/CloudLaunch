@@ -16,5 +16,7 @@ export const databaseAPI = {
   createSession: (duration: number, gameId: string): Promise<ApiResult<void>> =>
     ipcRenderer.invoke("create-session", duration, gameId),
   getPlaySessions: (gameId: string): Promise<ApiResult<PlaySession[]>> =>
-    ipcRenderer.invoke("get-play-sessions", gameId)
+    ipcRenderer.invoke("get-play-sessions", gameId),
+  updateSessionChapter: (sessionId: string, chapterId: string | null): Promise<ApiResult<void>> =>
+    ipcRenderer.invoke("update-session-chapter", sessionId, chapterId)
 }

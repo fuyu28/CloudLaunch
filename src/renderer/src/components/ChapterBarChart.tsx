@@ -6,7 +6,7 @@
  */
 
 import { useEffect, useState } from "react"
-import { FaChartBar, FaPlus, FaCog } from "react-icons/fa"
+import { FaChartBar } from "react-icons/fa"
 import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
 import { ChapterStats } from "../../../types/chapter"
 
@@ -15,10 +15,6 @@ interface ChapterBarChartProps {
   gameId: string
   /** ゲームタイトル */
   gameTitle: string
-  /** 章設定ボタンクリック時のコールバック */
-  onChapterSettings?: () => void
-  /** 章追加ボタンクリック時のコールバック */
-  onAddChapter?: () => void
 }
 
 /**
@@ -27,11 +23,7 @@ interface ChapterBarChartProps {
  * @param props - コンポーネントのプロパティ
  * @returns 章別統計グラフコンポーネント
  */
-export default function ChapterBarChart({
-  gameId,
-  onChapterSettings,
-  onAddChapter
-}: ChapterBarChartProps): React.JSX.Element {
+export default function ChapterBarChart({ gameId }: ChapterBarChartProps): React.JSX.Element {
   const { formatSmart } = useTimeFormat()
   const [chapterStats, setChapterStats] = useState<ChapterStats[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -89,16 +81,6 @@ export default function ChapterBarChart({
               <FaChartBar className="text-info" />
               <h3 className="card-title">章別プレイ統計</h3>
             </div>
-            <div className="flex gap-2">
-              <button className="btn btn-outline btn-sm" onClick={onChapterSettings}>
-                <FaCog />
-                章設定
-              </button>
-              <button className="btn btn-primary btn-sm" onClick={onAddChapter}>
-                <FaPlus />
-                章追加
-              </button>
-            </div>
           </div>
           <div className="text-center text-base-content/60 py-8">
             <p>章別データがありません</p>
@@ -129,18 +111,7 @@ export default function ChapterBarChart({
             <FaChartBar className="text-info" />
             <h3 className="card-title">章別プレイ統計</h3>
           </div>
-          <div className="flex gap-2">
-            <button className="btn btn-outline btn-sm" onClick={onChapterSettings}>
-              <FaCog />
-              章設定
-            </button>
-            <button className="btn btn-primary btn-sm" onClick={onAddChapter}>
-              <FaPlus />
-              章追加
-            </button>
-          </div>
         </div>
-
         {/* 単一の棒グラフ */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
@@ -192,26 +163,6 @@ export default function ChapterBarChart({
                   </div>
                 )
               })}
-          </div>
-        </div>
-
-        {/* 統計サマリー */}
-        <div className="mt-4 pt-4 border-t border-base-300">
-          <div className="grid grid-cols-3 gap-4 text-center text-sm">
-            <div>
-              <div className="text-base-content/60">総章数</div>
-              <div className="font-semibold">{chapterStats.length}</div>
-            </div>
-            <div>
-              <div className="text-base-content/60">総プレイ時間</div>
-              <div className="font-semibold">{formatSmart(totalTime)}</div>
-            </div>
-            <div>
-              <div className="text-base-content/60">総セッション数</div>
-              <div className="font-semibold">
-                {chapterStats.reduce((sum, stat) => sum + stat.sessionCount, 0)}
-              </div>
-            </div>
           </div>
         </div>
       </div>

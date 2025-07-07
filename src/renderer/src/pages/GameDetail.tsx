@@ -30,6 +30,7 @@ export default function GameDetail(): React.JSX.Element {
   const [isPlaySessionModalOpen, setIsPlaySessionModalOpen] = useState(false)
   const [isChapterSettingsModalOpen, setIsChapterSettingsModalOpen] = useState(false)
   const [isChapterAddModalOpen, setIsChapterAddModalOpen] = useState(false)
+  const [refreshKey, setRefreshKey] = useState(0)
   const { showToast } = useToastHandler()
   const { formatSmart, formatDate } = useTimeFormat()
 
@@ -96,11 +97,27 @@ export default function GameDetail(): React.JSX.Element {
     setIsChapterAddModalOpen(false)
   }, [])
 
-  const handleChaptersUpdated = useCallback(() => {
-    // 章データが更新された時の処理
-    // 必要に応じてゲームデータを再取得
+  // 全データを再取得する関数
+  const refreshGameData = useCallback(async () => {
+    if (!game?.id) return
+
+    try {
+      // ゲームデータを再取得
+      const updatedGame = await window.api.database.getGameById(game.id)
+      if (updatedGame) {
+        setFilteredGames((prev) => prev.map((g) => (g.id === game.id ? updatedGame : g)))
+      }
+      // リフレッシュキーを更新してコンポーネントの再レンダリングを促す
+      setRefreshKey((prev) => prev + 1)
+    } catch (error) {
+      console.error("ゲームデータの更新に失敗:", error)
+    }
+  }, [game?.id, setFilteredGames])
+
+  const handleChaptersUpdated = useCallback(async () => {
+    await refreshGameData()
     showToast("章データが更新されました", "success")
-  }, [showToast])
+  }, [refreshGameData, showToast])
 
   const handleAddPlaySession = useCallback(
     async (duration: number): Promise<void> => {
@@ -110,11 +127,8 @@ export default function GameDetail(): React.JSX.Element {
         const result = await window.api.database.createSession(duration, game.id)
         if (result.success) {
           showToast("プレイセッションを追加しました", "success")
-          // ゲーム情報を更新
-          const updatedGame = await window.api.database.getGameById(game.id)
-          if (updatedGame) {
-            setFilteredGames((prev) => prev.map((g) => (g.id === game.id ? updatedGame : g)))
-          }
+          // 全データを再取得
+          await refreshGameData()
         } else {
           showToast(result.message || "プレイセッションの追加に失敗しました", "error")
         }
@@ -122,7 +136,7 @@ export default function GameDetail(): React.JSX.Element {
         showToast("プレイセッションの追加に失敗しました", "error")
       }
     },
-    [game, showToast, setFilteredGames]
+    [game, showToast, refreshGameData]
   )
 
   if (!id) {
@@ -183,10 +197,9 @@ export default function GameDetail(): React.JSX.Element {
       {/* 中部：章統計グラフ */}
       <div className="mb-6">
         <ChapterBarChart
+          key={`chapter-chart-${refreshKey}`}
           gameId={game.id}
           gameTitle={game.title}
-          onChapterSettings={handleOpenChapterSettings}
-          onAddChapter={handleOpenChapterAdd}
         />
       </div>
 
@@ -194,9 +207,11 @@ export default function GameDetail(): React.JSX.Element {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* プレイセッション管理カード */}
         <PlaySessionCard
+          key={`play-session-${refreshKey}`}
           gameId={game.id}
           gameTitle={game.title}
           onAddSession={handleOpenPlaySessionModal}
+          onSessionUpdated={refreshGameData}
         />
 
         {/* クラウドデータ管理カード */}
@@ -213,9 +228,13 @@ export default function GameDetail(): React.JSX.Element {
 
         {/* 章表示・管理カード */}
         <ChapterDisplayCard
+          key={`chapter-display-${refreshKey}`}
           gameId={game.id}
           gameTitle={game.title}
           currentChapterId={game.currentChapter || undefined}
+          onChapterSettings={handleOpenChapterSettings}
+          onAddChapter={handleOpenChapterAdd}
+          onChapterChange={refreshGameData}
         />
       </div>
 
