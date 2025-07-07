@@ -182,7 +182,7 @@ export function registerDatabaseHandlers(): void {
 
   ipcMain.handle(
     "create-session",
-    async (_event, duration: number, gameId: string): Promise<ApiResult> => {
+    async (_event, duration: number, gameId: string, sessionName?: string): Promise<ApiResult> => {
       try {
         await prisma.$transaction(async (tx) => {
           // ゲーム情報を取得
@@ -211,12 +211,13 @@ export function registerDatabaseHandlers(): void {
             })
           }
 
-          // プレイセッションを作成（章IDを含む）
+          // プレイセッションを作成（章IDとセッション名を含む）
           await tx.playSession.create({
             data: {
               duration,
               gameId,
-              chapterId: currentChapterId
+              chapterId: currentChapterId,
+              sessionName: sessionName || undefined
             }
           })
 

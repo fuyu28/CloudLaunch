@@ -390,7 +390,7 @@ export class ProcessMonitorService extends EventEmitter {
             data: {
               duration: game.accumulatedTime,
               gameId: game.gameId,
-              processName: game.exeName
+              sessionName: `自動記録 - ${game.exeName}`
             }
           })
 

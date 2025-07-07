@@ -122,11 +122,11 @@ export default function GameDetail(): React.JSX.Element {
   }, [refreshGameData, showToast])
 
   const handleAddPlaySession = useCallback(
-    async (duration: number): Promise<void> => {
+    async (duration: number, sessionName?: string): Promise<void> => {
       if (!game) return
 
       try {
-        const result = await window.api.database.createSession(duration, game.id)
+        const result = await window.api.database.createSession(duration, game.id, sessionName)
         if (result.success) {
           showToast("プレイセッションを追加しました", "success")
           // 全データを再取得

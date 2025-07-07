@@ -43,7 +43,7 @@ model PlaySession {
   gameId      String
   playedAt    DateTime @default(now())
   duration    Int
-  processName String?
+  sessionName String?
   chapter     Chapter? @relation(fields: [chapterId], references: [id])
   chapterId   String?
   upload      Upload?  @relation(fields: [uploadId], references: [id])

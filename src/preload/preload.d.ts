@@ -58,7 +58,7 @@ export interface DatabaseAPI {
   createGame(game: InputGameData): Promise<ApiResult<void>>
   updateGame(id: string, game: InputGameData): Promise<ApiResult<void>>
   deleteGame(id: string): Promise<ApiResult<void>>
-  createSession(duration: number, gameId: string): Promise<ApiResult<void>>
+  createSession(duration: number, gameId: string, sessionName?: string): Promise<ApiResult<void>>
   getPlaySessions(gameId: string): Promise<ApiResult<PlaySession[]>>
   updateSessionChapter(sessionId: string, chapterId: string | null): Promise<ApiResult<void>>
 }

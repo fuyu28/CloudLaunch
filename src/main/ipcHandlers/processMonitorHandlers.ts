@@ -127,15 +127,12 @@ export function registerProcessMonitorHandlers(): void {
         })
 
         // 現在監視中のプロセスをチェック
-        const monitoringStatus = monitor.getMonitoringStatus()
-        const currentProcess = monitoringStatus.find((status) => status.gameId === gameId)
-
         const processData = sessions.map((session) => ({
           id: session.id,
-          name: session.processName || "不明なプロセス",
+          name: session.sessionName || "名前なし",
           duration: session.duration,
           playedAt: session.playedAt,
-          isLinked: currentProcess?.exeName === session.processName
+          isLinked: false // セッション名ベースでは連携状態は判定しない
         }))
 
         return { success: true, data: processData }
@@ -212,8 +209,6 @@ export function registerProcessMonitorHandlers(): void {
 
         // 監視対象に追加（実際のexePathを使用）
         monitor.addGame(gameId, game.title, exePath)
-
-        logger.info(`連携先プロセス設定: ${game.title} -> ${session.processName} (${exePath})`)
 
         return { success: true }
       } catch (error) {

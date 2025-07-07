@@ -31,6 +31,8 @@ export interface TimeFormatHook {
   formatSmart: (seconds: number) => string
   /** 日付フォーマット（例: "2025年7月7日(月)"） */
   formatDate: (date: Date) => string
+  /** 日付+時間フォーマット（例: "2025年7月7日(月) 11:11"） */
+  formatDateWithTime: (date: Date) => string
 }
 
 /**
@@ -116,11 +118,27 @@ export function useTimeFormat(): TimeFormatHook {
     }
   }, [])
 
+  const formatDateWithTime = useMemo(() => {
+    return (date: Date): string => {
+      const year = date.getFullYear()
+      const month = date.getMonth() + 1
+      const day = date.getDate()
+      const dayOfWeek = ["日", "月", "火", "水", "木", "金", "土"][date.getDay()]
+      const hours = date.getHours()
+      const hoursPadded = String(hours).padStart(2, "0")
+      const minutes = date.getMinutes()
+      const minutesPadded = String(minutes).padStart(2, "0")
+
+      return `${year}年${month}月${day}日(${dayOfWeek}) ${hoursPadded}:${minutesPadded}`
+    }
+  }, [])
+
   return {
     formatDuration,
     formatShort,
     formatSmart,
-    formatDate
+    formatDate,
+    formatDateWithTime
   }
 }
 
