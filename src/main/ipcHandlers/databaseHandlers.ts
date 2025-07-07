@@ -279,4 +279,31 @@ export function registerDatabaseHandlers(): void {
       }
     }
   )
+
+  ipcMain.handle(
+    "update-session-name",
+    async (_event, sessionId: string, sessionName: string): Promise<ApiResult> => {
+      try {
+        // セッションが存在するかチェック
+        const session = await prisma.playSession.findUnique({
+          where: { id: sessionId }
+        })
+
+        if (!session) {
+          return { success: false, message: "指定されたセッションが見つかりません" }
+        }
+
+        // セッション名を更新
+        await prisma.playSession.update({
+          where: { id: sessionId },
+          data: { sessionName: sessionName }
+        })
+
+        return { success: true }
+      } catch (error) {
+        logger.error("セッション名更新エラー:", error)
+        return { success: false, message: "セッション名の更新に失敗しました" }
+      }
+    }
+  )
 }

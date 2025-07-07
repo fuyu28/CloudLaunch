@@ -17,8 +17,10 @@
 
 import { useCallback, useEffect, useState } from "react"
 import { RxCross1 } from "react-icons/rx"
+import { FaEdit } from "react-icons/fa"
 import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
 import { useToastHandler } from "@renderer/hooks/useToastHandler"
+import { Chapter } from "../../../types/chapter"
 import ConfirmModal from "./ConfirmModal"
 
 /**
@@ -35,6 +37,14 @@ interface ProcessInfo {
   playedAt: Date
   /** 連携先として設定されているか（今は使用しない） */
   isLinked: boolean
+}
+
+/**
+ * 編集用のフォームデータ
+ */
+interface EditFormData {
+  sessionName: string
+  chapterId: string | null
 }
 
 /**
@@ -64,9 +74,16 @@ export default function PlaySessionManagementModal({
   onProcessUpdated
 }: PlaySessionManagementModalProps): React.JSX.Element {
   const [processes, setProcesses] = useState<ProcessInfo[]>([])
+  const [chapters, setChapters] = useState<Chapter[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedProcessId, setSelectedProcessId] = useState<string | null>(null)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [editingProcess, setEditingProcess] = useState<ProcessInfo | null>(null)
+  const [editFormData, setEditFormData] = useState<EditFormData>({
+    sessionName: "",
+    chapterId: null
+  })
   const { formatSmart, formatDateWithTime } = useTimeFormat()
   const { showToast } = useToastHandler()
 
@@ -94,6 +111,87 @@ export default function PlaySessionManagementModal({
       setLoading(false)
     }
   }, [gameId, showToast])
+
+  /**
+   * 章情報を取得
+   */
+  const fetchChapters = useCallback(async () => {
+    if (!gameId) return
+
+    try {
+      const result = await window.api.chapter.getChapters(gameId)
+      if (result.success && result.data) {
+        setChapters(result.data)
+      } else {
+        console.error("章情報の取得に失敗")
+      }
+    } catch (error) {
+      console.error("章情報取得エラー:", error)
+    }
+  }, [gameId])
+
+  /**
+   * 編集モーダルを開く
+   */
+  const openEditModal = useCallback((process: ProcessInfo) => {
+    setEditingProcess(process)
+    setEditFormData({
+      sessionName: process.name,
+      chapterId: null // 現在の章情報があれば設定
+    })
+    setIsEditModalOpen(true)
+  }, [])
+
+  /**
+   * 編集モーダルを閉じる
+   */
+  const closeEditModal = useCallback(() => {
+    setIsEditModalOpen(false)
+    setEditingProcess(null)
+    setEditFormData({
+      sessionName: "",
+      chapterId: null
+    })
+  }, [])
+
+  /**
+   * セッション編集処理
+   */
+  const handleEditSession = useCallback(async () => {
+    if (!editingProcess) return
+
+    try {
+      // セッション名を更新
+      if (editFormData.sessionName !== editingProcess.name) {
+        const nameResult = await window.api.database.updateSessionName(
+          editingProcess.id,
+          editFormData.sessionName
+        )
+        if (!nameResult.success) {
+          showToast("セッション名の更新に失敗しました", "error")
+          return
+        }
+      }
+
+      // 章を更新
+      const chapterResult = await window.api.database.updateSessionChapter(
+        editingProcess.id,
+        editFormData.chapterId
+      )
+      if (!chapterResult.success) {
+        showToast("章の更新に失敗しました", "error")
+        return
+      }
+
+      showToast("セッションを更新しました", "success")
+      await fetchProcesses()
+      onProcessUpdated?.()
+      closeEditModal()
+    } catch (error) {
+      console.error("セッション編集エラー:", error)
+      showToast("セッションの更新に失敗しました", "error")
+    }
+  }, [editingProcess, editFormData, fetchProcesses, onProcessUpdated, showToast, closeEditModal])
 
   /**
    * セッション削除処理
@@ -144,8 +242,9 @@ export default function PlaySessionManagementModal({
   useEffect(() => {
     if (isOpen) {
       fetchProcesses()
+      fetchChapters()
     }
-  }, [isOpen, fetchProcesses])
+  }, [isOpen, fetchProcesses, fetchChapters])
 
   /**
    * 選択されたセッションの情報を取得
@@ -195,12 +294,21 @@ export default function PlaySessionManagementModal({
                             <td>{formatSmart(process.duration)}</td>
                             <td>{formatDateWithTime(process.playedAt)}</td>
                             <td>
-                              <button
-                                className="btn btn-sm btn-outline btn-error"
-                                onClick={() => openDeleteModal(process.id)}
-                              >
-                                削除
-                              </button>
+                              <div className="flex gap-2">
+                                <button
+                                  className="btn btn-sm btn-outline btn-primary"
+                                  onClick={() => openEditModal(process)}
+                                >
+                                  <FaEdit />
+                                  編集
+                                </button>
+                                <button
+                                  className="btn btn-sm btn-outline btn-error"
+                                  onClick={() => openDeleteModal(process.id)}
+                                >
+                                  削除
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         ))}
@@ -230,6 +338,68 @@ export default function PlaySessionManagementModal({
         onConfirm={handleDeleteProcess}
         onCancel={closeDeleteModal}
       />
+
+      {/* 編集モーダル */}
+      <div className={`modal ${isEditModalOpen ? "modal-open" : ""}`}>
+        <div className="modal-box">
+          <h3 className="font-bold text-lg mb-4">セッション編集</h3>
+
+          <div className="space-y-4">
+            {/* セッション名 */}
+            <div>
+              <label className="label">
+                <span className="label-text">セッション名</span>
+              </label>
+              <input
+                type="text"
+                className="input input-bordered w-full"
+                value={editFormData.sessionName}
+                onChange={(e) =>
+                  setEditFormData((prev) => ({ ...prev, sessionName: e.target.value }))
+                }
+                placeholder="セッション名を入力"
+              />
+            </div>
+
+            {/* 章選択 */}
+            <div>
+              <label className="label">
+                <span className="label-text">紐づける章</span>
+              </label>
+              <select
+                className="select select-bordered w-full"
+                value={editFormData.chapterId || ""}
+                onChange={(e) =>
+                  setEditFormData((prev) => ({
+                    ...prev,
+                    chapterId: e.target.value || null
+                  }))
+                }
+              >
+                <option value="">章を選択しない</option>
+                {chapters.map((chapter) => (
+                  <option key={chapter.id} value={chapter.id}>
+                    {chapter.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="modal-action">
+            <button className="btn btn-ghost" onClick={closeEditModal}>
+              キャンセル
+            </button>
+            <button
+              className="btn btn-primary"
+              onClick={handleEditSession}
+              disabled={!editFormData.sessionName.trim()}
+            >
+              更新
+            </button>
+          </div>
+        </div>
+      </div>
     </>
   )
 }
