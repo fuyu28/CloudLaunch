@@ -8,17 +8,11 @@
 
 import { useMemo, useRef, useState, useLayoutEffect } from "react"
 import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
-
-interface PlaySession {
-  id: string
-  duration: number
-  playedAt: string
-  gameId: string
-}
+import { PlaySessionType } from "src/types/game"
 
 interface PlayHeatmapProps {
   /** プレイセッションデータの配列 */
-  sessions: PlaySession[]
+  sessions: PlaySessionType[]
   /** ゲームID（フィルタリング用） */
   gameId: string
 }

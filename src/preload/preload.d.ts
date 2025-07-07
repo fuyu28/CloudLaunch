@@ -2,7 +2,7 @@ import { Game } from "@prisma/client"
 import type { Creds } from "../types/creds"
 import { AwsSdkError } from "../types/error"
 import { FilterOption, SortOption } from "../types/menu"
-import { InputGameData } from "../types/game"
+import { InputGameData, PlaySessionType } from "../types/game"
 import { ApiResult } from "../types/result"
 import { ValidatePathResult } from "../types/file"
 import { Chapter, ChapterStats, ChapterCreateInput, ChapterUpdateInput } from "../types/chapter"
@@ -59,7 +59,7 @@ export interface DatabaseAPI {
   updateGame(id: string, game: InputGameData): Promise<ApiResult<void>>
   deleteGame(id: string): Promise<ApiResult<void>>
   createSession(duration: number, gameId: string, sessionName?: string): Promise<ApiResult<void>>
-  getPlaySessions(gameId: string): Promise<ApiResult<PlaySession[]>>
+  getPlaySessions(gameId: string): Promise<ApiResult<PlaySessionType[]>>
   updateSessionChapter(sessionId: string, chapterId: string | null): Promise<ApiResult<void>>
 }
 

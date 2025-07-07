@@ -9,5 +9,5 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "files.eol": "\n",
-  "cSpell.words": ["applaunch", "cloudlaunch", "rungameid"]
+  "cSpell.words": ["applaunch", "cloudlaunch", "rungameid", "Siglus", "siglusengine"]
 }

@@ -12,12 +12,11 @@
  * ユーザーフレンドリーなメッセージを返します。
  */
 
-import { Game, PlaySession } from "@prisma/client"
 import { ipcMain } from "electron"
 import { prisma } from "../db"
 import { Prisma } from "@prisma/client"
 import type { FilterOption, SortOption } from "../../types/menu"
-import type { InputGameData } from "../../types/game"
+import type { InputGameData, GameType, PlaySessionType } from "../../types/game"
 import { ApiResult } from "../../types/result"
 import { logger } from "../utils/logger"
 import { MESSAGES } from "../../constants"
@@ -39,7 +38,12 @@ const sortMap: Record<SortOption, { [key: string]: "asc" | "desc" }> = {
 export function registerDatabaseHandlers(): void {
   ipcMain.handle(
     "list-games",
-    async (_event, searchWord: string, filter: FilterOption, sort: SortOption): Promise<Game[]> => {
+    async (
+      _event,
+      searchWord: string,
+      filter: FilterOption,
+      sort: SortOption
+    ): Promise<GameType[]> => {
       try {
         // 文字検索
         const searchCondition: Prisma.GameWhereInput = searchWord
@@ -66,7 +70,7 @@ export function registerDatabaseHandlers(): void {
     }
   )
 
-  ipcMain.handle("get-game-by-id", async (_event, id: string): Promise<Game | null> => {
+  ipcMain.handle("get-game-by-id", async (_event, id: string): Promise<GameType | null> => {
     try {
       return prisma.game.findFirst({
         where: { id }
@@ -79,7 +83,7 @@ export function registerDatabaseHandlers(): void {
 
   ipcMain.handle(
     "get-play-sessions",
-    async (_event, gameId: string): Promise<ApiResult<PlaySession[]>> => {
+    async (_event, gameId: string): Promise<ApiResult<PlaySessionType[]>> => {
       try {
         const sessions = await prisma.playSession.findMany({
           where: { gameId },

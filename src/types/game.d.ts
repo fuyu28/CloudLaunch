@@ -1,4 +1,4 @@
-export type Game = {
+export type GameType = {
   id: string
   title: string
   publisher: string
@@ -11,8 +11,6 @@ export type Game = {
   lastPlayed: Date | null
   currentChapter: string | null
 }
-
-export type GameType = Game
 
 export type InputGameData = {
   title: string
@@ -37,4 +35,18 @@ export type MonitoringGameStatus = {
   isPlaying: boolean
   /** プレイ時間（秒） */
   playTime: number
+}
+
+export type PlaySessionType = {
+  id: string
+  sessionName: string | null
+  playedAt: Date
+  duration: number
+  gameId: string
+  chapterId: string | null
+  chapter: {
+    name: string
+    id: string
+    order: number
+  } | null
 }
