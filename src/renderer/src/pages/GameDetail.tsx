@@ -214,6 +214,17 @@ export default function GameDetail(): React.JSX.Element {
           onSessionUpdated={refreshGameData}
         />
 
+        {/* 章表示・管理カード */}
+        <ChapterDisplayCard
+          key={`chapter-display-${refreshKey}`}
+          gameId={game.id}
+          gameTitle={game.title}
+          currentChapterId={game.currentChapter || undefined}
+          onChapterSettings={handleOpenChapterSettings}
+          onAddChapter={handleOpenChapterAdd}
+          onChapterChange={refreshGameData}
+        />
+
         {/* クラウドデータ管理カード */}
         <CloudDataCard
           gameId={game.id}
@@ -224,17 +235,6 @@ export default function GameDetail(): React.JSX.Element {
           isDownloading={isDownloading}
           onUpload={handleUploadSaveData}
           onDownload={handleDownloadSaveData}
-        />
-
-        {/* 章表示・管理カード */}
-        <ChapterDisplayCard
-          key={`chapter-display-${refreshKey}`}
-          gameId={game.id}
-          gameTitle={game.title}
-          currentChapterId={game.currentChapter || undefined}
-          onChapterSettings={handleOpenChapterSettings}
-          onAddChapter={handleOpenChapterAdd}
-          onChapterChange={refreshGameData}
         />
       </div>
 
