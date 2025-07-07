@@ -165,10 +165,16 @@ export default function ChapterDisplayCard({
             <FaBook className="text-info" />
             <h4 className="font-semibold">現在の章</h4>
           </div>
-          <button className="btn btn-outline btn-sm" onClick={onChapterSettings}>
-            <FaCog />
-            章設定
-          </button>
+          <div className="flex items-center gap-2">
+            <button className="btn btn-outline btn-sm" onClick={onChapterSettings}>
+              <FaCog />
+              章設定
+            </button>
+            <button className="btn btn-primary btn-sm" onClick={onAddChapter}>
+              <FaPlus />
+              章追加
+            </button>
+          </div>
         </div>
         {/* 現在の章表示 */}
         <div className="bg-base-100 rounded-lg p-4 mb-4">
@@ -218,12 +224,7 @@ export default function ChapterDisplayCard({
           </div>
         </div>
         {/* 章追加ボタン */}
-        <div className="mt-4 pt-4 border-t border-base-300">
-          <button className="btn btn-outline btn-sm w-full" onClick={onAddChapter}>
-            <FaPlus />
-            新しい章を追加
-          </button>
-        </div>
+        <div className="mt-4 pt-4 border-t border-base-300"></div>
       </div>
     </div>
   )
