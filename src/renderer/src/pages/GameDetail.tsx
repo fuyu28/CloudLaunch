@@ -206,7 +206,7 @@ export default function GameDetail(): React.JSX.Element {
       </div>
 
       {/* 下部：機能カード群 */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         {/* プレイセッション管理カード */}
         <PlaySessionCard
           key={`play-session-${refreshKey}`}
@@ -217,28 +217,30 @@ export default function GameDetail(): React.JSX.Element {
           onProcessManagement={() => setIsProcessModalOpen(true)}
         />
 
-        {/* 章表示・管理カード */}
-        <ChapterDisplayCard
-          key={`chapter-display-${refreshKey}`}
-          gameId={game.id}
-          gameTitle={game.title}
-          currentChapterId={game.currentChapter || undefined}
-          onChapterSettings={handleOpenChapterSettings}
-          onAddChapter={handleOpenChapterAdd}
-          onChapterChange={refreshGameData}
-        />
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          {/* 章表示・管理カード */}
+          <ChapterDisplayCard
+            key={`chapter-display-${refreshKey}`}
+            gameId={game.id}
+            gameTitle={game.title}
+            currentChapterId={game.currentChapter || undefined}
+            onChapterSettings={handleOpenChapterSettings}
+            onAddChapter={handleOpenChapterAdd}
+            onChapterChange={refreshGameData}
+          />
 
-        {/* クラウドデータ管理カード */}
-        <CloudDataCard
-          gameId={game.id}
-          gameTitle={game.title}
-          hasSaveFolder={!!game.saveFolderPath}
-          isValidCreds={isValidCreds}
-          isUploading={isUploading}
-          isDownloading={isDownloading}
-          onUpload={handleUploadSaveData}
-          onDownload={handleDownloadSaveData}
-        />
+          {/* クラウドデータ管理カード */}
+          <CloudDataCard
+            gameId={game.id}
+            gameTitle={game.title}
+            hasSaveFolder={!!game.saveFolderPath}
+            isValidCreds={isValidCreds}
+            isUploading={isUploading}
+            isDownloading={isDownloading}
+            onUpload={handleUploadSaveData}
+            onDownload={handleDownloadSaveData}
+          />
+        </div>
       </div>
 
       {/* モーダル */}
