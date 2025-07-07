@@ -76,6 +76,8 @@ export default function ChapterBarChart({ gameId }: ChapterBarChartProps): React
   // 総プレイ時間を計算
   const totalTime = chapterStats.reduce((sum, stat) => sum + stat.totalTime, 0)
 
+  const hasData = totalTime > 0
+
   if (isLoading) {
     return (
       <div className="card bg-base-100 shadow-xl">
@@ -140,9 +142,13 @@ export default function ChapterBarChart({ gameId }: ChapterBarChartProps): React
           </div>
           <div
             className="w-full h-8 rounded-full overflow-hidden bg-base-300"
-            style={{
-              background: makeGradient(chapterStats, chapterColors)
-            }}
+            style={
+              hasData
+                ? {
+                    background: makeGradient(chapterStats, chapterColors)
+                  }
+                : {}
+            }
             title="章別プレイ時間割合"
           />
         </div>
