@@ -2,7 +2,7 @@ import { Game } from "@prisma/client"
 import type { Creds } from "../types/creds"
 import { AwsSdkError } from "../types/error"
 import { FilterOption, SortOption } from "../types/menu"
-import { InputGameData } from "../types/game"
+import { InputGameData, PlaySessionType } from "../types/game"
 import { ApiResult } from "../types/result"
 import { ValidatePathResult } from "../types/file"
 import { Chapter, ChapterStats, ChapterCreateInput, ChapterUpdateInput } from "../types/chapter"
@@ -58,8 +58,8 @@ export interface DatabaseAPI {
   createGame(game: InputGameData): Promise<ApiResult<void>>
   updateGame(id: string, game: InputGameData): Promise<ApiResult<void>>
   deleteGame(id: string): Promise<ApiResult<void>>
-  createSession(duration: number, gameId: string): Promise<ApiResult<void>>
-  getPlaySessions(gameId: string): Promise<ApiResult<PlaySession[]>>
+  createSession(duration: number, gameId: string, sessionName?: string): Promise<ApiResult<void>>
+  getPlaySessions(gameId: string): Promise<ApiResult<PlaySessionType[]>>
   updateSessionChapter(sessionId: string, chapterId: string | null): Promise<ApiResult<void>>
 }
 
@@ -93,6 +93,20 @@ export interface ProcessMonitorAPI {
   addGameToMonitor(gameId: string, gameTitle: string, exePath: string): Promise<ApiResult>
   removeGameFromMonitor(gameId: string): Promise<ApiResult>
   getMonitoringStatus(): Promise<MonitoringGameStatus[]>
+  isMonitoring(): Promise<boolean>
+  getGameProcesses(gameId: string): Promise<
+    ApiResult<
+      Array<{
+        id: string
+        name: string
+        duration: number
+        playedAt: Date
+        isLinked: boolean
+      }>
+    >
+  >
+  deleteProcess(processId: string): Promise<ApiResult>
+  setLinkedProcess(gameId: string, processId: string): Promise<ApiResult>
 }
 
 export interface ChapterAPI {

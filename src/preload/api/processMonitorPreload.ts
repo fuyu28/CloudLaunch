@@ -65,5 +65,47 @@ export const processMonitorAPI = {
    * @returns 監視中のゲーム情報の配列
    */
   getMonitoringStatus: (): Promise<MonitoringGameStatus[]> =>
-    ipcRenderer.invoke("get-monitoring-status")
+    ipcRenderer.invoke("get-monitoring-status"),
+
+  /**
+   * 監視中かどうかをチェック
+   * @returns 監視中かどうか
+   */
+  isMonitoring: (): Promise<boolean> => ipcRenderer.invoke("is-monitoring"),
+
+  /**
+   * 指定されたゲームのプロセス情報を取得
+   * @param gameId ゲームID
+   * @returns プロセス情報の配列
+   */
+  getGameProcesses: (
+    gameId: string
+  ): Promise<
+    ApiResult<
+      Array<{
+        id: string
+        name: string
+        duration: number
+        playedAt: Date
+        isLinked: boolean
+      }>
+    >
+  > => ipcRenderer.invoke("get-game-processes", gameId),
+
+  /**
+   * プロセス（プレイセッション）を削除
+   * @param processId プロセスID
+   * @returns 処理結果
+   */
+  deleteProcess: (processId: string): Promise<ApiResult> =>
+    ipcRenderer.invoke("delete-process", processId),
+
+  /**
+   * 連携先プロセスを設定
+   * @param gameId ゲームID
+   * @param processId プロセスID
+   * @returns 処理結果
+   */
+  setLinkedProcess: (gameId: string, processId: string): Promise<ApiResult> =>
+    ipcRenderer.invoke("set-linked-process", gameId, processId)
 }

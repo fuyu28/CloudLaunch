@@ -6,23 +6,11 @@
  */
 
 import { useState, useCallback, useEffect } from "react"
-import { FaPlus, FaGamepad, FaClock, FaEdit } from "react-icons/fa"
+import { FaPlus, FaGamepad, FaClock, FaEdit, FaCog } from "react-icons/fa"
 import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
 import PlayHeatmap from "./PlayHeatmap"
 import { Chapter } from "../../../types/chapter"
-
-interface PlaySession {
-  id: string
-  duration: number
-  playedAt: string
-  gameId: string
-  chapterId?: string | null
-  chapter?: {
-    id: string
-    name: string
-    order: number
-  } | null
-}
+import { PlaySessionType } from "src/types/game"
 
 interface PlaySessionCardProps {
   /** ゲームID */
@@ -33,6 +21,8 @@ interface PlaySessionCardProps {
   onAddSession: () => void
   /** セッション更新時のコールバック */
   onSessionUpdated?: () => void
+  /** プロセス管理を開くコールバック */
+  onProcessManagement?: () => void
 }
 
 /**
@@ -44,10 +34,11 @@ interface PlaySessionCardProps {
 export default function PlaySessionCard({
   gameId,
   onAddSession,
-  onSessionUpdated
+  onSessionUpdated,
+  onProcessManagement
 }: PlaySessionCardProps): React.JSX.Element {
   const { formatSmart } = useTimeFormat()
-  const [sessions, setSessions] = useState<PlaySession[]>([])
+  const [sessions, setSessions] = useState<PlaySessionType[]>([])
   const [chapters, setChapters] = useState<Chapter[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [editingSession, setEditingSession] = useState<string | null>(null)
@@ -151,10 +142,16 @@ export default function PlaySessionCard({
             プレイセッション
           </h3>
 
-          <button className="btn btn-primary btn-sm" onClick={onAddSession}>
-            <FaPlus />
-            セッション追加
-          </button>
+          <div className="flex gap-2">
+            <button className="btn btn-outline btn-sm" onClick={onProcessManagement}>
+              <FaCog />
+              プロセス管理
+            </button>
+            <button className="btn btn-primary btn-sm" onClick={onAddSession}>
+              <FaPlus />
+              セッション追加
+            </button>
+          </div>
         </div>
 
         {isLoading ? (
@@ -242,11 +239,7 @@ export default function PlaySessionCard({
                               </div>
                             ) : (
                               <div className="flex items-center gap-2">
-                                <span className="text-xs">
-                                  {session.chapter
-                                    ? `${session.chapter.order}. ${session.chapter.name}`
-                                    : "未設定"}
-                                </span>
+                                <span className="text-xs">{session.chapter?.name ?? "未設定"}</span>
                                 <button
                                   className="btn btn-ghost btn-xs"
                                   onClick={() => setEditingSession(session.id)}

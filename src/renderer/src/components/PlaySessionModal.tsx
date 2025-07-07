@@ -33,7 +33,7 @@ export interface PlaySessionModalProps {
   /** モーダルを閉じる時のコールバック */
   onClose: () => void
   /** プレイセッションを追加する時のコールバック */
-  onSubmit: (duration: number) => Promise<void>
+  onSubmit: (duration: number, sessionName?: string) => Promise<void>
   /** ゲームのタイトル */
   gameTitle: string
 }
@@ -67,6 +67,7 @@ export function PlaySessionModal({
   const [hoursInput, setHoursInput] = useState<string>("")
   const [minutesInput, setMinutesInput] = useState<string>("")
   const [secondsInput, setSecondsInput] = useState<string>("")
+  const [sessionName, setSessionName] = useState<string>("")
   const [timerSeconds, setTimerSeconds] = useState<number>(0)
   const [timerState, setTimerState] = useState<TimerState>("stopped")
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
@@ -82,6 +83,7 @@ export function PlaySessionModal({
       setHoursInput("")
       setMinutesInput("")
       setSecondsInput("")
+      setSessionName("")
       setTimerSeconds(0)
       setTimerState("stopped")
       setError("")
@@ -187,7 +189,7 @@ export function PlaySessionModal({
         duration = timerSeconds
       }
 
-      await onSubmit(duration)
+      await onSubmit(duration, sessionName.trim() || undefined)
       onClose()
     } catch {
       setError("プレイセッションの追加に失敗しました")
@@ -227,6 +229,25 @@ export function PlaySessionModal({
             <FaClock className="mr-2" />
             タイマー
           </button>
+        </div>
+
+        {/* セッション名入力欄（共通） */}
+        <div className="form-control mb-4">
+          <label className="label">
+            <span className="label-text">セッション名（任意）</span>
+          </label>
+          <input
+            type="text"
+            className="input input-bordered w-full"
+            placeholder="例: 第1章クリア, ボス戦, 探索タイム"
+            value={sessionName}
+            onChange={(e) => setSessionName(e.target.value)}
+          />
+          <label className="label">
+            <span className="label-text-alt">
+              セッションに名前を付けることで、後で振り返りやすくなります
+            </span>
+          </label>
         </div>
 
         {/* 手動追加モード */}

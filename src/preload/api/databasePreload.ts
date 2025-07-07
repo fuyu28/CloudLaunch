@@ -1,7 +1,7 @@
 import { ipcRenderer } from "electron"
 import { FilterOption, SortOption } from "../../types/menu"
-import { Game, PlaySession } from "@prisma/client"
-import { InputGameData } from "../../types/game"
+import { Game } from "@prisma/client"
+import { InputGameData, PlaySessionType } from "../../types/game"
 import { ApiResult } from "../../types/result"
 
 export const databaseAPI = {
@@ -13,9 +13,13 @@ export const databaseAPI = {
   updateGame: (id: string, game: InputGameData): Promise<ApiResult<void>> =>
     ipcRenderer.invoke("update-game", id, game),
   deleteGame: (id: string): Promise<ApiResult<void>> => ipcRenderer.invoke("delete-game", id),
-  createSession: (duration: number, gameId: string): Promise<ApiResult<void>> =>
-    ipcRenderer.invoke("create-session", duration, gameId),
-  getPlaySessions: (gameId: string): Promise<ApiResult<PlaySession[]>> =>
+  createSession: (
+    duration: number,
+    gameId: string,
+    sessionName?: string
+  ): Promise<ApiResult<void>> =>
+    ipcRenderer.invoke("create-session", duration, gameId, sessionName),
+  getPlaySessions: (gameId: string): Promise<ApiResult<PlaySessionType[]>> =>
     ipcRenderer.invoke("get-play-sessions", gameId),
   updateSessionChapter: (sessionId: string, chapterId: string | null): Promise<ApiResult<void>> =>
     ipcRenderer.invoke("update-session-chapter", sessionId, chapterId)

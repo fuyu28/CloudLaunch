@@ -46,6 +46,8 @@ interface MonitoredGame {
   playStartTime?: Date
   /** 累積プレイ時間（秒） */
   accumulatedTime: number
+  /** 最後にプロセスが見つからなかった時刻 */
+  lastNotFound?: Date
 }
 
 /**
@@ -58,11 +60,12 @@ export class ProcessMonitorService extends EventEmitter {
   private static instance: ProcessMonitorService | null = null
   private monitoredGames: Map<string, MonitoredGame> = new Map()
   private monitoringInterval: NodeJS.Timeout | null = null
-  private readonly intervalMs: number = 5000 // 5秒間隔で監視
-  private readonly sessionTimeoutMs: number = 10 // 10秒間プロセスが見つからなかったらセッション終了
+  private readonly intervalMs: number = 2000 // 2秒間隔で監視
+  private readonly sessionTimeoutMs: number = 4000 // 4秒間プロセスが見つからなかったらセッション終了
   private gamesCache: Array<{ id: string; title: string; exePath: string }> = []
   private lastCacheUpdate: Date | null = null
   private readonly cacheExpiryMs: number = 60000 // 1分間キャッシュを保持
+  private readonly gameCleanupTimeoutMs: number = 300000 // 5分間プロセスが見つからない場合に監視対象から削除
 
   /**
    * ProcessMonitorServiceのコンストラクタ
@@ -105,6 +108,14 @@ export class ProcessMonitorService extends EventEmitter {
     process.on("beforeExit", () => {
       this.stopMonitoring()
     })
+  }
+
+  /**
+   * 監視が開始されているかチェック
+   * @returns 監視中かどうか
+   */
+  public isMonitoring(): boolean {
+    return this.monitoringInterval !== null
   }
 
   /**
@@ -168,7 +179,7 @@ export class ProcessMonitorService extends EventEmitter {
     isPlaying: boolean
     playTime: number
   }> {
-    return Array.from(this.monitoredGames.values()).map((game) => ({
+    const status = Array.from(this.monitoredGames.values()).map((game) => ({
       gameId: game.gameId,
       gameTitle: game.gameTitle,
       exeName: game.exeName,
@@ -177,6 +188,15 @@ export class ProcessMonitorService extends EventEmitter {
         game.accumulatedTime +
         (game.playStartTime ? Math.floor((Date.now() - game.playStartTime.getTime()) / 1000) : 0)
     }))
+
+    logger.info(`監視状況取得: ${status.length}個のゲーム`)
+    status.forEach((game) => {
+      logger.info(
+        `  - ${game.gameTitle} (${game.exeName}): プレイ中=${game.isPlaying}, 時間=${game.playTime}秒`
+      )
+    })
+
+    return status
   }
 
   /**
@@ -274,10 +294,23 @@ export class ProcessMonitorService extends EventEmitter {
           if (bestMatch) {
             isRunning = true
           } else {
-            // フォールバック: ディレクトリ一致しない場合は検出しない
-            logger.info(
-              `プロセス検出スキップ (ディレクトリ不一致): ${game.gameTitle} - ${game.exeName}`
-            )
+            // フォールバック: より緩い条件で再検査
+            logger.info(`厳密マッチ失敗、緩い条件で再検査: ${game.gameTitle} - ${gameExeName}`)
+
+            // ファイル名だけで一致した場合は検出とする
+            for (const process of processes) {
+              if (process.name?.toLowerCase() === gameExeName) {
+                isRunning = true
+                logger.info(`プロセス検出 (ファイル名のみ): ${game.gameTitle} - ${gameExeName}`)
+                break
+              }
+            }
+
+            if (!isRunning) {
+              logger.info(
+                `プロセス検出スキップ (全マッチ失敗): ${game.gameTitle} - ${game.exeName}`
+              )
+            }
           }
         }
 
@@ -286,6 +319,7 @@ export class ProcessMonitorService extends EventEmitter {
         if (isRunning) {
           // プロセスが実行中
           game.lastDetected = now
+          game.lastNotFound = undefined // リセット
 
           if (!game.playStartTime) {
             // プレイ開始
@@ -296,6 +330,10 @@ export class ProcessMonitorService extends EventEmitter {
           }
         } else {
           // プロセスが見つからない
+          if (!game.lastNotFound) {
+            game.lastNotFound = now
+          }
+
           if (game.playStartTime && game.lastDetected) {
             const timeSinceLastDetected = now.getTime() - game.lastDetected.getTime()
 
@@ -317,8 +355,18 @@ export class ProcessMonitorService extends EventEmitter {
       }
       // デバッグ用：監視対象のゲームをログ出力
       for (const [gameId, game] of this.monitoredGames) {
-        logger.info(`監視中のゲーム: ${game.exeName} (ID: ${gameId})`)
+        logger.info(
+          `監視中のゲーム: ${game.gameTitle} (${game.exeName}, ID: ${gameId}, プレイ中: ${!!game.playStartTime})`
+        )
       }
+
+      // 長時間プロセスが見つからないゲームをクリーンアップ
+      await this.cleanupInactiveGames()
+
+      // 監視中のゲーム数とプロセス数を表示
+      logger.info(
+        `監視中のゲーム数: ${this.monitoredGames.size}, 取得したプロセス数: ${processes.length}`
+      )
     } catch (error) {
       logger.error("プロセスチェックでエラーが発生しました:", error)
     }
@@ -341,7 +389,8 @@ export class ProcessMonitorService extends EventEmitter {
           await tx.playSession.create({
             data: {
               duration: game.accumulatedTime,
-              gameId: game.gameId
+              gameId: game.gameId,
+              sessionName: `自動記録 - ${game.exeName}`
             }
           })
 
@@ -376,6 +425,34 @@ export class ProcessMonitorService extends EventEmitter {
       .map((game) => this.saveSession(game))
 
     await Promise.all(promises)
+  }
+
+  /**
+   * 長時間非アクティブなゲームを監視対象から削除
+   */
+  private async cleanupInactiveGames(): Promise<void> {
+    const now = new Date()
+    const gamesToRemove: string[] = []
+
+    for (const [gameId, game] of this.monitoredGames) {
+      // プレイ中でない かつ 長時間プロセスが見つからない場合
+      if (!game.playStartTime && game.lastNotFound) {
+        const timeSinceNotFound = now.getTime() - game.lastNotFound.getTime()
+
+        if (timeSinceNotFound > this.gameCleanupTimeoutMs) {
+          gamesToRemove.push(gameId)
+        }
+      }
+    }
+
+    // 監視対象から削除
+    for (const gameId of gamesToRemove) {
+      const game = this.monitoredGames.get(gameId)
+      if (game) {
+        this.monitoredGames.delete(gameId)
+        logger.info(`非アクティブゲームを監視対象から削除: ${game.gameTitle} (${game.exeName})`)
+      }
+    }
   }
 
   /**
@@ -453,8 +530,7 @@ export class ProcessMonitorService extends EventEmitter {
 
         // 2. ファイル名一致（パス一致しなかった場合のみ）
         if (!isRunning && processNames.has(exeName)) {
-          // 同名のプロセスが複数のゲームで検出される可能性があるため、
-          // プロセスのパス情報を詳細に確認する
+          // 文字化けに対応するため、より柔軟なマッチング手法を使用
           let bestMatch = false
 
           for (const process of processes) {
@@ -486,8 +562,17 @@ export class ProcessMonitorService extends EventEmitter {
           if (bestMatch) {
             isRunning = true
           } else {
-            // フォールバック: ディレクトリ一致しない場合は自動監視に追加しない
-            logger.info(`自動監視スキップ (ディレクトリ不一致): ${game.title} - ${exeName}`)
+            // フォールバック: より緩い条件で再検査
+            logger.info(`厳密マッチ失敗、緩い条件で再検査: ${game.title} - ${exeName}`)
+
+            // ファイル名だけで一致した場合は監視対象に追加
+            for (const process of processes) {
+              if (process.name?.toLowerCase() === exeName) {
+                isRunning = true
+                logger.info(`自動監視追加 (ファイル名のみ): ${game.title} - ${exeName}`)
+                break
+              }
+            }
           }
         }
 
