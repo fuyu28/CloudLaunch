@@ -117,7 +117,7 @@ function CloudDataCard({
         setIsLoading(false)
       }
     },
-    [gameId, isValidCreds]
+    [fileDetails, gameId, isValidCreds, lastFetchedGameId]
   )
 
   // gameIdが変わった場合に状態をリセット
@@ -134,7 +134,7 @@ function CloudDataCard({
     if (gameId && isValidCreds) {
       fetchFileDetails()
     }
-  }, [gameId, isValidCreds]) // fetchFileDetailsを依存配列から削除
+  }, [gameId, isValidCreds, fetchFileDetails]) // fetchFileDetailsを依存配列から削除
 
   // アップロード完了後にデータを再取得
   const handleUpload = useCallback(async () => {
