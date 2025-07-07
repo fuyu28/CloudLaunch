@@ -93,6 +93,7 @@ export interface ProcessMonitorAPI {
   addGameToMonitor(gameId: string, gameTitle: string, exePath: string): Promise<ApiResult>
   removeGameFromMonitor(gameId: string): Promise<ApiResult>
   getMonitoringStatus(): Promise<MonitoringGameStatus[]>
+  isMonitoring(): Promise<boolean>
 }
 
 export interface ChapterAPI {

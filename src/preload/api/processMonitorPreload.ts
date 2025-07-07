@@ -65,5 +65,11 @@ export const processMonitorAPI = {
    * @returns 監視中のゲーム情報の配列
    */
   getMonitoringStatus: (): Promise<MonitoringGameStatus[]> =>
-    ipcRenderer.invoke("get-monitoring-status")
+    ipcRenderer.invoke("get-monitoring-status"),
+
+  /**
+   * 監視中かどうかをチェック
+   * @returns 監視中かどうか
+   */
+  isMonitoring: (): Promise<boolean> => ipcRenderer.invoke("is-monitoring")
 }

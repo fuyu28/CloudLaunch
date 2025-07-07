@@ -59,7 +59,7 @@ export class ProcessMonitorService extends EventEmitter {
   private monitoredGames: Map<string, MonitoredGame> = new Map()
   private monitoringInterval: NodeJS.Timeout | null = null
   private readonly intervalMs: number = 5000 // 5秒間隔で監視
-  private readonly sessionTimeoutMs: number = 10 // 10秒間プロセスが見つからなかったらセッション終了
+  private readonly sessionTimeoutMs: number = 10000 // 10秒間プロセスが見つからなかったらセッション終了
   private gamesCache: Array<{ id: string; title: string; exePath: string }> = []
   private lastCacheUpdate: Date | null = null
   private readonly cacheExpiryMs: number = 60000 // 1分間キャッシュを保持
@@ -105,6 +105,14 @@ export class ProcessMonitorService extends EventEmitter {
     process.on("beforeExit", () => {
       this.stopMonitoring()
     })
+  }
+
+  /**
+   * 監視が開始されているかチェック
+   * @returns 監視中かどうか
+   */
+  public isMonitoring(): boolean {
+    return this.monitoringInterval !== null
   }
 
   /**
@@ -168,7 +176,7 @@ export class ProcessMonitorService extends EventEmitter {
     isPlaying: boolean
     playTime: number
   }> {
-    return Array.from(this.monitoredGames.values()).map((game) => ({
+    const status = Array.from(this.monitoredGames.values()).map((game) => ({
       gameId: game.gameId,
       gameTitle: game.gameTitle,
       exeName: game.exeName,
@@ -177,6 +185,15 @@ export class ProcessMonitorService extends EventEmitter {
         game.accumulatedTime +
         (game.playStartTime ? Math.floor((Date.now() - game.playStartTime.getTime()) / 1000) : 0)
     }))
+
+    logger.info(`監視状況取得: ${status.length}個のゲーム`)
+    status.forEach((game) => {
+      logger.info(
+        `  - ${game.gameTitle} (${game.exeName}): プレイ中=${game.isPlaying}, 時間=${game.playTime}秒`
+      )
+    })
+
+    return status
   }
 
   /**
@@ -274,10 +291,23 @@ export class ProcessMonitorService extends EventEmitter {
           if (bestMatch) {
             isRunning = true
           } else {
-            // フォールバック: ディレクトリ一致しない場合は検出しない
-            logger.info(
-              `プロセス検出スキップ (ディレクトリ不一致): ${game.gameTitle} - ${game.exeName}`
-            )
+            // フォールバック: より緩い条件で再検査
+            logger.info(`厳密マッチ失敗、緩い条件で再検査: ${game.gameTitle} - ${gameExeName}`)
+
+            // ファイル名だけで一致した場合は検出とする
+            for (const process of processes) {
+              if (process.name?.toLowerCase() === gameExeName) {
+                isRunning = true
+                logger.info(`プロセス検出 (ファイル名のみ): ${game.gameTitle} - ${gameExeName}`)
+                break
+              }
+            }
+
+            if (!isRunning) {
+              logger.info(
+                `プロセス検出スキップ (全マッチ失敗): ${game.gameTitle} - ${game.exeName}`
+              )
+            }
           }
         }
 
@@ -317,8 +347,15 @@ export class ProcessMonitorService extends EventEmitter {
       }
       // デバッグ用：監視対象のゲームをログ出力
       for (const [gameId, game] of this.monitoredGames) {
-        logger.info(`監視中のゲーム: ${game.exeName} (ID: ${gameId})`)
+        logger.info(
+          `監視中のゲーム: ${game.gameTitle} (${game.exeName}, ID: ${gameId}, プレイ中: ${!!game.playStartTime})`
+        )
       }
+
+      // 監視中のゲーム数とプロセス数を表示
+      logger.info(
+        `監視中のゲーム数: ${this.monitoredGames.size}, 取得したプロセス数: ${processes.length}`
+      )
     } catch (error) {
       logger.error("プロセスチェックでエラーが発生しました:", error)
     }
@@ -453,8 +490,7 @@ export class ProcessMonitorService extends EventEmitter {
 
         // 2. ファイル名一致（パス一致しなかった場合のみ）
         if (!isRunning && processNames.has(exeName)) {
-          // 同名のプロセスが複数のゲームで検出される可能性があるため、
-          // プロセスのパス情報を詳細に確認する
+          // 文字化けに対応するため、より柔軟なマッチング手法を使用
           let bestMatch = false
 
           for (const process of processes) {
@@ -470,24 +506,64 @@ export class ProcessMonitorService extends EventEmitter {
               // プロセスのパス（cmd）と ゲームの実行ファイルパスを正規化して比較
               const normalizedProcessPath = processCmd.replace(/\\/g, "/")
               const normalizedGamePath = gameExePath.replace(/\\/g, "/")
+              const normalizedGameDirectory = gameDirectory.replace(/\\/g, "/")
 
+              // 1. パス完全一致
               if (normalizedProcessPath === normalizedGamePath) {
                 bestMatch = true
                 logger.info(`自動監視追加 (パス完全一致): ${game.title} - ${process.cmd}`)
                 break
-              } else if (normalizedProcessPath.includes(gameDirectory.replace(/\\/g, "/"))) {
+              }
+
+              // 2. ディレクトリ部分一致
+              if (normalizedProcessPath.includes(normalizedGameDirectory)) {
                 bestMatch = true
                 logger.info(`自動監視追加 (ディレクトリ部分一致): ${game.title} - ${process.cmd}`)
                 break
               }
+
+              // 3. ファイル名一致（最終手段）
+              if (normalizedProcessPath.endsWith(`/${exeName}`)) {
+                bestMatch = true
+                logger.info(`自動監視追加 (ファイル名一致): ${game.title} - ${process.cmd}`)
+                break
+              }
+
+              // 4. 文字化け対応：パス構造の類似性チェック
+              const processPathParts = normalizedProcessPath.split("/").filter(Boolean)
+              const gamePathParts = normalizedGamePath.split("/").filter(Boolean)
+
+              // パスの深さと最後のファイル名が一致するかチェック
+              if (
+                processPathParts.length === gamePathParts.length &&
+                processPathParts[processPathParts.length - 1] ===
+                  gamePathParts[gamePathParts.length - 1]
+              ) {
+                bestMatch = true
+                logger.info(`自動監視追加 (構造一致): ${game.title} - ${process.cmd}`)
+                break
+              }
+
+              logger.info(
+                `一致チェック結果: パス完全一致=${normalizedProcessPath === normalizedGamePath}, ディレクトリ一致=${normalizedProcessPath.includes(normalizedGameDirectory)}, ファイル名一致=${normalizedProcessPath.endsWith(`/${exeName}`)}, 構造一致=${processPathParts.length === gamePathParts.length && processPathParts[processPathParts.length - 1] === gamePathParts[gamePathParts.length - 1]}`
+              )
             }
           }
 
           if (bestMatch) {
             isRunning = true
           } else {
-            // フォールバック: ディレクトリ一致しない場合は自動監視に追加しない
-            logger.info(`自動監視スキップ (ディレクトリ不一致): ${game.title} - ${exeName}`)
+            // フォールバック: より緩い条件で再検査
+            logger.info(`厳密マッチ失敗、緩い条件で再検査: ${game.title} - ${exeName}`)
+
+            // ファイル名だけで一致した場合は監視対象に追加
+            for (const process of processes) {
+              if (process.name?.toLowerCase() === exeName) {
+                isRunning = true
+                logger.info(`自動監視追加 (ファイル名のみ): ${game.title} - ${exeName}`)
+                break
+              }
+            }
           }
         }
 
@@ -495,6 +571,17 @@ export class ProcessMonitorService extends EventEmitter {
         if (isRunning) {
           this.addGame(game.id, game.title, game.exePath)
           logger.info(`自動監視対象に追加: ${game.title} (${exeName})`)
+
+          // 追加したゲームのプレイ状態を即座に設定
+          const addedGame = this.monitoredGames.get(game.id)
+          if (addedGame && !addedGame.playStartTime) {
+            const now = new Date()
+            addedGame.playStartTime = now
+            addedGame.lastDetected = now
+            addedGame.accumulatedTime = 0
+            logger.info(`自動監視追加時のプレイ開始設定: ${game.title}`)
+            this.emit("gameStarted", { gameId: game.id, gameTitle: game.title, exeName })
+          }
         }
       }
     } catch (error) {

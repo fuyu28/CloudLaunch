@@ -86,4 +86,16 @@ export function registerProcessMonitorHandlers(): void {
       return []
     }
   })
+
+  /**
+   * 監視中かどうかをチェック
+   */
+  ipcMain.handle("is-monitoring", async (): Promise<boolean> => {
+    try {
+      return monitor.isMonitoring()
+    } catch (error) {
+      logger.error("監視状態チェックエラー:", error)
+      return false
+    }
+  })
 }

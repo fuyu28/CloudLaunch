@@ -37,8 +37,19 @@ export function PlayStatusBar(): React.JSX.Element {
   // 監視状況を更新
   const updateMonitoringStatus = async (): Promise<void> => {
     try {
-      const status = await window.api.processMonitor.getMonitoringStatus()
+      const [status, monitoring] = await Promise.all([
+        window.api.processMonitor.getMonitoringStatus(),
+        window.api.processMonitor.isMonitoring()
+      ])
       setMonitoringGames(status)
+      setIsMonitoring(monitoring)
+
+      // デバッグ情報を出力
+      console.log("監視状況更新:", {
+        gameCount: status.length,
+        playingCount: status.filter((g) => g.isPlaying).length,
+        monitoring
+      })
     } catch (error) {
       console.error("監視状況の取得に失敗しました:", error)
     }
@@ -84,7 +95,13 @@ export function PlayStatusBar(): React.JSX.Element {
 
   // 初期化
   useEffect(() => {
-    updateMonitoringStatus()
+    // 少し遅延させて監視状態を取得（メインプロセスの初期化を待つ）
+    const timer = setTimeout(() => {
+      updateMonitoringStatus()
+      console.log("PlayStatusBar初期化完了")
+    }, 1000)
+
+    return () => clearTimeout(timer)
   }, [])
 
   const playingGames = monitoringGames.filter((game) => game.isPlaying)

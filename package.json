@@ -12,7 +12,7 @@
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json --composite false",
     "typecheck": "npm run typecheck:node && npm run typecheck:web",
     "start": "electron-vite preview",
-    "dev": "electron-vite dev",
+    "dev": "chcp 65001 && electron-vite dev",
     "prisma:migrate:prod": "cross-env DATABASE_URL=\"file:../out/app.db\" npx prisma migrate deploy",
     "prisma:generate": "npx prisma generate",
     "prepackage": "npm run prisma:migrate:prod && npm run prisma:generate",
