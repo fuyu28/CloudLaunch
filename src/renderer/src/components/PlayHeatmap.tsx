@@ -6,7 +6,7 @@
  * プレイ頻度の高い日ほど濃い色で表示されます。
  */
 
-import { useMemo, useRef, useState, useLayoutEffect } from "react"
+import { useMemo } from "react"
 import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
 import { PlaySessionType } from "src/types/game"
 
@@ -34,10 +34,6 @@ interface DayData {
 export default function PlayHeatmap({ sessions, gameId }: PlayHeatmapProps): React.JSX.Element {
   const { formatSmart } = useTimeFormat()
 
-  // 追加: 横・縦のオーバーフローを判定するための ref と state
-  const containerRef = useRef<HTMLDivElement>(null)
-  const [isOverflowX, setIsOverflowX] = useState(false)
-  const [isOverflowY, setIsOverflowY] = useState(false)
   // 過去1年間の日付データを生成
   const heatmapData = useMemo(() => {
     const today = new Date()
@@ -128,30 +124,12 @@ export default function PlayHeatmap({ sessions, gameId }: PlayHeatmapProps): Rea
     return result
   }, [heatmapData])
 
-  // 月ラベルを生成
-  const monthLabels = useMemo(() => {
-    const labels: string[] = []
-    const today = new Date()
-
-    for (let i = 11; i >= 0; i--) {
-      const date = new Date(today.getFullYear(), today.getMonth() - i, 1)
-      labels.push(date.toLocaleDateString("ja-JP", { month: "short" }))
-    }
-
-    return labels
-  }, [])
-
-  // レイアウト後にスクロール領域をチェック
-  useLayoutEffect(() => {
-    const el = containerRef.current
-    if (!el) return
-
-    setIsOverflowX(el.scrollWidth > el.clientWidth)
-    setIsOverflowY(el.scrollHeight > el.clientHeight)
-  }, [heatmapData, weeks]) // heatmapData や weeks が変わったら再チェック
+  const monthForWeek = weeks.map((week) =>
+    week[0].date.toLocaleDateString("ja-JP", { month: "short" })
+  )
 
   return (
-    <div className="w-full">
+    <div className="w-full overflow-auto scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-transparent">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-semibold">プレイ活動</h3>
         <div className="flex items-center gap-2 text-xs text-base-content/60">
@@ -165,49 +143,51 @@ export default function PlayHeatmap({ sessions, gameId }: PlayHeatmapProps): Rea
         </div>
       </div>
 
+      {/* ■ Grid コンテナ 定義 ■ */}
       <div
-        ref={containerRef}
-        className={
-          // オーバーフローしていなければスクロールバー非表示、
-          // オーバーフローしていれば細いスクロールバーを付与
-          `overflow-auto ${
-            isOverflowX || isOverflowY
-              ? "scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-transparent"
-              : "scrollbar-none"
-          }`
-        }
+        className="grid gap-1"
+        style={{
+          // 1行目：月ラベル、2〜8行目：日曜日〜土曜日
+          gridTemplateRows: "auto repeat(7, min-content)",
+          gridTemplateColumns: `repeat(${weeks.length}, min-content)`
+        }}
       >
-        <div className="inline-block min-w-full">
-          {/* 月ラベル */}
-          <div className="flex mb-2">
-            {monthLabels.map((month, index) => (
-              <div
-                key={index}
-                className="flex-1 text-xs text-base-content/60 text-center min-w-[30px]"
-              >
-                {month}
-              </div>
-            ))}
+        {/* ─── 1行目：月ラベル ─── */}
+        {monthForWeek.map((month, col) => (
+          <div
+            key={col}
+            className="text-xs text-base-content/60 text-center"
+            style={{ gridRow: 1, gridColumn: col + 1 }}
+          >
+            {/* 先週と同じ月なら空文字 */}
+            {col === 0 || monthForWeek[col] !== monthForWeek[col - 1] ? month : ""}
           </div>
+        ))}
 
-          {/* ヒートマップグリッド */}
-          <div className="flex gap-1 scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-transparent">
-            {weeks.map((week, weekIndex) => (
-              <div key={weekIndex} className="flex flex-col gap-1 pb-2">
-                {week.map((day, dayIndex) => {
-                  const intensity = getIntensity(day.sessions, day.totalTime)
-                  return (
-                    <div
-                      key={dayIndex}
-                      className={`w-3 h-3 rounded-sm cursor-pointer transition-all hover:scale-110 ${getIntensityClass(intensity)}`}
-                      title={`${day.date.toLocaleDateString("ja-JP")}: ${day.sessions}回プレイ, ${formatSmart(day.totalTime)}`}
-                    />
-                  )
-                })}
-              </div>
-            ))}
-          </div>
-        </div>
+        {/* ─── 2〜8行目：セル ─── */}
+        {weeks.map((week, col) =>
+          week.map((day, weekday) => {
+            const intensity = getIntensity(day.sessions, day.totalTime)
+            return (
+              <div
+                key={`${col}-${weekday}`}
+                className={`
+                  w-3 h-3 rounded-sm cursor-pointer
+                  transition-all hover:scale-110
+                  ${getIntensityClass(intensity)}
+                `}
+                title={`${day.date.toLocaleDateString(
+                  "ja-JP"
+                )}: ${day.sessions}回, ${formatSmart(day.totalTime)}`}
+                style={{
+                  // gridColumn: 週番号＋1、gridRow: 曜日(0=日曜)＋2行目以降
+                  gridColumn: col + 1,
+                  gridRow: weekday + 2
+                }}
+              />
+            )
+          })
+        )}
       </div>
     </div>
   )
