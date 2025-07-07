@@ -19,7 +19,7 @@ import ChapterBarChart from "@renderer/components/ChapterBarChart"
 import ChapterDisplayCard from "@renderer/components/ChapterDisplayCard"
 import ChapterSettingsModal from "@renderer/components/ChapterSettingsModal"
 import ChapterAddModal from "@renderer/components/ChapterAddModal"
-import ProcessManagementModal from "@renderer/components/ProcessManagementModal"
+import PlaySessionManagementModal from "@renderer/components/PlaySessionManagementModal"
 import { useToastHandler } from "@renderer/hooks/useToastHandler"
 
 export default function GameDetail(): React.JSX.Element {
@@ -290,7 +290,7 @@ export default function GameDetail(): React.JSX.Element {
       />
 
       {/* プロセス管理 */}
-      <ProcessManagementModal
+      <PlaySessionManagementModal
         isOpen={isProcessModalOpen}
         gameId={game.id}
         gameTitle={game.title}

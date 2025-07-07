@@ -40,7 +40,7 @@ interface ProcessInfo {
 /**
  * セッション管理モーダルのProps
  */
-interface ProcessManagementModalProps {
+interface PlaySessionManagementModalProps {
   /** モーダルの開閉状態 */
   isOpen: boolean
   /** モーダルを閉じる関数 */
@@ -56,13 +56,13 @@ interface ProcessManagementModalProps {
 /**
  * セッション管理モーダルコンポーネント
  */
-export default function ProcessManagementModal({
+export default function PlaySessionManagementModal({
   isOpen,
   onClose,
   gameId,
   gameTitle,
   onProcessUpdated
-}: ProcessManagementModalProps): React.JSX.Element {
+}: PlaySessionManagementModalProps): React.JSX.Element {
   const [processes, setProcesses] = useState<ProcessInfo[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedProcessId, setSelectedProcessId] = useState<string | null>(null)
