@@ -14,7 +14,7 @@
 import { renderHook, act } from "@testing-library/react"
 import { useGameActions } from "../useGameActions"
 import { useLoadingState } from "../useLoadingState"
-import type { InputGameData, Game } from "../../../../types/game"
+import type { InputGameData, GameType } from "../../../../types/game"
 import type { ApiResult } from "../../../../types/result"
 import type { FilterOption, SortOption } from "../../../../types/menu"
 
@@ -62,7 +62,7 @@ describe("useGameActions", () => {
     playStatus: "unplayed"
   }
 
-  const mockGames: Game[] = [
+  const mockGames: GameType[] = [
     {
       id: "game-1",
       title: "Test Game",
@@ -84,7 +84,7 @@ describe("useGameActions", () => {
 
   describe("createGameAndRefreshList", () => {
     it("ゲーム作成が成功した場合、ゲーム一覧を更新してモーダルを閉じる", async () => {
-      const mockCreateResult: ApiResult<Game> = {
+      const mockCreateResult: ApiResult<GameType> = {
         success: true,
         data: mockGames[0]
       }
@@ -208,7 +208,7 @@ describe("useGameActions", () => {
         sort: "lastPlayed" as SortOption
       }
 
-      const mockCreateResult: ApiResult<Game> = {
+      const mockCreateResult: ApiResult<GameType> = {
         success: true,
         data: mockGames[0]
       }
@@ -286,7 +286,7 @@ describe("useGameActions", () => {
 
   describe("ローディング状態との統合", () => {
     it("executeWithLoading に正しいオプションが渡される", async () => {
-      const mockCreateResult: ApiResult<Game> = {
+      const mockCreateResult: ApiResult<GameType> = {
         success: true,
         data: mockGames[0]
       }

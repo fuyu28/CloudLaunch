@@ -12,7 +12,7 @@
 import { useCallback } from "react"
 import { useLoadingState } from "./useLoadingState"
 import { MESSAGES } from "../../../constants"
-import type { InputGameData, Game } from "../../../types/game"
+import type { InputGameData, GameType } from "../../../types/game"
 import type { ApiResult } from "../../../types/result"
 import type { SortOption, FilterOption } from "../../../types/menu"
 
@@ -29,7 +29,7 @@ export interface UseGameActionsProps {
   /** 現在のソート */
   sort: SortOption
   /** ゲーム一覧の更新コールバック */
-  onGamesUpdate: (games: Game[]) => void
+  onGamesUpdate: (games: GameType[]) => void
   /** モーダルクローズのコールバック */
   onModalClose: () => void
 }
