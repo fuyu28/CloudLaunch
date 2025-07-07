@@ -506,47 +506,16 @@ export class ProcessMonitorService extends EventEmitter {
               // プロセスのパス（cmd）と ゲームの実行ファイルパスを正規化して比較
               const normalizedProcessPath = processCmd.replace(/\\/g, "/")
               const normalizedGamePath = gameExePath.replace(/\\/g, "/")
-              const normalizedGameDirectory = gameDirectory.replace(/\\/g, "/")
 
-              // 1. パス完全一致
               if (normalizedProcessPath === normalizedGamePath) {
                 bestMatch = true
                 logger.info(`自動監視追加 (パス完全一致): ${game.title} - ${process.cmd}`)
                 break
-              }
-
-              // 2. ディレクトリ部分一致
-              if (normalizedProcessPath.includes(normalizedGameDirectory)) {
+              } else if (normalizedProcessPath.includes(gameDirectory.replace(/\\/g, "/"))) {
                 bestMatch = true
                 logger.info(`自動監視追加 (ディレクトリ部分一致): ${game.title} - ${process.cmd}`)
                 break
               }
-
-              // 3. ファイル名一致（最終手段）
-              if (normalizedProcessPath.endsWith(`/${exeName}`)) {
-                bestMatch = true
-                logger.info(`自動監視追加 (ファイル名一致): ${game.title} - ${process.cmd}`)
-                break
-              }
-
-              // 4. 文字化け対応：パス構造の類似性チェック
-              const processPathParts = normalizedProcessPath.split("/").filter(Boolean)
-              const gamePathParts = normalizedGamePath.split("/").filter(Boolean)
-
-              // パスの深さと最後のファイル名が一致するかチェック
-              if (
-                processPathParts.length === gamePathParts.length &&
-                processPathParts[processPathParts.length - 1] ===
-                  gamePathParts[gamePathParts.length - 1]
-              ) {
-                bestMatch = true
-                logger.info(`自動監視追加 (構造一致): ${game.title} - ${process.cmd}`)
-                break
-              }
-
-              logger.info(
-                `一致チェック結果: パス完全一致=${normalizedProcessPath === normalizedGamePath}, ディレクトリ一致=${normalizedProcessPath.includes(normalizedGameDirectory)}, ファイル名一致=${normalizedProcessPath.endsWith(`/${exeName}`)}, 構造一致=${processPathParts.length === gamePathParts.length && processPathParts[processPathParts.length - 1] === gamePathParts[gamePathParts.length - 1]}`
-              )
             }
           }
 
@@ -571,17 +540,6 @@ export class ProcessMonitorService extends EventEmitter {
         if (isRunning) {
           this.addGame(game.id, game.title, game.exePath)
           logger.info(`自動監視対象に追加: ${game.title} (${exeName})`)
-
-          // 追加したゲームのプレイ状態を即座に設定
-          const addedGame = this.monitoredGames.get(game.id)
-          if (addedGame && !addedGame.playStartTime) {
-            const now = new Date()
-            addedGame.playStartTime = now
-            addedGame.lastDetected = now
-            addedGame.accumulatedTime = 0
-            logger.info(`自動監視追加時のプレイ開始設定: ${game.title}`)
-            this.emit("gameStarted", { gameId: game.id, gameTitle: game.title, exeName })
-          }
         }
       }
     } catch (error) {
