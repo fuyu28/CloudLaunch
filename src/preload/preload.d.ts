@@ -28,6 +28,21 @@ export interface SaveDataDownloadAPI {
     localSaveFolderPath: string,
     remoteSaveDataPath: string
   ): Promise<ApiResult<void>>
+  getCloudDataInfo(
+    gameId: string
+  ): Promise<ApiResult<{ exists: boolean; uploadedAt?: Date; size?: number; comment?: string }>>
+  getCloudFileDetails(gameId: string): Promise<
+    ApiResult<{
+      exists: boolean
+      totalSize: number
+      files: Array<{
+        name: string
+        size: number
+        lastModified: Date
+        key: string
+      }>
+    }>
+  >
 }
 
 export interface CredentialAPI {
@@ -43,6 +58,7 @@ export interface DatabaseAPI {
   updateGame(id: string, game: InputGameData): Promise<ApiResult<void>>
   deleteGame(id: string): Promise<ApiResult<void>>
   createSession(duration: number, gameId: string): Promise<ApiResult<void>>
+  getPlaySessions(gameId: string): Promise<ApiResult<PlaySession[]>>
 }
 
 export interface LoadImageAPI {

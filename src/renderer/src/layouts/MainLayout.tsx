@@ -136,7 +136,7 @@ export default function MainLayout(): React.JSX.Element {
         </header>
 
         {/* ページ固有部分 */}
-        <main className="flex-1 pt-4 overflow-hidden min-h-0">
+        <main className="flex-1 pt-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-transparent min-h-0">
           <Outlet />
         </main>
 
