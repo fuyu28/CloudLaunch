@@ -6,7 +6,7 @@
  * プレイ頻度の高い日ほど濃い色で表示されます。
  */
 
-import { useMemo } from "react"
+import { useMemo, useRef, useState, useLayoutEffect } from "react"
 import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
 
 interface PlaySession {
@@ -40,6 +40,10 @@ interface DayData {
 export default function PlayHeatmap({ sessions, gameId }: PlayHeatmapProps): React.JSX.Element {
   const { formatSmart } = useTimeFormat()
 
+  // 追加: 横・縦のオーバーフローを判定するための ref と state
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [isOverflowX, setIsOverflowX] = useState(false)
+  const [isOverflowY, setIsOverflowY] = useState(false)
   // 過去1年間の日付データを生成
   const heatmapData = useMemo(() => {
     const today = new Date()
@@ -98,13 +102,13 @@ export default function PlayHeatmap({ sessions, gameId }: PlayHeatmapProps): Rea
       case 0:
         return "bg-base-300"
       case 1:
-        return "bg-success bg-opacity-20"
+        return "bg-success/20"
       case 2:
-        return "bg-success bg-opacity-40"
+        return "bg-success/40"
       case 3:
-        return "bg-success bg-opacity-60"
+        return "bg-success/60"
       case 4:
-        return "bg-success bg-opacity-80"
+        return "bg-success/80"
       default:
         return "bg-base-300"
     }
@@ -143,6 +147,15 @@ export default function PlayHeatmap({ sessions, gameId }: PlayHeatmapProps): Rea
     return labels
   }, [])
 
+  // レイアウト後にスクロール領域をチェック
+  useLayoutEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+
+    setIsOverflowX(el.scrollWidth > el.clientWidth)
+    setIsOverflowY(el.scrollHeight > el.clientHeight)
+  }, [heatmapData, weeks]) // heatmapData や weeks が変わったら再チェック
+
   return (
     <div className="w-full">
       <div className="flex justify-between items-center mb-4">
@@ -158,7 +171,18 @@ export default function PlayHeatmap({ sessions, gameId }: PlayHeatmapProps): Rea
         </div>
       </div>
 
-      <div className="overflow-x-auto">
+      <div
+        ref={containerRef}
+        className={
+          // オーバーフローしていなければスクロールバー非表示、
+          // オーバーフローしていれば細いスクロールバーを付与
+          `overflow-auto ${
+            isOverflowX || isOverflowY
+              ? "scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-transparent"
+              : "scrollbar-none"
+          }`
+        }
+      >
         <div className="inline-block min-w-full">
           {/* 月ラベル */}
           <div className="flex mb-2">
@@ -173,9 +197,9 @@ export default function PlayHeatmap({ sessions, gameId }: PlayHeatmapProps): Rea
           </div>
 
           {/* ヒートマップグリッド */}
-          <div className="flex gap-1">
+          <div className="flex gap-1 scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-transparent">
             {weeks.map((week, weekIndex) => (
-              <div key={weekIndex} className="flex flex-col gap-1">
+              <div key={weekIndex} className="flex flex-col gap-1 pb-2">
                 {week.map((day, dayIndex) => {
                   const intensity = getIntensity(day.sessions, day.totalTime)
                   return (

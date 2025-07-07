@@ -33,6 +33,7 @@ import {
 import { ApiResult } from "../../types/result"
 import { withFileOperationErrorHandling } from "../utils/ipcErrorHandler"
 import { validateCredentialsForR2 } from "../utils/credentialValidator"
+import { createRemotePath } from "../../utils/stringUtils"
 
 /**
  * リモートパス配下のすべてのオブジェクトキーを取得する関数
@@ -179,7 +180,19 @@ export function registerDownloadSaveDataHandler(): void {
 
         const { credentials, r2Client } = credentialResult.data!
         const bucketName = credentials.bucketName
-        const remotePath = `saves/${gameId}/`
+
+        // データベースからゲーム情報を取得してタイトルを取得
+        const { prisma } = await import("../db")
+        const game = await prisma.game.findUnique({
+          where: { id: gameId }
+        })
+
+        if (!game) {
+          return { success: false, message: "ゲームが見つかりません" }
+        }
+
+        // ゲームタイトルからリモートパスを生成（アップロード処理と同じ形式）
+        const remotePath = createRemotePath(game.title)
 
         try {
           // リモートパス配下のオブジェクトを検索
@@ -200,18 +213,126 @@ export function registerDownloadSaveDataHandler(): void {
 
           const headResult = await r2Client.send(headCommand)
 
+          // 最新ファイルのサイズを使用（後方互換性のため）
+          const totalSize = headResult.ContentLength || 0
+
           return {
             success: true,
             data: {
               exists: true,
               uploadedAt: headResult.LastModified,
-              size: headResult.ContentLength,
+              size: totalSize,
               comment: headResult.Metadata?.comment || ""
             }
           }
         } catch (error) {
           if (error && typeof error === "object" && "name" in error && error.name === "NoSuchKey") {
             return { success: true, data: { exists: false } }
+          }
+          throw error
+        }
+      }
+    )
+  )
+
+  // クラウドファイル詳細情報取得ハンドラー
+  ipcMain.handle(
+    "get-cloud-file-details",
+    withFileOperationErrorHandling(
+      async (
+        _event,
+        gameId: string
+      ): Promise<
+        ApiResult<{
+          exists: boolean
+          totalSize: number
+          files: Array<{
+            name: string
+            size: number
+            lastModified: Date
+            key: string
+          }>
+        }>
+      > => {
+        const credentialResult = await validateCredentialsForR2()
+        if (!credentialResult.success) {
+          return { success: false, message: credentialResult.message }
+        }
+
+        const { credentials, r2Client } = credentialResult.data!
+        const bucketName = credentials.bucketName
+
+        // データベースからゲーム情報を取得してタイトルを取得
+        const { prisma } = await import("../db")
+        const game = await prisma.game.findUnique({
+          where: { id: gameId }
+        })
+
+        if (!game) {
+          return { success: false, message: "ゲームが見つかりません" }
+        }
+
+        // ゲームタイトルからリモートパスを生成（アップロード処理と同じ形式）
+        const remotePath = createRemotePath(game.title)
+
+        try {
+          // リモートパス配下のオブジェクトを検索
+          const objects = await getAllObjectKeys(r2Client, bucketName, remotePath)
+
+          if (objects.length === 0) {
+            return {
+              success: true,
+              data: {
+                exists: false,
+                totalSize: 0,
+                files: []
+              }
+            }
+          }
+
+          // 各ファイルの詳細情報を取得
+          const fileDetails = await Promise.all(
+            objects.map(async (obj) => {
+              const headCommand = new HeadObjectCommand({
+                Bucket: bucketName,
+                Key: obj.key
+              })
+
+              const headResult = await r2Client.send(headCommand)
+
+              // ファイル名を取得（パスの最後の部分）
+              const fileName = obj.key.split("/").pop() || obj.key
+
+              return {
+                name: fileName,
+                size: headResult.ContentLength || 0,
+                lastModified: headResult.LastModified || obj.lastModified,
+                key: obj.key
+              }
+            })
+          )
+
+          // 総ファイルサイズを計算
+          const totalSize = fileDetails.reduce((sum, file) => sum + file.size, 0)
+
+          return {
+            success: true,
+            data: {
+              exists: true,
+              totalSize,
+              files: fileDetails
+            }
+          }
+        } catch (error) {
+          if (error && typeof error === "object" && "name" in error && error.name === "NoSuchKey") {
+            return {
+              success: true,
+              data: {
+                exists: false,
+                totalSize: 0,
+                files: []
+              }
+            }
           }
           throw error
         }

@@ -31,6 +31,18 @@ export interface SaveDataDownloadAPI {
   getCloudDataInfo(
     gameId: string
   ): Promise<ApiResult<{ exists: boolean; uploadedAt?: Date; size?: number; comment?: string }>>
+  getCloudFileDetails(gameId: string): Promise<
+    ApiResult<{
+      exists: boolean
+      totalSize: number
+      files: Array<{
+        name: string
+        size: number
+        lastModified: Date
+        key: string
+      }>
+    }>
+  >
 }
 
 export interface CredentialAPI {

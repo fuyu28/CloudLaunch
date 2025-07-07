@@ -11,5 +11,20 @@ export const saveDataDownloadAPI = {
   getCloudDataInfo: (
     gameId: string
   ): Promise<ApiResult<{ exists: boolean; uploadedAt?: Date; size?: number; comment?: string }>> =>
-    ipcRenderer.invoke("get-cloud-data-info", gameId)
+    ipcRenderer.invoke("get-cloud-data-info", gameId),
+
+  getCloudFileDetails: (
+    gameId: string
+  ): Promise<
+    ApiResult<{
+      exists: boolean
+      totalSize: number
+      files: Array<{
+        name: string
+        size: number
+        lastModified: Date
+        key: string
+      }>
+    }>
+  > => ipcRenderer.invoke("get-cloud-file-details", gameId)
 }

@@ -53,35 +53,30 @@ export function GameActionButtons({
   isLaunching = false
 }: GameActionButtonsProps): React.JSX.Element {
   return (
-    <div className="flex flex-col gap-3">
-      {/* １行目：実行ボタン */}
+    <div className="flex gap-3">
       <button
         onClick={onLaunch}
         disabled={isLaunching}
-        className="btn btn-primary btn-lg w-full flex items-center justify-center gap-2"
+        className="btn btn-primary btn-md flex-1 flex max-w-60"
       >
         {isLaunching ? (
           <>
             <span className="loading loading-spinner loading-sm"></span>
-            <span className="text-lg">起動中…</span>
+            起動中…
           </>
         ) : (
           <>
             <IoIosPlay size={24} />
-            <span className="text-lg font-medium">ゲームを起動</span>
+            ゲームを起動
           </>
         )}
       </button>
-
-      {/* ２行目：編集／削除 */}
-      <div className="flex gap-2">
-        <button className="btn btn-outline btn-md flex-1" onClick={onEdit}>
-          <MdEdit /> 編集
-        </button>
-        <button className="btn btn-error btn-md flex-1" onClick={onDelete}>
-          <FaTrash /> 登録を解除
-        </button>
-      </div>
+      <button className="btn btn-outline btn-md flex-1 max-w-60" onClick={onEdit}>
+        <MdEdit /> 編集
+      </button>
+      <button className="btn btn-error btn-md flex-1 max-w-60" onClick={onDelete}>
+        <FaTrash /> 登録を解除
+      </button>
     </div>
   )
 }

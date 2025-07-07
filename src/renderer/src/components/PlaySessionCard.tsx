@@ -95,8 +95,8 @@ export default function PlaySessionCard({
   }, [fetchSessions])
 
   return (
-    <div className="card bg-base-100 shadow-xl">
-      <div className="card-body">
+    <div className="card bg-base-100 shadow-xl h-full">
+      <div className="card-body flex flex-col h-full">
         <div className="flex justify-between items-center mb-4">
           <h3 className="card-title flex items-center gap-2">
             <FaGamepad className="text-primary" />
@@ -151,7 +151,7 @@ export default function PlaySessionCard({
                   最近のセッション
                 </h4>
 
-                <div className="space-y-2 max-h-32 overflow-y-auto">
+                <div className="space-y-2 max-h-32 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-transparent">
                   {sessions
                     .slice(0, 5)
                     .sort((a, b) => new Date(b.playedAt).getTime() - new Date(a.playedAt).getTime())

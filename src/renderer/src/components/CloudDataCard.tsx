@@ -6,7 +6,7 @@
  */
 
 import { useCallback, useEffect, useState } from "react"
-import { FaUpload, FaDownload, FaCloud, FaCloudDownloadAlt } from "react-icons/fa"
+import { FaUpload, FaDownload, FaCloud, FaCloudDownloadAlt, FaFile } from "react-icons/fa"
 import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
 
 interface CloudDataInfo {
@@ -14,6 +14,17 @@ interface CloudDataInfo {
   uploadedAt?: Date
   size?: number
   comment?: string
+}
+
+interface CloudFileDetails {
+  exists: boolean
+  totalSize: number
+  files: Array<{
+    name: string
+    size: number
+    lastModified: Date
+    key: string
+  }>
 }
 
 interface CloudDataCardProps {
@@ -52,43 +63,58 @@ export default function CloudDataCard({
 }: CloudDataCardProps): React.JSX.Element {
   const { formatDate } = useTimeFormat()
   const [cloudData, setCloudData] = useState<CloudDataInfo>({ exists: false })
+  const [fileDetails, setFileDetails] = useState<CloudFileDetails | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isFileDetailsLoading, setIsFileDetailsLoading] = useState(false)
 
-  // クラウドデータ情報を取得
-  const fetchCloudData = useCallback(async () => {
+  // ファイル詳細情報を取得
+  const fetchFileDetails = useCallback(async () => {
     if (!isValidCreds || !gameId) return
 
     try {
-      setIsLoading(true)
-      const result = await window.api.saveData.download.getCloudDataInfo(gameId)
+      setIsFileDetailsLoading(true)
+      const result = await window.api.saveData.download.getCloudFileDetails(gameId)
 
-      if (result.success && result.data?.exists) {
-        setCloudData({
-          exists: true,
-          uploadedAt: result.data.uploadedAt,
-          size: result.data.size,
-          comment: result.data.comment
-        })
+      if (result.success && result.data) {
+        setFileDetails(result.data)
+        // ファイル詳細情報から基本情報も設定
+        if (result.data.exists) {
+          const latestFile = result.data.files.sort(
+            (a, b) => new Date(b.lastModified).getTime() - new Date(a.lastModified).getTime()
+          )[0]
+
+          setCloudData({
+            exists: true,
+            uploadedAt: latestFile?.lastModified,
+            size: result.data.totalSize,
+            comment: ""
+          })
+        } else {
+          setCloudData({ exists: false })
+        }
       } else {
+        setFileDetails({ exists: false, totalSize: 0, files: [] })
         setCloudData({ exists: false })
       }
     } catch (error) {
-      console.error("クラウドデータ情報の取得に失敗:", error)
+      console.error("ファイル詳細情報の取得に失敗:", error)
+      setFileDetails({ exists: false, totalSize: 0, files: [] })
       setCloudData({ exists: false })
     } finally {
+      setIsFileDetailsLoading(false)
       setIsLoading(false)
     }
   }, [gameId, isValidCreds])
 
   useEffect(() => {
-    fetchCloudData()
-  }, [fetchCloudData])
+    fetchFileDetails()
+  }, [fetchFileDetails])
 
   // アップロード完了後にデータを再取得
   const handleUpload = useCallback(async () => {
     await onUpload()
-    await fetchCloudData()
-  }, [onUpload, fetchCloudData])
+    await fetchFileDetails()
+  }, [onUpload, fetchFileDetails])
 
   // ファイルサイズをフォーマット
   const formatFileSize = (bytes?: number): string => {
@@ -107,34 +133,103 @@ export default function CloudDataCard({
   }
 
   return (
-    <div className="card bg-base-100 shadow-xl">
-      <div className="card-body">
-        <h3 className="card-title flex items-center gap-2">
-          <FaCloud className="text-info" />
-          クラウドデータ管理
-        </h3>
+    <div className="card bg-base-100 shadow-xl h-full">
+      <div className="card-body flex flex-col h-full">
+        <div className="flex justify-between items-center pb-4">
+          <h3 className="card-title flex items-center gap-2">
+            <FaCloud className="text-info" />
+            クラウドデータ管理
+          </h3>
+          {/* アクションボタン */}
+          <div className="card-actions justify-end gap-2">
+            <button
+              className="btn btn-outline btn-sm"
+              onClick={handleUpload}
+              disabled={!hasSaveFolder || !isValidCreds || isUploading || isDownloading}
+            >
+              {isUploading ? (
+                <>
+                  <span className="loading loading-spinner loading-xs"></span>
+                  アップロード中...
+                </>
+              ) : (
+                <>
+                  <FaUpload />
+                  アップロード
+                </>
+              )}
+            </button>
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={onDownload}
+              disabled={!cloudData.exists || !isValidCreds || isUploading || isDownloading}
+            >
+              {isDownloading ? (
+                <>
+                  <span className="loading loading-spinner loading-xs"></span>
+                  ダウンロード中...
+                </>
+              ) : (
+                <>
+                  <FaDownload />
+                  ダウンロード
+                </>
+              )}
+            </button>
+          </div>
+        </div>
 
         {/* クラウドデータ情報 */}
-        <div className="mb-4">
-          {isLoading ? (
+        <div className="mb-4 flex-1">
+          {isLoading || isFileDetailsLoading ? (
             <div className="flex items-center gap-2 text-base-content/60">
               <span className="loading loading-spinner loading-sm"></span>
               <span>データ情報を取得中...</span>
             </div>
-          ) : cloudData.exists ? (
-            <div className="bg-base-200 p-3 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <FaCloudDownloadAlt className="text-success" />
-                <span className="font-medium">
-                  クラウドデータが存在します
-                  {cloudData.uploadedAt && ` (${formatDate(cloudData.uploadedAt)})`}
-                </span>
+          ) : cloudData.exists && fileDetails ? (
+            <div className="space-y-7">
+              {/* 基本情報 */}
+              <div className="bg-base-200 p-3 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <FaCloudDownloadAlt className="text-success" />
+                  <span className="font-medium">
+                    クラウドデータが存在します
+                    {cloudData.uploadedAt && ` (${formatDate(cloudData.uploadedAt)})`}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-sm text-base-content/70">
+                  <div>ファイル数: {fileDetails.files.length}</div>
+                  <div>総容量: {formatFileSize(fileDetails.totalSize)}</div>
+                </div>
               </div>
 
-              <div className="space-y-1 text-sm text-base-content/70">
-                {cloudData.size && <div>ファイルサイズ: {formatFileSize(cloudData.size)}</div>}
-                {cloudData.comment && <div>コメント: {cloudData.comment}</div>}
-              </div>
+              {/* ファイル一覧 */}
+              {fileDetails.files.length > 0 && (
+                <div className="bg-base-200 p-3 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <FaFile className="text-info" />
+                    <span className="font-medium text-sm">ファイル一覧</span>
+                  </div>
+
+                  <div className="max-h-40 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-transparent">
+                    <div className="space-y-1">
+                      {fileDetails.files.map((file, index) => (
+                        <div
+                          key={index}
+                          className="flex justify-between items-center text-xs p-1 hover:bg-base-300 rounded"
+                        >
+                          <span className="font-mono truncate flex-1 mr-2">{file.name}</span>
+                          <div className="flex gap-2 text-base-content/60">
+                            <span>{formatFileSize(file.size)}</span>
+                            <span>{formatDate(file.lastModified)}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="bg-base-200 p-3 rounded-lg">
@@ -144,45 +239,6 @@ export default function CloudDataCard({
               </div>
             </div>
           )}
-        </div>
-
-        {/* アクションボタン */}
-        <div className="card-actions justify-end gap-2">
-          <button
-            className="btn btn-outline btn-sm"
-            onClick={handleUpload}
-            disabled={!hasSaveFolder || !isValidCreds || isUploading || isDownloading}
-          >
-            {isUploading ? (
-              <>
-                <span className="loading loading-spinner loading-xs"></span>
-                アップロード中...
-              </>
-            ) : (
-              <>
-                <FaUpload />
-                アップロード
-              </>
-            )}
-          </button>
-
-          <button
-            className="btn btn-primary btn-sm"
-            onClick={onDownload}
-            disabled={!cloudData.exists || !isValidCreds || isUploading || isDownloading}
-          >
-            {isDownloading ? (
-              <>
-                <span className="loading loading-spinner loading-xs"></span>
-                ダウンロード中...
-              </>
-            ) : (
-              <>
-                <FaDownload />
-                ダウンロード
-              </>
-            )}
-          </button>
         </div>
 
         {/* 警告メッセージ */}
