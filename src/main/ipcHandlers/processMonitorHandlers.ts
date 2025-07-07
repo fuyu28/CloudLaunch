@@ -129,7 +129,7 @@ export function registerProcessMonitorHandlers(): void {
         // 現在監視中のプロセスをチェック
         const processData = sessions.map((session) => ({
           id: session.id,
-          name: session.sessionName || "名前なし",
+          name: session.sessionName || "未設定",
           duration: session.duration,
           playedAt: session.playedAt,
           isLinked: false // セッション名ベースでは連携状態は判定しない

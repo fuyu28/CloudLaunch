@@ -6,6 +6,7 @@
  * 主な機能：
  * - セッション一覧の表示（名前、実行時間）
  * - セッションの削除
+ * - セッションの編集（名前、章の紐づけ）
  * - モーダルの開閉制御
  *
  * @param isOpen - モーダルの開閉状態
@@ -21,23 +22,8 @@ import { FaEdit } from "react-icons/fa"
 import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
 import { useToastHandler } from "@renderer/hooks/useToastHandler"
 import { Chapter } from "../../../types/chapter"
+import type { PlaySessionType } from "../../../types/game"
 import ConfirmModal from "./ConfirmModal"
-
-/**
- * セッション情報の型定義
- */
-interface ProcessInfo {
-  /** セッションID */
-  id: string
-  /** セッション名 */
-  name: string
-  /** 実行時間（秒） */
-  duration: number
-  /** プレイ日時 */
-  playedAt: Date
-  /** 連携先として設定されているか（今は使用しない） */
-  isLinked: boolean
-}
 
 /**
  * 編集用のフォームデータ
@@ -73,13 +59,13 @@ export default function PlaySessionManagementModal({
   gameTitle,
   onProcessUpdated
 }: PlaySessionManagementModalProps): React.JSX.Element {
-  const [processes, setProcesses] = useState<ProcessInfo[]>([])
+  const [processes, setProcesses] = useState<PlaySessionType[]>([])
   const [chapters, setChapters] = useState<Chapter[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedProcessId, setSelectedProcessId] = useState<string | null>(null)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-  const [editingProcess, setEditingProcess] = useState<ProcessInfo | null>(null)
+  const [editingProcess, setEditingProcess] = useState<PlaySessionType | null>(null)
   const [editFormData, setEditFormData] = useState<EditFormData>({
     sessionName: "",
     chapterId: null
@@ -95,14 +81,11 @@ export default function PlaySessionManagementModal({
 
     setLoading(true)
     try {
-      const result = await window.api.processMonitor.getGameProcesses(gameId)
+      const result = await window.api.database.getPlaySessions(gameId)
       if (result.success && result.data) {
         setProcesses(result.data)
       } else {
-        showToast(
-          ("message" in result ? result.message : null) || "セッション情報の取得に失敗しました",
-          "error"
-        )
+        showToast("セッション情報の取得に失敗しました", "error")
       }
     } catch (error) {
       console.error("セッション情報取得エラー:", error)
@@ -133,11 +116,11 @@ export default function PlaySessionManagementModal({
   /**
    * 編集モーダルを開く
    */
-  const openEditModal = useCallback((process: ProcessInfo) => {
+  const openEditModal = useCallback((process: PlaySessionType) => {
     setEditingProcess(process)
     setEditFormData({
-      sessionName: process.name,
-      chapterId: null // 現在の章情報があれば設定
+      sessionName: process.sessionName ?? "未設定",
+      chapterId: process.chapterId || null
     })
     setIsEditModalOpen(true)
   }, [])
@@ -162,7 +145,7 @@ export default function PlaySessionManagementModal({
 
     try {
       // セッション名を更新
-      if (editFormData.sessionName !== editingProcess.name) {
+      if (editFormData.sessionName !== editingProcess.sessionName) {
         const nameResult = await window.api.database.updateSessionName(
           editingProcess.id,
           editFormData.sessionName
@@ -200,16 +183,13 @@ export default function PlaySessionManagementModal({
     if (!selectedProcessId) return
 
     try {
-      const result = await window.api.processMonitor.deleteProcess(selectedProcessId)
+      const result = await window.api.database.deletePlaySession(selectedProcessId)
       if (result.success) {
         showToast("セッションを削除しました", "success")
         await fetchProcesses()
         onProcessUpdated?.()
       } else {
-        showToast(
-          ("message" in result ? result.message : null) || "セッションの削除に失敗しました",
-          "error"
-        )
+        showToast("セッションの削除に失敗しました", "error")
       }
     } catch (error) {
       console.error("セッション削除エラー:", error)
@@ -263,7 +243,7 @@ export default function PlaySessionManagementModal({
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto ">
+          <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-transparent">
             {loading ? (
               <div className="flex justify-center items-center py-8">
                 <span className="loading loading-spinner loading-md"></span>
@@ -280,6 +260,7 @@ export default function PlaySessionManagementModal({
                       <thead>
                         <tr>
                           <th>セッション名</th>
+                          <th>章</th>
                           <th>実行時間</th>
                           <th>プレイ日時</th>
                           <th>操作</th>
@@ -289,8 +270,9 @@ export default function PlaySessionManagementModal({
                         {processes.map((process) => (
                           <tr key={process.id}>
                             <td>
-                              <div className="font-medium">{process.name}</div>
+                              <div className="font-medium">{process.sessionName ?? "未設定"}</div>
                             </td>
+                            <td>{process.chapter?.name ?? "未設定"}</td>
                             <td>{formatSmart(process.duration)}</td>
                             <td>{formatDateWithTime(process.playedAt)}</td>
                             <td>
@@ -332,7 +314,7 @@ export default function PlaySessionManagementModal({
       <ConfirmModal
         id="delete-session-modal"
         isOpen={isDeleteModalOpen}
-        message={`セッション「${selectedProcess?.name}」を削除しますか？\nこの操作は取り消せません。`}
+        message={`セッション「${selectedProcess?.sessionName || "未設定"}」を削除しますか？\nこの操作は取り消せません。`}
         cancelText="キャンセル"
         confirmText="削除する"
         onConfirm={handleDeleteProcess}

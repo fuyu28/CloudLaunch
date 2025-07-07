@@ -306,4 +306,27 @@ export function registerDatabaseHandlers(): void {
       }
     }
   )
+
+  ipcMain.handle("delete-play-session", async (_event, sessionId: string): Promise<ApiResult> => {
+    try {
+      // セッションが存在するかチェック
+      const session = await prisma.playSession.findUnique({
+        where: { id: sessionId }
+      })
+
+      if (!session) {
+        return { success: false, message: "指定されたセッションが見つかりません" }
+      }
+
+      // セッションを削除
+      await prisma.playSession.delete({
+        where: { id: sessionId }
+      })
+
+      return { success: true }
+    } catch (error) {
+      logger.error("セッション削除エラー:", error)
+      return { success: false, message: "セッションの削除に失敗しました" }
+    }
+  })
 }

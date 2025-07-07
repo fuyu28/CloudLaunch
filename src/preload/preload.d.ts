@@ -62,6 +62,7 @@ export interface DatabaseAPI {
   getPlaySessions(gameId: string): Promise<ApiResult<PlaySessionType[]>>
   updateSessionChapter(sessionId: string, chapterId: string | null): Promise<ApiResult<void>>
   updateSessionName(sessionId: string, sessionName: string): Promise<ApiResult<void>>
+  deletePlaySession(sessionId: string): Promise<ApiResult<void>>
 }
 
 export interface LoadImageAPI {

@@ -24,5 +24,7 @@ export const databaseAPI = {
   updateSessionChapter: (sessionId: string, chapterId: string | null): Promise<ApiResult<void>> =>
     ipcRenderer.invoke("update-session-chapter", sessionId, chapterId),
   updateSessionName: (sessionId: string, sessionName: string): Promise<ApiResult<void>> =>
-    ipcRenderer.invoke("update-session-name", sessionId, sessionName)
+    ipcRenderer.invoke("update-session-name", sessionId, sessionName),
+  deletePlaySession: (sessionId: string): Promise<ApiResult<void>> =>
+    ipcRenderer.invoke("delete-play-session", sessionId)
 }
