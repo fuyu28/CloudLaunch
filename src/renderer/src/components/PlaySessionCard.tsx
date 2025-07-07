@@ -6,10 +6,9 @@
  */
 
 import { useState, useCallback, useEffect } from "react"
-import { FaPlus, FaGamepad, FaClock, FaEdit, FaCog } from "react-icons/fa"
+import { FaPlus, FaGamepad, FaCog } from "react-icons/fa"
 import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
 import PlayHeatmap from "./PlayHeatmap"
-import { Chapter } from "../../../types/chapter"
 import { PlaySessionType } from "src/types/game"
 
 interface PlaySessionCardProps {
@@ -34,14 +33,11 @@ interface PlaySessionCardProps {
 export default function PlaySessionCard({
   gameId,
   onAddSession,
-  onSessionUpdated,
   onProcessManagement
 }: PlaySessionCardProps): React.JSX.Element {
   const { formatSmart } = useTimeFormat()
   const [sessions, setSessions] = useState<PlaySessionType[]>([])
-  const [chapters, setChapters] = useState<Chapter[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [editingSession, setEditingSession] = useState<string | null>(null)
   const [stats, setStats] = useState({
     totalSessions: 0,
     totalTime: 0,
@@ -93,45 +89,9 @@ export default function PlaySessionCard({
     }
   }, [gameId])
 
-  // 章データを取得
-  const fetchChapters = useCallback(async () => {
-    if (!gameId) return
-
-    try {
-      const result = await window.api.chapter.getChapters(gameId)
-      if (result.success && result.data) {
-        setChapters(result.data.sort((a, b) => a.order - b.order))
-      }
-    } catch (error) {
-      console.error("章データ取得エラー:", error)
-    }
-  }, [gameId])
-
   useEffect(() => {
     fetchSessions()
-    fetchChapters()
-  }, [fetchSessions, fetchChapters])
-
-  // セッションの章を変更
-  const updateSessionChapter = useCallback(
-    async (sessionId: string, chapterId: string | null) => {
-      try {
-        const result = await window.api.database.updateSessionChapter(sessionId, chapterId)
-        if (result.success) {
-          // セッションデータを再取得
-          await fetchSessions()
-          setEditingSession(null)
-          // 親コンポーネントに変更を通知
-          onSessionUpdated?.()
-        } else {
-          console.error("セッション章変更エラー:", result.message)
-        }
-      } catch (error) {
-        console.error("セッション章変更エラー:", error)
-      }
-    },
-    [fetchSessions, onSessionUpdated]
-  )
+  }, [fetchSessions])
 
   return (
     <div className="card bg-base-100 shadow-xl h-full">
@@ -145,7 +105,7 @@ export default function PlaySessionCard({
           <div className="flex gap-2">
             <button className="btn btn-outline btn-sm" onClick={onProcessManagement}>
               <FaCog />
-              プロセス管理
+              セッション管理
             </button>
             <button className="btn btn-primary btn-sm" onClick={onAddSession}>
               <FaPlus />
@@ -187,74 +147,6 @@ export default function PlaySessionCard({
             <div className="bg-base-200 p-4 rounded-lg">
               <PlayHeatmap sessions={sessions} gameId={gameId} />
             </div>
-
-            {/* 最近のセッション */}
-            {sessions.length > 0 && (
-              <div className="mt-4">
-                <h4 className="font-semibold mb-2 flex items-center gap-2">
-                  <FaClock className="text-base-content/60" />
-                  最近のセッション
-                </h4>
-
-                <div className="space-y-2 max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-transparent">
-                  {sessions
-                    .slice(0, 10)
-                    .sort((a, b) => new Date(b.playedAt).getTime() - new Date(a.playedAt).getTime())
-                    .map((session) => (
-                      <div
-                        key={session.id}
-                        className="flex justify-between items-center bg-base-200 p-3 rounded text-sm"
-                      >
-                        <div className="flex flex-col gap-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">{formatSmart(session.duration)}</span>
-                            <span className="text-base-content/60">
-                              {new Date(session.playedAt).toLocaleDateString("ja-JP")}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-base-content/60">章:</span>
-                            {editingSession === session.id ? (
-                              <div className="flex items-center gap-2">
-                                <select
-                                  className="select select-xs select-bordered"
-                                  value={session.chapterId || ""}
-                                  onChange={(e) =>
-                                    updateSessionChapter(session.id, e.target.value || null)
-                                  }
-                                >
-                                  <option value="">章を選択</option>
-                                  {chapters.map((chapter) => (
-                                    <option key={chapter.id} value={chapter.id}>
-                                      {chapter.order}. {chapter.name}
-                                    </option>
-                                  ))}
-                                </select>
-                                <button
-                                  className="btn btn-ghost btn-xs"
-                                  onClick={() => setEditingSession(null)}
-                                >
-                                  キャンセル
-                                </button>
-                              </div>
-                            ) : (
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs">{session.chapter?.name ?? "未設定"}</span>
-                                <button
-                                  className="btn btn-ghost btn-xs"
-                                  onClick={() => setEditingSession(session.id)}
-                                >
-                                  <FaEdit />
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              </div>
-            )}
           </>
         )}
       </div>

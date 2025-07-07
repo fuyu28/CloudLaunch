@@ -16,6 +16,7 @@
  */
 
 import { useCallback, useEffect, useState } from "react"
+import { RxCross1 } from "react-icons/rx"
 import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
 import { useToastHandler } from "@renderer/hooks/useToastHandler"
 import ConfirmModal from "./ConfirmModal"
@@ -155,61 +156,63 @@ export default function ProcessManagementModal({
     <>
       {/* セッション管理モーダル */}
       <div className={`modal ${isOpen ? "modal-open" : ""}`}>
-        <div className="modal-box max-w-4xl">
-          <div className="flex justify-between items-center mb-4">
+        <div className="modal-box max-w-4xl max-h-[80vh] flex flex-col">
+          <div className="flex justify-between items-center mb-4 flex-shrink-0">
             <h3 className="font-bold text-lg">セッション管理 - {gameTitle}</h3>
             <button className="btn btn-sm btn-circle btn-ghost" onClick={onClose}>
-              ✕
+              <RxCross1 />
             </button>
           </div>
 
-          {loading ? (
-            <div className="flex justify-center items-center py-8">
-              <span className="loading loading-spinner loading-md"></span>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {processes.length === 0 ? (
-                <div className="text-center py-8 text-base-content/60">
-                  このゲームに関連するセッションがありません
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="table w-full">
-                    <thead>
-                      <tr>
-                        <th>セッション名</th>
-                        <th>実行時間</th>
-                        <th>プレイ日時</th>
-                        <th>操作</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {processes.map((process) => (
-                        <tr key={process.id}>
-                          <td>
-                            <div className="font-medium">{process.name}</div>
-                          </td>
-                          <td>{formatSmart(process.duration)}</td>
-                          <td>{formatDateWithTime(process.playedAt)}</td>
-                          <td>
-                            <button
-                              className="btn btn-sm btn-outline btn-error"
-                              onClick={() => openDeleteModal(process.id)}
-                            >
-                              削除
-                            </button>
-                          </td>
+          <div className="flex-1 overflow-y-auto ">
+            {loading ? (
+              <div className="flex justify-center items-center py-8">
+                <span className="loading loading-spinner loading-md"></span>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {processes.length === 0 ? (
+                  <div className="text-center py-8 text-base-content/60">
+                    このゲームに関連するセッションがありません
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="table w-full">
+                      <thead>
+                        <tr>
+                          <th>セッション名</th>
+                          <th>実行時間</th>
+                          <th>プレイ日時</th>
+                          <th>操作</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          )}
+                      </thead>
+                      <tbody>
+                        {processes.map((process) => (
+                          <tr key={process.id}>
+                            <td>
+                              <div className="font-medium">{process.name}</div>
+                            </td>
+                            <td>{formatSmart(process.duration)}</td>
+                            <td>{formatDateWithTime(process.playedAt)}</td>
+                            <td>
+                              <button
+                                className="btn btn-sm btn-outline btn-error"
+                                onClick={() => openDeleteModal(process.id)}
+                              >
+                                削除
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
-          <div className="modal-action">
+          <div className="modal-action flex-shrink-0">
             <button className="btn" onClick={onClose}>
               閉じる
             </button>
