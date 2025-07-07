@@ -269,9 +269,6 @@ export class ProcessMonitorService extends EventEmitter {
                 break
               }
             }
-            if (process.cmd) {
-              logger.debug(`cmd: ${process.cmd}`)
-            }
           }
 
           if (bestMatch) {

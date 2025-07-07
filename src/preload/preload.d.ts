@@ -5,6 +5,7 @@ import { FilterOption, SortOption } from "../types/menu"
 import { InputGameData } from "../types/game"
 import { ApiResult } from "../types/result"
 import { ValidatePathResult } from "../types/file"
+import { Chapter, ChapterStats, ChapterCreateInput, ChapterUpdateInput } from "../types/chapter"
 
 export interface FileAPI {
   selectFile(filters: Electron.FileFilter[]): Promise<ApiResult<string | null>>
@@ -93,6 +94,20 @@ export interface ProcessMonitorAPI {
   getMonitoringStatus(): Promise<MonitoringGameStatus[]>
 }
 
+export interface ChapterAPI {
+  getChapters(gameId: string): Promise<ApiResult<Chapter[]>>
+  createChapter(input: ChapterCreateInput): Promise<ApiResult<Chapter>>
+  updateChapter(chapterId: string, input: ChapterUpdateInput): Promise<ApiResult<Chapter>>
+  deleteChapter(chapterId: string): Promise<ApiResult<void>>
+  updateChapterOrders(
+    gameId: string,
+    chapterOrders: Array<{ id: string; order: number }>
+  ): Promise<ApiResult<void>>
+  getChapterStats(gameId: string): Promise<ApiResult<ChapterStats[]>>
+  ensureDefaultChapter(gameId: string): Promise<ApiResult<Chapter>>
+  setCurrentChapter(gameId: string, chapterId: string): Promise<ApiResult<void>>
+}
+
 export interface API {
   file: FileAPI
   window: WindowAPI
@@ -106,4 +121,5 @@ export interface API {
   loadImage: LoadImageAPI
   game: LaunchGameAPI
   processMonitor: ProcessMonitorAPI
+  chapter: ChapterAPI
 }

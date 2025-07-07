@@ -27,6 +27,7 @@ interface ChapterAddModalProps {
  */
 export default function ChapterAddModal({
   isOpen,
+  gameId,
   onClose,
   onChapterAdded
 }: ChapterAddModalProps): React.JSX.Element {
@@ -47,24 +48,25 @@ export default function ChapterAddModal({
     try {
       setIsSubmitting(true)
 
-      // TODO: 章追加APIを実装
-      // const result = await window.api.database.createChapter(gameId, {
-      //   name: chapterName.trim()
-      // })
+      const result = await window.api.chapter.createChapter({
+        name: chapterName.trim(),
+        gameId
+      })
 
-      // 暫定的な処理 - 成功をシミュレート
-      await new Promise((resolve) => setTimeout(resolve, 500))
-
-      // 成功時の処理
-      setChapterName("")
-      onChapterAdded?.()
-      onClose()
+      if (result.success) {
+        // 成功時の処理
+        setChapterName("")
+        onChapterAdded?.()
+        onClose()
+      } else {
+        console.error("章の追加に失敗:", result.message)
+      }
     } catch (error) {
       console.error("章の追加に失敗:", error)
     } finally {
       setIsSubmitting(false)
     }
-  }, [chapterName, isSubmitting, onChapterAdded, onClose])
+  }, [chapterName, gameId, isSubmitting, onChapterAdded, onClose])
 
   // Enterキーでの送信
   const handleKeyDown = useCallback(

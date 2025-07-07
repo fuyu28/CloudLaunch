@@ -7,12 +7,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { FaEdit, FaTrash, FaChevronUp, FaChevronDown, FaTimes, FaSave } from "react-icons/fa"
-
-interface Chapter {
-  id: string
-  name: string
-  order: number
-}
+import { Chapter } from "../../../types/chapter"
 
 interface ChapterSettingsModalProps {
   /** モーダルの表示状態 */
@@ -49,19 +44,14 @@ export default function ChapterSettingsModal({
 
     try {
       setIsLoading(true)
-      // TODO: 章データを取得するAPIを実装
-      // const result = await window.api.database.getChapters(gameId)
+      const result = await window.api.chapter.getChapters(gameId)
 
-      // 暫定的なダミーデータ
-      const dummyChapters: Chapter[] = [
-        { id: "1", name: "プロローグ", order: 1 },
-        { id: "2", name: "第1章", order: 2 },
-        { id: "3", name: "第2章", order: 3 },
-        { id: "4", name: "第3章", order: 4 },
-        { id: "5", name: "エピローグ", order: 5 }
-      ]
-
-      setChapters(dummyChapters.sort((a, b) => a.order - b.order))
+      if (result.success && result.data) {
+        setChapters(result.data.sort((a, b) => a.order - b.order))
+      } else {
+        console.error("章データの取得に失敗:", result.success ? "データが空です" : result.message)
+        setChapters([])
+      }
     } catch (error) {
       console.error("章データの取得に失敗:", error)
       setChapters([])
@@ -92,17 +82,21 @@ export default function ChapterSettingsModal({
 
     try {
       setIsSaving(true)
-      // TODO: 章名更新APIを実装
-      // const result = await window.api.database.updateChapter(editingChapter.id, { name: editName.trim() })
+      const result = await window.api.chapter.updateChapter(editingChapter.id, {
+        name: editName.trim()
+      })
 
-      // 暫定的な処理
-      setChapters((prev) =>
-        prev.map((ch) => (ch.id === editingChapter.id ? { ...ch, name: editName.trim() } : ch))
-      )
-
-      setEditingChapter(null)
-      setEditName("")
-      onChaptersUpdated?.()
+      if (result.success) {
+        // ローカル状態を更新
+        setChapters((prev) =>
+          prev.map((ch) => (ch.id === editingChapter.id ? { ...ch, name: editName.trim() } : ch))
+        )
+        setEditingChapter(null)
+        setEditName("")
+        onChaptersUpdated?.()
+      } else {
+        console.error("章名の更新に失敗:", result.message)
+      }
     } catch (error) {
       console.error("章名の更新に失敗:", error)
     } finally {
@@ -117,12 +111,15 @@ export default function ChapterSettingsModal({
 
       try {
         setIsSaving(true)
-        // TODO: 章削除APIを実装
-        // const result = await window.api.database.deleteChapter(chapterId)
+        const result = await window.api.chapter.deleteChapter(chapterId)
 
-        // 暫定的な処理
-        setChapters((prev) => prev.filter((ch) => ch.id !== chapterId))
-        onChaptersUpdated?.()
+        if (result.success) {
+          // ローカル状態を更新
+          setChapters((prev) => prev.filter((ch) => ch.id !== chapterId))
+          onChaptersUpdated?.()
+        } else {
+          console.error("章の削除に失敗:", result.message)
+        }
       } catch (error) {
         console.error("章の削除に失敗:", error)
       } finally {
@@ -140,28 +137,38 @@ export default function ChapterSettingsModal({
 
       try {
         setIsSaving(true)
-        // TODO: 章順序更新APIを実装
 
-        // 暫定的な処理
+        // 新しい順序を計算
         const newChapters = [...chapters]
         const temp = newChapters[currentIndex]
         newChapters[currentIndex] = newChapters[currentIndex - 1]
         newChapters[currentIndex - 1] = temp
 
         // order値を更新
-        newChapters.forEach((ch, index) => {
-          ch.order = index + 1
-        })
+        const chapterOrders = newChapters.map((ch, index) => ({
+          id: ch.id,
+          order: index + 1
+        }))
 
-        setChapters(newChapters)
-        onChaptersUpdated?.()
+        const result = await window.api.chapter.updateChapterOrders(gameId, chapterOrders)
+
+        if (result.success) {
+          // ローカル状態を更新
+          newChapters.forEach((ch, index) => {
+            ch.order = index + 1
+          })
+          setChapters(newChapters)
+          onChaptersUpdated?.()
+        } else {
+          console.error("章順序の更新に失敗:", result.message)
+        }
       } catch (error) {
         console.error("章順序の更新に失敗:", error)
       } finally {
         setIsSaving(false)
       }
     },
-    [chapters, onChaptersUpdated]
+    [chapters, gameId, onChaptersUpdated]
   )
 
   // 章の順序を下に移動
@@ -172,28 +179,38 @@ export default function ChapterSettingsModal({
 
       try {
         setIsSaving(true)
-        // TODO: 章順序更新APIを実装
 
-        // 暫定的な処理
+        // 新しい順序を計算
         const newChapters = [...chapters]
         const temp = newChapters[currentIndex]
         newChapters[currentIndex] = newChapters[currentIndex + 1]
         newChapters[currentIndex + 1] = temp
 
         // order値を更新
-        newChapters.forEach((ch, index) => {
-          ch.order = index + 1
-        })
+        const chapterOrders = newChapters.map((ch, index) => ({
+          id: ch.id,
+          order: index + 1
+        }))
 
-        setChapters(newChapters)
-        onChaptersUpdated?.()
+        const result = await window.api.chapter.updateChapterOrders(gameId, chapterOrders)
+
+        if (result.success) {
+          // ローカル状態を更新
+          newChapters.forEach((ch, index) => {
+            ch.order = index + 1
+          })
+          setChapters(newChapters)
+          onChaptersUpdated?.()
+        } else {
+          console.error("章順序の更新に失敗:", result.message)
+        }
       } catch (error) {
         console.error("章順序の更新に失敗:", error)
       } finally {
         setIsSaving(false)
       }
     },
-    [chapters, onChaptersUpdated]
+    [chapters, gameId, onChaptersUpdated]
   )
 
   if (!isOpen) return <></>

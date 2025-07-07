@@ -8,15 +8,7 @@
 import { useEffect, useState } from "react"
 import { FaChartBar, FaPlus, FaCog } from "react-icons/fa"
 import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
-
-interface ChapterStats {
-  chapterId: string
-  chapterName: string
-  totalTime: number
-  sessionCount: number
-  averageTime: number
-  order: number
-}
+import { ChapterStats } from "../../../types/chapter"
 
 interface ChapterBarChartProps {
   /** ゲームID */
@@ -51,54 +43,17 @@ export default function ChapterBarChart({
 
       try {
         setIsLoading(true)
-        // TODO: 章別統計データを取得するAPIを実装
-        // const result = await window.api.database.getChapterStats(gameId)
+        const result = await window.api.chapter.getChapterStats(gameId)
 
-        // 暫定的なダミーデータ
-        const dummyData: ChapterStats[] = [
-          {
-            chapterId: "1",
-            chapterName: "プロローグ",
-            totalTime: 3600, // 1時間
-            sessionCount: 3,
-            averageTime: 1200,
-            order: 1
-          },
-          {
-            chapterId: "2",
-            chapterName: "第1章",
-            totalTime: 7200, // 2時間
-            sessionCount: 5,
-            averageTime: 1440,
-            order: 2
-          },
-          {
-            chapterId: "3",
-            chapterName: "第2章",
-            totalTime: 5400, // 1.5時間
-            sessionCount: 4,
-            averageTime: 1350,
-            order: 3
-          },
-          {
-            chapterId: "4",
-            chapterName: "第3章",
-            totalTime: 9000, // 2.5時間
-            sessionCount: 6,
-            averageTime: 1500,
-            order: 4
-          },
-          {
-            chapterId: "5",
-            chapterName: "エピローグ",
-            totalTime: 1800, // 0.5時間
-            sessionCount: 2,
-            averageTime: 900,
-            order: 5
-          }
-        ]
-
-        setChapterStats(dummyData)
+        if (result.success && result.data) {
+          setChapterStats(result.data)
+        } else {
+          console.error(
+            "章別統計データの取得に失敗:",
+            result.success ? "データが空です" : result.message
+          )
+          setChapterStats([])
+        }
       } catch (error) {
         console.error("章別統計データの取得に失敗:", error)
         setChapterStats([])

@@ -21,6 +21,7 @@ import type { InputGameData } from "../../types/game"
 import { ApiResult } from "../../types/result"
 import { logger } from "../utils/logger"
 import { MESSAGES } from "../../constants"
+import { ensureDefaultChapter } from "./chapterHandlers"
 
 const filterMap: Record<FilterOption, Prisma.GameWhereInput> = {
   all: {},
@@ -94,14 +95,32 @@ export function registerDatabaseHandlers(): void {
 
   ipcMain.handle("create-game", async (_event, game: InputGameData): Promise<ApiResult> => {
     try {
-      await prisma.game.create({
-        data: {
-          title: game.title,
-          publisher: game.publisher,
-          saveFolderPath: game.saveFolderPath ?? null,
-          exePath: game.exePath,
-          imagePath: game.imagePath ?? null
-        }
+      await prisma.$transaction(async (tx) => {
+        // ゲームを作成
+        const newGame = await tx.game.create({
+          data: {
+            title: game.title,
+            publisher: game.publisher,
+            saveFolderPath: game.saveFolderPath ?? null,
+            exePath: game.exePath,
+            imagePath: game.imagePath ?? null
+          }
+        })
+
+        // デフォルト章を作成
+        const defaultChapter = await tx.chapter.create({
+          data: {
+            name: "デフォルト",
+            gameId: newGame.id,
+            order: 1
+          }
+        })
+
+        // ゲームのcurrentChapterを設定
+        await tx.game.update({
+          where: { id: newGame.id },
+          data: { currentChapter: defaultChapter.id }
+        })
       })
       return { success: true }
     } catch (error) {
@@ -157,26 +176,49 @@ export function registerDatabaseHandlers(): void {
     async (_event, duration: number, gameId: string): Promise<ApiResult> => {
       try {
         await prisma.$transaction(async (tx) => {
-          await tx.playSession.create({
-            data: {
-              duration,
-              gameId
-            }
-          })
-
+          // ゲーム情報を取得
           const game = await tx.game.findUnique({
             where: { id: gameId }
           })
 
-          if (game) {
+          if (!game) {
+            throw new Error("ゲームが見つかりません")
+          }
+
+          // 現在の章を取得（なければデフォルト章を作成）
+          let currentChapterId = game.currentChapter
+          if (!currentChapterId) {
+            // デフォルト章を作成または取得
+            const defaultChapterResult = await ensureDefaultChapter(gameId)
+            if (!defaultChapterResult.success || !defaultChapterResult.data) {
+              throw new Error("デフォルト章の作成に失敗しました")
+            }
+            currentChapterId = defaultChapterResult.data.id
+
+            // ゲームのcurrentChapterを更新
             await tx.game.update({
               where: { id: gameId },
-              data: {
-                totalPlayTime: { increment: duration },
-                lastPlayed: new Date()
-              }
+              data: { currentChapter: currentChapterId }
             })
           }
+
+          // プレイセッションを作成（章IDを含む）
+          await tx.playSession.create({
+            data: {
+              duration,
+              gameId,
+              chapterId: currentChapterId
+            }
+          })
+
+          // ゲームの統計情報を更新
+          await tx.game.update({
+            where: { id: gameId },
+            data: {
+              totalPlayTime: { increment: duration },
+              lastPlayed: new Date()
+            }
+          })
         })
         return { success: true }
       } catch (error) {

@@ -7,12 +7,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { FaBook, FaChevronLeft, FaChevronRight, FaPlus, FaCog } from "react-icons/fa"
-
-interface Chapter {
-  id: string
-  name: string
-  order: number
-}
+import { Chapter } from "../../../types/chapter"
 
 interface ChapterDisplayCardProps {
   /** ゲームID */
@@ -47,27 +42,23 @@ export default function ChapterDisplayCard({
 
       try {
         setIsLoading(true)
-        // TODO: 章データを取得するAPIを実装
-        // const result = await window.api.database.getChapters(gameId)
+        const result = await window.api.chapter.getChapters(gameId)
 
-        // 暫定的なダミーデータ
-        const dummyChapters: Chapter[] = [
-          { id: "1", name: "プロローグ", order: 1 },
-          { id: "2", name: "第1章", order: 2 },
-          { id: "3", name: "第2章", order: 3 },
-          { id: "4", name: "第3章", order: 4 },
-          { id: "5", name: "エピローグ", order: 5 }
-        ]
+        if (result.success && result.data) {
+          const sortedChapters = result.data.sort((a, b) => a.order - b.order)
+          setChapters(sortedChapters)
 
-        const sortedChapters = dummyChapters.sort((a, b) => a.order - b.order)
-        setChapters(sortedChapters)
-
-        // 現在の章を設定
-        if (currentChapterId) {
-          const current = sortedChapters.find((c) => c.id === currentChapterId)
-          setCurrentChapter(current || sortedChapters[0])
+          // 現在の章を設定
+          if (currentChapterId) {
+            const current = sortedChapters.find((c) => c.id === currentChapterId)
+            setCurrentChapter(current || (sortedChapters.length > 0 ? sortedChapters[0] : null))
+          } else {
+            setCurrentChapter(sortedChapters.length > 0 ? sortedChapters[0] : null)
+          }
         } else {
-          setCurrentChapter(sortedChapters[0])
+          console.error("章データの取得に失敗:", result.success ? "データが空です" : result.message)
+          setChapters([])
+          setCurrentChapter(null)
         }
       } catch (error) {
         console.error("章データの取得に失敗:", error)
@@ -82,36 +73,68 @@ export default function ChapterDisplayCard({
   }, [gameId, currentChapterId])
 
   // 前の章に移動
-  const goToPreviousChapter = useCallback(() => {
+  const goToPreviousChapter = useCallback(async () => {
     if (!currentChapter || chapters.length === 0) return
 
     const currentIndex = chapters.findIndex((c) => c.id === currentChapter.id)
     if (currentIndex > 0) {
       const previousChapter = chapters[currentIndex - 1]
-      setCurrentChapter(previousChapter)
-      onChapterChange?.(previousChapter.id)
+
+      try {
+        // サーバー側で現在の章を更新
+        const result = await window.api.chapter.setCurrentChapter(gameId, previousChapter.id)
+        if (result.success) {
+          setCurrentChapter(previousChapter)
+          onChapterChange?.(previousChapter.id)
+        } else {
+          console.error("章の変更に失敗:", result.message)
+        }
+      } catch (error) {
+        console.error("章の変更に失敗:", error)
+      }
     }
-  }, [currentChapter, chapters, onChapterChange])
+  }, [currentChapter, chapters, gameId, onChapterChange])
 
   // 次の章に移動
-  const goToNextChapter = useCallback(() => {
+  const goToNextChapter = useCallback(async () => {
     if (!currentChapter || chapters.length === 0) return
 
     const currentIndex = chapters.findIndex((c) => c.id === currentChapter.id)
     if (currentIndex < chapters.length - 1) {
       const nextChapter = chapters[currentIndex + 1]
-      setCurrentChapter(nextChapter)
-      onChapterChange?.(nextChapter.id)
+
+      try {
+        // サーバー側で現在の章を更新
+        const result = await window.api.chapter.setCurrentChapter(gameId, nextChapter.id)
+        if (result.success) {
+          setCurrentChapter(nextChapter)
+          onChapterChange?.(nextChapter.id)
+        } else {
+          console.error("章の変更に失敗:", result.message)
+        }
+      } catch (error) {
+        console.error("章の変更に失敗:", error)
+      }
     }
-  }, [currentChapter, chapters, onChapterChange])
+  }, [currentChapter, chapters, gameId, onChapterChange])
 
   // 章を直接選択
   const selectChapter = useCallback(
-    (chapter: Chapter) => {
-      setCurrentChapter(chapter)
-      onChapterChange?.(chapter.id)
+    async (chapter: Chapter) => {
+      try {
+        // サーバー側で現在の章を更新
+        const result = await window.api.chapter.setCurrentChapter(gameId, chapter.id)
+        if (result.success) {
+          setCurrentChapter(chapter)
+          onChapterChange?.(chapter.id)
+        } else {
+          console.error("章の変更に失敗:", result.message)
+        }
+      } catch (error) {
+        console.error("章の変更に失敗:", error)
+      }
     },
-    [onChapterChange]
+    [gameId, onChapterChange]
   )
 
   if (isLoading) {
