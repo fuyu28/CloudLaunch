@@ -46,6 +46,8 @@ interface MonitoredGame {
   playStartTime?: Date
   /** 累積プレイ時間（秒） */
   accumulatedTime: number
+  /** 最後にプロセスが見つからなかった時刻 */
+  lastNotFound?: Date
 }
 
 /**
@@ -58,11 +60,12 @@ export class ProcessMonitorService extends EventEmitter {
   private static instance: ProcessMonitorService | null = null
   private monitoredGames: Map<string, MonitoredGame> = new Map()
   private monitoringInterval: NodeJS.Timeout | null = null
-  private readonly intervalMs: number = 5000 // 5秒間隔で監視
-  private readonly sessionTimeoutMs: number = 10000 // 10秒間プロセスが見つからなかったらセッション終了
+  private readonly intervalMs: number = 2000 // 2秒間隔で監視
+  private readonly sessionTimeoutMs: number = 4000 // 4秒間プロセスが見つからなかったらセッション終了
   private gamesCache: Array<{ id: string; title: string; exePath: string }> = []
   private lastCacheUpdate: Date | null = null
   private readonly cacheExpiryMs: number = 60000 // 1分間キャッシュを保持
+  private readonly gameCleanupTimeoutMs: number = 300000 // 5分間プロセスが見つからない場合に監視対象から削除
 
   /**
    * ProcessMonitorServiceのコンストラクタ
@@ -316,6 +319,7 @@ export class ProcessMonitorService extends EventEmitter {
         if (isRunning) {
           // プロセスが実行中
           game.lastDetected = now
+          game.lastNotFound = undefined // リセット
 
           if (!game.playStartTime) {
             // プレイ開始
@@ -326,6 +330,10 @@ export class ProcessMonitorService extends EventEmitter {
           }
         } else {
           // プロセスが見つからない
+          if (!game.lastNotFound) {
+            game.lastNotFound = now
+          }
+
           if (game.playStartTime && game.lastDetected) {
             const timeSinceLastDetected = now.getTime() - game.lastDetected.getTime()
 
@@ -351,6 +359,9 @@ export class ProcessMonitorService extends EventEmitter {
           `監視中のゲーム: ${game.gameTitle} (${game.exeName}, ID: ${gameId}, プレイ中: ${!!game.playStartTime})`
         )
       }
+
+      // 長時間プロセスが見つからないゲームをクリーンアップ
+      await this.cleanupInactiveGames()
 
       // 監視中のゲーム数とプロセス数を表示
       logger.info(
@@ -413,6 +424,34 @@ export class ProcessMonitorService extends EventEmitter {
       .map((game) => this.saveSession(game))
 
     await Promise.all(promises)
+  }
+
+  /**
+   * 長時間非アクティブなゲームを監視対象から削除
+   */
+  private async cleanupInactiveGames(): Promise<void> {
+    const now = new Date()
+    const gamesToRemove: string[] = []
+
+    for (const [gameId, game] of this.monitoredGames) {
+      // プレイ中でない かつ 長時間プロセスが見つからない場合
+      if (!game.playStartTime && game.lastNotFound) {
+        const timeSinceNotFound = now.getTime() - game.lastNotFound.getTime()
+
+        if (timeSinceNotFound > this.gameCleanupTimeoutMs) {
+          gamesToRemove.push(gameId)
+        }
+      }
+    }
+
+    // 監視対象から削除
+    for (const gameId of gamesToRemove) {
+      const game = this.monitoredGames.get(gameId)
+      if (game) {
+        this.monitoredGames.delete(gameId)
+        logger.info(`非アクティブゲームを監視対象から削除: ${game.gameTitle} (${game.exeName})`)
+      }
+    }
   }
 
   /**
