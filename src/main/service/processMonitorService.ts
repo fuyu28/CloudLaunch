@@ -389,7 +389,8 @@ export class ProcessMonitorService extends EventEmitter {
           await tx.playSession.create({
             data: {
               duration: game.accumulatedTime,
-              gameId: game.gameId
+              gameId: game.gameId,
+              processName: game.exeName
             }
           })
 

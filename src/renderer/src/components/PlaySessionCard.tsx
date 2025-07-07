@@ -6,7 +6,7 @@
  */
 
 import { useState, useCallback, useEffect } from "react"
-import { FaPlus, FaGamepad, FaClock, FaEdit } from "react-icons/fa"
+import { FaPlus, FaGamepad, FaClock, FaEdit, FaCog } from "react-icons/fa"
 import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
 import PlayHeatmap from "./PlayHeatmap"
 import { Chapter } from "../../../types/chapter"
@@ -33,6 +33,8 @@ interface PlaySessionCardProps {
   onAddSession: () => void
   /** セッション更新時のコールバック */
   onSessionUpdated?: () => void
+  /** プロセス管理を開くコールバック */
+  onProcessManagement?: () => void
 }
 
 /**
@@ -44,7 +46,8 @@ interface PlaySessionCardProps {
 export default function PlaySessionCard({
   gameId,
   onAddSession,
-  onSessionUpdated
+  onSessionUpdated,
+  onProcessManagement
 }: PlaySessionCardProps): React.JSX.Element {
   const { formatSmart } = useTimeFormat()
   const [sessions, setSessions] = useState<PlaySession[]>([])
@@ -151,10 +154,16 @@ export default function PlaySessionCard({
             プレイセッション
           </h3>
 
-          <button className="btn btn-primary btn-sm" onClick={onAddSession}>
-            <FaPlus />
-            セッション追加
-          </button>
+          <div className="flex gap-2">
+            <button className="btn btn-outline btn-sm" onClick={onProcessManagement}>
+              <FaCog />
+              プロセス管理
+            </button>
+            <button className="btn btn-primary btn-sm" onClick={onAddSession}>
+              <FaPlus />
+              セッション追加
+            </button>
+          </div>
         </div>
 
         {isLoading ? (

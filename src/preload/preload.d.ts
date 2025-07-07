@@ -94,6 +94,19 @@ export interface ProcessMonitorAPI {
   removeGameFromMonitor(gameId: string): Promise<ApiResult>
   getMonitoringStatus(): Promise<MonitoringGameStatus[]>
   isMonitoring(): Promise<boolean>
+  getGameProcesses(gameId: string): Promise<
+    ApiResult<
+      Array<{
+        id: string
+        name: string
+        duration: number
+        playedAt: Date
+        isLinked: boolean
+      }>
+    >
+  >
+  deleteProcess(processId: string): Promise<ApiResult>
+  setLinkedProcess(gameId: string, processId: string): Promise<ApiResult>
 }
 
 export interface ChapterAPI {

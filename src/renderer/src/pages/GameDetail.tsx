@@ -19,6 +19,7 @@ import ChapterBarChart from "@renderer/components/ChapterBarChart"
 import ChapterDisplayCard from "@renderer/components/ChapterDisplayCard"
 import ChapterSettingsModal from "@renderer/components/ChapterSettingsModal"
 import ChapterAddModal from "@renderer/components/ChapterAddModal"
+import ProcessManagementModal from "@renderer/components/ProcessManagementModal"
 import { useToastHandler } from "@renderer/hooks/useToastHandler"
 
 export default function GameDetail(): React.JSX.Element {
@@ -28,6 +29,7 @@ export default function GameDetail(): React.JSX.Element {
   const isValidCreds = useAtomValue(isValidCredsAtom)
   const validateCreds = useValidateCreds()
   const [isPlaySessionModalOpen, setIsPlaySessionModalOpen] = useState(false)
+  const [isProcessModalOpen, setIsProcessModalOpen] = useState(false)
   const [isChapterSettingsModalOpen, setIsChapterSettingsModalOpen] = useState(false)
   const [isChapterAddModalOpen, setIsChapterAddModalOpen] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
@@ -212,6 +214,7 @@ export default function GameDetail(): React.JSX.Element {
           gameTitle={game.title}
           onAddSession={handleOpenPlaySessionModal}
           onSessionUpdated={refreshGameData}
+          onProcessManagement={() => setIsProcessModalOpen(true)}
         />
 
         {/* 章表示・管理カード */}
@@ -282,6 +285,15 @@ export default function GameDetail(): React.JSX.Element {
         gameId={game.id}
         onClose={handleCloseChapterAdd}
         onChapterAdded={handleChaptersUpdated}
+      />
+
+      {/* プロセス管理 */}
+      <ProcessManagementModal
+        isOpen={isProcessModalOpen}
+        gameId={game.id}
+        gameTitle={game.title}
+        onClose={() => setIsProcessModalOpen(false)}
+        onProcessUpdated={refreshGameData}
       />
     </div>
   )
