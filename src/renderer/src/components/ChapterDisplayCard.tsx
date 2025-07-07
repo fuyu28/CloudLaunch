@@ -173,75 +173,72 @@ export default function ChapterDisplayCard({
   const isLastChapter = currentIndex === chapters.length - 1
 
   return (
-    <div className="bg-base-200 p-4 rounded-lg">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <FaBook className="text-info" />
-          <h4 className="font-semibold">現在の章</h4>
-        </div>
-        <button className="btn btn-ghost btn-sm">
-          <FaCog />
-          章設定
-        </button>
-      </div>
-
-      {/* 現在の章表示 */}
-      <div className="bg-base-100 rounded-lg p-4 mb-4">
-        <div className="flex justify-between items-center">
-          {/* 前の章ボタン */}
-          <button
-            className={`btn btn-ghost btn-sm ${isFirstChapter ? "btn-disabled" : ""}`}
-            onClick={goToPreviousChapter}
-            disabled={isFirstChapter}
-          >
-            <FaChevronLeft />
-          </button>
-
-          {/* 現在の章情報 */}
-          <div className="text-center flex-1">
-            <div className="text-sm text-base-content/60">
-              {currentIndex + 1} / {chapters.length}
-            </div>
-            <div className="text-xl font-bold">{currentChapter?.name}</div>
+    <div className="card bg-base-100 shadow-xl h-full">
+      <div className="card-body flex flex-col h-full">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <FaBook className="text-info" />
+            <h4 className="font-semibold">現在の章</h4>
           </div>
-
-          {/* 次の章ボタン */}
-          <button
-            className={`btn btn-ghost btn-sm ${isLastChapter ? "btn-disabled" : ""}`}
-            onClick={goToNextChapter}
-            disabled={isLastChapter}
-          >
-            <FaChevronRight />
+          <button className="btn btn-outline btn-sm">
+            <FaCog />
+            章設定
           </button>
         </div>
-      </div>
-
-      {/* 章一覧 */}
-      <div className="space-y-2">
-        <div className="text-sm font-medium text-base-content/80 mb-2">章一覧</div>
-        <div className="max-h-32 overflow-y-auto space-y-1">
-          {chapters.map((chapter) => (
+        {/* 現在の章表示 */}
+        <div className="bg-base-100 rounded-lg p-4 mb-4">
+          <div className="flex justify-between items-center">
+            {/* 前の章ボタン */}
             <button
-              key={chapter.id}
-              className={`btn btn-ghost btn-sm w-full justify-start ${
-                currentChapter?.id === chapter.id ? "btn-active" : ""
-              }`}
-              onClick={() => selectChapter(chapter)}
+              className={`btn btn-ghost btn-sm ${isFirstChapter ? "btn-disabled" : ""}`}
+              onClick={goToPreviousChapter}
+              disabled={isFirstChapter}
             >
-              <span className="flex-1 text-left">
-                {chapter.order}. {chapter.name}
-              </span>
+              <FaChevronLeft />
             </button>
-          ))}
+            {/* 現在の章情報 */}
+            <div className="text-center flex-1">
+              <div className="text-sm text-base-content/60">
+                {currentIndex + 1} / {chapters.length}
+              </div>
+              <div className="text-xl font-bold">{currentChapter?.name}</div>
+            </div>
+            {/* 次の章ボタン */}
+            <button
+              className={`btn btn-ghost btn-sm ${isLastChapter ? "btn-disabled" : ""}`}
+              onClick={goToNextChapter}
+              disabled={isLastChapter}
+            >
+              <FaChevronRight />
+            </button>
+          </div>
         </div>
-      </div>
-
-      {/* 章追加ボタン */}
-      <div className="mt-4 pt-4 border-t border-base-300">
-        <button className="btn btn-outline btn-sm w-full">
-          <FaPlus />
-          新しい章を追加
-        </button>
+        {/* 章一覧 */}
+        <div className="space-y-2">
+          <div className="text-sm font-medium text-base-content/80 mb-2">章一覧</div>
+          <div className="max-h-32 overflow-y-auto space-y-1">
+            {chapters.map((chapter) => (
+              <button
+                key={chapter.id}
+                className={`btn btn-ghost btn-sm w-full justify-start ${
+                  currentChapter?.id === chapter.id ? "btn-active" : ""
+                }`}
+                onClick={() => selectChapter(chapter)}
+              >
+                <span className="flex-1 text-left">
+                  {chapter.order}. {chapter.name}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+        {/* 章追加ボタン */}
+        <div className="mt-4 pt-4 border-t border-base-300">
+          <button className="btn btn-outline btn-sm w-full">
+            <FaPlus />
+            新しい章を追加
+          </button>
+        </div>
       </div>
     </div>
   )
