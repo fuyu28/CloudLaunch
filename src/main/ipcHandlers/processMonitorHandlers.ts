@@ -26,7 +26,7 @@ export function registerProcessMonitorHandlers(): void {
    */
   ipcMain.handle("start-process-monitoring", async (): Promise<ApiResult> => {
     try {
-      monitor.startMonitoring()
+      await monitor.startMonitoring()
       return { success: true }
     } catch (error) {
       logger.error("プロセス監視開始エラー:", error)
