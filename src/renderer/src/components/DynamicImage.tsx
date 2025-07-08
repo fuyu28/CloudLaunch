@@ -38,7 +38,7 @@ const DynamicImage = memo(function DynamicImage({
   const { imageSrc, isLoading } = useImageLoader(originalSrc)
 
   // ローディング中の表示
-  if (isLoading) {
+  if (isLoading && !imageSrc) {
     return (
       <div
         className="flex items-center justify-center bg-gray-100 text-gray-400"

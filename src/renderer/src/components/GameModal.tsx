@@ -25,7 +25,7 @@ import type { ApiResult } from "../../../types/result"
 
 type GameFormModalProps = {
   mode: "add" | "edit"
-  initialData?: InputGameData | null
+  initialData?: InputGameData | undefined
   isOpen: boolean
   onClose: () => void
   onClosed?: () => void

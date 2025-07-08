@@ -127,7 +127,7 @@ export type SaveDataComparison = {
   localFiles: string[]
   remoteFiles: string[]
   conflicts: string[]
-  lastSync: Date | null
+  lastSync: Date | undefined
 }
 
 export type CompareResult = ValidationResult & {

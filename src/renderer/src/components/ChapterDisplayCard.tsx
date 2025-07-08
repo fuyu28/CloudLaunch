@@ -38,7 +38,7 @@ export default function ChapterDisplayCard({
   onChapterChange
 }: ChapterDisplayCardProps): React.JSX.Element {
   const [chapters, setChapters] = useState<Chapter[]>([])
-  const [currentChapter, setCurrentChapter] = useState<Chapter | null>(null)
+  const [currentChapter, setCurrentChapter] = useState<Chapter | undefined>(undefined)
   const [isLoading, setIsLoading] = useState(true)
 
   // 章データを取得
@@ -57,19 +57,21 @@ export default function ChapterDisplayCard({
           // 現在の章を設定
           if (currentChapterId) {
             const current = sortedChapters.find((c) => c.id === currentChapterId)
-            setCurrentChapter(current || (sortedChapters.length > 0 ? sortedChapters[0] : null))
+            setCurrentChapter(
+              current || (sortedChapters.length > 0 ? sortedChapters[0] : undefined)
+            )
           } else {
-            setCurrentChapter(sortedChapters.length > 0 ? sortedChapters[0] : null)
+            setCurrentChapter(sortedChapters.length > 0 ? sortedChapters[0] : undefined)
           }
         } else {
           console.error("章データの取得に失敗:", result.success ? "データが空です" : result.message)
           setChapters([])
-          setCurrentChapter(null)
+          setCurrentChapter(undefined)
         }
       } catch (error) {
         console.error("章データの取得に失敗:", error)
         setChapters([])
-        setCurrentChapter(null)
+        setCurrentChapter(undefined)
       } finally {
         setIsLoading(false)
       }

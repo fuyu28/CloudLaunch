@@ -111,7 +111,7 @@ export async function executeWithToast<T>(
   asyncFn: () => Promise<T>,
   options: ToastOptions,
   toastHandler: ToastHandler
-): Promise<T | null> {
+): Promise<T | undefined> {
   const { loadingMessage, successMessage, errorMessage, showToast = true } = options
 
   let toastId: string | undefined

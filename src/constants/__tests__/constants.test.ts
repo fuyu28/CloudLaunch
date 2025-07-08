@@ -118,7 +118,7 @@ describe("constants", () => {
       const checkMessagesRecursively = (obj: object, path = ""): void => {
         Object.entries(obj).forEach(([key, value]) => {
           const currentPath = path ? `${path}.${key}` : key
-          if (typeof value === "object" && value !== null && !(value instanceof RegExp)) {
+          if (typeof value === "object" && value !== undefined && !(value instanceof RegExp)) {
             checkMessagesRecursively(value, currentPath)
           } else if (typeof value === "function") {
             // 関数（例: ALREADY_EXISTS）の場合は、呼び出し結果が文字列であることを確認

@@ -31,7 +31,7 @@ export default function GameDetail(): React.JSX.Element {
   const visibleGames = useAtomValue(visibleGamesAtom)
   const isValidCreds = useAtomValue(isValidCredsAtom)
   const validateCreds = useValidateCreds()
-  const [game, setGame] = useState<GameType | null>(null)
+  const [game, setGame] = useState<GameType | undefined>(undefined)
   const [isLoadingGame, setIsLoadingGame] = useState(true)
   const [isPlaySessionModalOpen, setIsPlaySessionModalOpen] = useState(false)
   const [isProcessModalOpen, setIsProcessModalOpen] = useState(false)
@@ -60,19 +60,21 @@ export default function GameDetail(): React.JSX.Element {
         // visibleGamesにない場合は直接データベースから取得
         const fetchedGame = await window.api.database.getGameById(id)
         if (fetchedGame) {
-          setGame(fetchedGame)
+          // APIから返されたデータは既にtransformされているのでそのまま使用
+          const transformedGame = fetchedGame as GameType
+          setGame(transformedGame)
           setCurrentGameId(id)
           // visibleGamesも更新
           setVisibleGames((prev) => {
             const exists = prev.find((g) => g.id === id)
-            return exists ? prev : [...prev, fetchedGame]
+            return exists ? prev : [...prev, transformedGame]
           })
         } else {
-          setGame(null)
+          setGame(undefined)
         }
       } catch (error) {
         console.error("ゲームデータの取得に失敗:", error)
-        setGame(null)
+        setGame(undefined)
       } finally {
         setIsLoadingGame(false)
       }
@@ -159,10 +161,11 @@ export default function GameDetail(): React.JSX.Element {
       // ゲームデータを再取得
       const updatedGame = await window.api.database.getGameById(game.id)
       if (updatedGame) {
-        // ローカルの状態を更新
-        setGame(updatedGame)
+        // ローカルの状態を更新（APIから返されたデータは既にtransformされている）
+        const transformedGame = updatedGame as GameType
+        setGame(transformedGame)
         // visibleGamesも更新
-        setVisibleGames((prev) => prev.map((g) => (g.id === game.id ? updatedGame : g)))
+        setVisibleGames((prev) => prev.map((g) => (g.id === game.id ? transformedGame : g)))
       }
       // リフレッシュキーを更新してコンポーネントの再レンダリングを促す
       setRefreshKey((prev) => prev + 1)

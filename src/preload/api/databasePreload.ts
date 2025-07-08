@@ -1,13 +1,13 @@
 import { ipcRenderer } from "electron"
 import { FilterOption, SortOption } from "../../types/menu"
-import { Game } from "@prisma/client"
-import { InputGameData, PlaySessionType } from "../../types/game"
+import { InputGameData, PlaySessionType, GameType } from "../../types/game"
 import { ApiResult } from "../../types/result"
 
 export const databaseAPI = {
-  listGames: (searchWord: string, filter: FilterOption, sort: SortOption): Promise<Game[]> =>
+  listGames: (searchWord: string, filter: FilterOption, sort: SortOption): Promise<GameType[]> =>
     ipcRenderer.invoke("list-games", searchWord, filter, sort),
-  getGameById: (id: string): Promise<Game | null> => ipcRenderer.invoke("get-game-by-id", id),
+  getGameById: (id: string): Promise<GameType | undefined> =>
+    ipcRenderer.invoke("get-game-by-id", id),
   createGame: (game: InputGameData): Promise<ApiResult<void>> =>
     ipcRenderer.invoke("create-game", game),
   updateGame: (id: string, game: InputGameData): Promise<ApiResult<void>> =>

@@ -34,11 +34,11 @@ export default function ChapterSettingsModal({
   onChaptersUpdated
 }: ChapterSettingsModalProps): React.JSX.Element {
   const [chapters, setChapters] = useState<Chapter[]>([])
-  const [editingChapter, setEditingChapter] = useState<Chapter | null>(null)
+  const [editingChapter, setEditingChapter] = useState<Chapter | undefined>(undefined)
   const [editName, setEditName] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
-  const [deletingChapter, setDeletingChapter] = useState<Chapter | null>(null)
+  const [deletingChapter, setDeletingChapter] = useState<Chapter | undefined>(undefined)
 
   // 章データを取得
   const fetchChapters = useCallback(async (): Promise<void> => {
@@ -74,7 +74,7 @@ export default function ChapterSettingsModal({
 
   // 編集キャンセル
   const cancelEditing = useCallback(() => {
-    setEditingChapter(null)
+    setEditingChapter(undefined)
     setEditName("")
   }, [])
 
@@ -93,7 +93,7 @@ export default function ChapterSettingsModal({
         setChapters((prev) =>
           prev.map((ch) => (ch.id === editingChapter.id ? { ...ch, name: editName.trim() } : ch))
         )
-        setEditingChapter(null)
+        setEditingChapter(undefined)
         setEditName("")
         onChaptersUpdated?.()
       } else {
@@ -113,7 +113,7 @@ export default function ChapterSettingsModal({
 
   // 章削除確認モーダルを閉じる
   const closeDeleteConfirmation = useCallback(() => {
-    setDeletingChapter(null)
+    setDeletingChapter(undefined)
   }, [])
 
   // 章削除実行
@@ -127,7 +127,7 @@ export default function ChapterSettingsModal({
       if (result.success) {
         // ローカル状態を更新
         setChapters((prev) => prev.filter((ch) => ch.id !== deletingChapter.id))
-        setDeletingChapter(null)
+        setDeletingChapter(undefined)
         onChaptersUpdated?.()
       } else {
         console.error("章の削除に失敗:", result.message)

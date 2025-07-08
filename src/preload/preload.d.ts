@@ -8,8 +8,8 @@ import { ValidatePathResult } from "../types/file"
 import { Chapter, ChapterStats, ChapterCreateInput, ChapterUpdateInput } from "../types/chapter"
 
 export interface FileAPI {
-  selectFile(filters: Electron.FileFilter[]): Promise<ApiResult<string | null>>
-  selectFolder(): Promise<ApiResult<string | null>>
+  selectFile(filters: Electron.FileFilter[]): Promise<ApiResult<string | undefined>>
+  selectFolder(): Promise<ApiResult<string | undefined>>
   validatePath(filePath: string, expectType?: string): Promise<ValidatePathResult>
 }
 
@@ -21,7 +21,7 @@ export interface SaveDataUploadAPI {
 }
 
 export interface SaveDataFolderAPI {
-  listRemoteSaveDataFolders(): Promise<string[] | null>
+  listRemoteSaveDataFolders(): Promise<string[] | undefined>
 }
 
 export interface SaveDataDownloadAPI {
@@ -54,7 +54,7 @@ export interface CredentialAPI {
 
 export interface DatabaseAPI {
   listGames(searchWord: string, filter: FilterOption, sort: SortOption): Promise<Game[]>
-  getGameById(id: string): Promise<Game | null>
+  getGameById(id: string): Promise<Game | undefined>
   createGame(game: InputGameData): Promise<ApiResult<void>>
   updateGame(id: string, game: InputGameData): Promise<ApiResult<void>>
   deleteGame(id: string): Promise<ApiResult<void>>

@@ -14,11 +14,11 @@
  * セキュリティ機能：
  * - 認証情報の事前検証
  * - S3バケットへのアクセス権限確認
- * - エラー時の適切なnull返却（機密情報の漏洩防止）
+ * - エラー時の適切なundefined返却（機密情報の漏洩防止）
  *
  * 注意事項：
- * - エラー発生時はnullを返却（詳細なエラー情報は非公開）
- * - 認証情報が未設定の場合もnullを返却
+ * - エラー発生時はundefinedを返却（詳細なエラー情報は非公開）
+ * - 認証情報が未設定の場合もundefinedを返却
  * - パフォーマンス重視でページネーション未対応（第1ページのみ）
  */
 
@@ -45,16 +45,16 @@ export function registerSaveDataFolderListHandler(): void {
    * 技術的詳細：
    * - Delimiter 機能により効率的なフォルダ一覧取得
    * - 正規表現でパス区切り文字（/または\）の除去
-   * - エラー時はnull返却（セキュリティ考慮）
+   * - エラー時はundefined返却（セキュリティ考慮）
    *
    * 戻り値形式：
    * - 成功時: フォルダ名文字列の配列（例: ["game1", "game2"]）
-   * - 失敗時: null
-   * - フォルダが存在しない場合: null
+   * - 失敗時: undefined
+   * - フォルダが存在しない場合: undefined
    *
-   * @returns Promise<string[] | null> フォルダ一覧（成功時）またはnull（失敗時）
+   * @returns Promise<string[] | undefined> フォルダ一覧（成功時）またはundefined（失敗時）
    */
-  ipcMain.handle("list-remote-save-data-folders", async (): Promise<string[] | null> => {
+  ipcMain.handle("list-remote-save-data-folders", async (): Promise<string[] | undefined> => {
     try {
       const r2Client = await createR2Client()
       const credsResult = await getCredential()
@@ -69,11 +69,11 @@ export function registerSaveDataFolderListHandler(): void {
         Delimiter: "/"
       })
       const res = await r2Client.send(cmd)
-      const dirs = res.CommonPrefixes?.map((cp) => cp.Prefix!.replace(/[\\/]+$/, "")) ?? null
+      const dirs = res.CommonPrefixes?.map((cp) => cp.Prefix!.replace(/[\\/]+$/, "")) ?? undefined
       return dirs
     } catch (err) {
       logger.error("リモートセーブデータフォルダ一覧取得エラー:", err)
-      return null
+      return undefined
     }
   })
 }

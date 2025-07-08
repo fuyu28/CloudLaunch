@@ -59,16 +59,16 @@ interface MonitoredGame {
  * シングルトンパターンで実装されており、アプリケーション全体で1つのインスタンスを共有します。
  */
 export class ProcessMonitorService extends EventEmitter {
-  private static instance: ProcessMonitorService | null = null
+  private static instance: ProcessMonitorService | undefined = undefined
   private monitoredGames: Map<string, MonitoredGame> = new Map()
-  private monitoringInterval: NodeJS.Timeout | null = null
+  private monitoringInterval: NodeJS.Timeout | undefined = undefined
   private readonly intervalMs: number = 2000 // 2秒間隔で監視
   private readonly sessionTimeoutMs: number = 4000 // 4秒間プロセスが見つからなかったらセッション終了
   private gamesCache: Array<{ id: string; title: string; exePath: string }> = []
   private isInitialized: boolean = false // 初期化フラグ
   private readonly gameCleanupTimeoutMs: number = 20000 // 20秒間プロセスが見つからない場合に監視対象から削除
   private processCache: Array<{ name?: string; pid: number; cmd?: string }> = []
-  private lastProcessCacheUpdate: Date | null = null
+  private lastProcessCacheUpdate: Date | undefined = undefined
   private readonly processCacheExpiryMs: number = 10000 // 10秒間プロセスキャッシュを保持
   private readonly maxProcessCacheSize: number = 1000 // プロセスキャッシュの最大サイズ
 
@@ -126,7 +126,7 @@ export class ProcessMonitorService extends EventEmitter {
    * @returns 監視中かどうか
    */
   public isMonitoring(): boolean {
-    return this.monitoringInterval !== null
+    return this.monitoringInterval !== undefined
   }
 
   /**
@@ -135,7 +135,7 @@ export class ProcessMonitorService extends EventEmitter {
   public stopMonitoring(): void {
     if (this.monitoringInterval) {
       clearInterval(this.monitoringInterval)
-      this.monitoringInterval = null
+      this.monitoringInterval = undefined
       logger.info("プロセス監視を停止しました")
     }
 
@@ -152,7 +152,7 @@ export class ProcessMonitorService extends EventEmitter {
   private clearCaches(): void {
     this.gamesCache.length = 0
     this.processCache.length = 0
-    this.lastProcessCacheUpdate = null
+    this.lastProcessCacheUpdate = undefined
     this.isInitialized = false
     logger.debug("キャッシュをクリアしました")
   }
@@ -588,11 +588,11 @@ export class ProcessMonitorService extends EventEmitter {
                 }
               }
             }
-            return null
+            return undefined
           })
           .filter(
             (proc): proc is { name: string; pid: number; cmd: string } =>
-              proc !== null && proc.cmd !== ""
+              proc !== undefined && proc.cmd !== ""
           )
 
         logger.info(`Windows PowerShell: ${processes.length}個のプロセスを取得`)
@@ -618,11 +618,11 @@ export class ProcessMonitorService extends EventEmitter {
               const cmd = match[3] ? match[3].toLowerCase() : ""
               return { name, pid, cmd }
             }
-            return null
+            return undefined
           })
           .filter(
             (proc): proc is { name: string; pid: number; cmd: string } =>
-              proc !== null && proc.pid > 0
+              proc !== undefined && proc.pid > 0
           )
 
         logger.info(`macOS ps: ${processes.length}個のプロセスを取得`)
@@ -641,11 +641,11 @@ export class ProcessMonitorService extends EventEmitter {
               const cmd = match[3] ? match[3].toLowerCase() : ""
               return { name, pid, cmd }
             }
-            return null
+            return undefined
           })
           .filter(
             (proc): proc is { name: string; pid: number; cmd: string } =>
-              proc !== null && proc.pid > 0
+              proc !== undefined && proc.pid > 0
           )
 
         logger.info(`Linux ps: ${processes.length}個のプロセスを取得`)

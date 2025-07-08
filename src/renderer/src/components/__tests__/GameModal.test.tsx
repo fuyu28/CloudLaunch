@@ -41,7 +41,7 @@ describe("GameModal", () => {
 
   const defaultProps = {
     mode: "add" as const,
-    initialData: null,
+    initialData: undefined,
     isOpen: true,
     onClose: mockOnClose,
     onSubmit: mockOnSubmit

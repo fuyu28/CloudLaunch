@@ -41,7 +41,7 @@ type SetterOrUpdater<Value> = (value: Value | ((prev: Value) => Value)) => void
  */
 export interface GameEditResult {
   /** 編集用のゲームデータ */
-  editData: InputGameData | null
+  editData: InputGameData | undefined
   /** 編集モーダルが開いているかどうか */
   isEditModalOpen: boolean
   /** 削除モーダルが開いているかどうか */
@@ -77,11 +77,11 @@ export interface GameEditResult {
  * @returns ゲーム編集操作機能
  */
 export function useGameEdit(
-  game: GameType | null | undefined,
+  game: GameType | undefined,
   navigate: NavigateFunction,
   setFilteredGames: SetterOrUpdater<GameType[]>
 ): GameEditResult {
-  const [editData, setEditData] = useState<InputGameData | null>(null)
+  const [editData, setEditData] = useState<InputGameData | undefined>(undefined)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [isLaunching, setIsLaunching] = useState(false)
@@ -96,9 +96,9 @@ export function useGameEdit(
     setEditData({
       title,
       publisher,
-      imagePath: imagePath ?? undefined,
+      imagePath,
       exePath,
-      saveFolderPath: saveFolderPath ?? undefined,
+      saveFolderPath,
       playStatus
     })
     setIsEditModalOpen(true)
@@ -115,7 +115,7 @@ export function useGameEdit(
    * 編集モーダルが完全に閉じた後の処理
    */
   const onEditClosed = useCallback(() => {
-    setEditData(null)
+    setEditData(undefined)
   }, [])
 
   /**

@@ -24,7 +24,7 @@ export interface LoadingState {
   /** ローディング中かどうか */
   isLoading: boolean
   /** エラーメッセージ */
-  error: string | null
+  error: string | undefined
 }
 
 /**
@@ -40,19 +40,22 @@ export function useLoadingState(initialLoading = false): {
   /** ローディング中かどうか */
   isLoading: boolean
   /** エラーメッセージ */
-  error: string | null
+  error: string | undefined
   /** ローディング状態を設定 */
   setLoading: (loading: boolean) => void
   /** エラー状態を設定 */
-  setError: (error: string | null) => void
+  setError: (error: string | undefined) => void
   /** 状態をリセット */
   reset: () => void
   /** トースト付きで非同期処理を実行 */
-  executeWithLoading: <T>(asyncFn: () => Promise<T>, options?: ToastOptions) => Promise<T | null>
+  executeWithLoading: <T>(
+    asyncFn: () => Promise<T>,
+    options?: ToastOptions
+  ) => Promise<T | undefined>
 } {
   const [state, setState] = useState<LoadingState>({
     isLoading: initialLoading,
-    error: null
+    error: undefined
   })
   const toastHandler = useToastHandler()
 
@@ -68,9 +71,9 @@ export function useLoadingState(initialLoading = false): {
   /**
    * エラー状態を設定する
    *
-   * @param error - エラーメッセージまたはnull
+   * @param error - エラーメッセージまたはundefined
    */
-  const setError = useCallback((error: string | null) => {
+  const setError = useCallback((error: string | undefined) => {
     setState((prev) => ({ ...prev, error }))
   }, [])
 
@@ -78,7 +81,7 @@ export function useLoadingState(initialLoading = false): {
    * 状態をリセットする
    */
   const reset = useCallback(() => {
-    setState({ isLoading: false, error: null })
+    setState({ isLoading: false, error: undefined })
   }, [])
 
   /**
@@ -86,20 +89,20 @@ export function useLoadingState(initialLoading = false): {
    *
    * @param asyncFn - 実行する非同期関数
    * @param options - トーストオプション
-   * @returns 実行結果またはnull
+   * @returns 実行結果またはundefined
    */
   const executeWithLoading = useCallback(
-    async <T>(asyncFn: () => Promise<T>, options?: ToastOptions): Promise<T | null> => {
+    async <T>(asyncFn: () => Promise<T>, options?: ToastOptions): Promise<T | undefined> => {
       try {
         setLoading(true)
-        setError(null)
+        setError(undefined)
 
         const result = await executeWithToast(asyncFn, options || {}, toastHandler)
         return result
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error)
         setError(errorMsg)
-        return null
+        return undefined
       } finally {
         setLoading(false)
       }

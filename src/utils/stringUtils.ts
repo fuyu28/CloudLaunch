@@ -44,7 +44,7 @@ export function createRemotePath(gameTitle: string): string {
  * @param value - チェックする文字列
  * @returns 有効な文字列の場合 true
  */
-export function isNonEmptyString(value: string | null | undefined): value is string {
+export function isNonEmptyString(value: string | undefined | undefined): value is string {
   return typeof value === "string" && value.trim().length > 0
 }
 

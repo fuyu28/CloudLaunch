@@ -19,11 +19,11 @@ import { ApiResult } from "src/types/result"
  */
 interface ImageLoadState {
   /** 読み込み済み画像のdata URL */
-  imageSrc: string | null
+  imageSrc?: string
   /** 読み込み中フラグ */
   isLoading: boolean
   /** エラー状態 */
-  error: string | null
+  error?: string
 }
 
 /**
@@ -50,9 +50,9 @@ const createNoImageDataUrl = (): string => {
  * @returns 画像読み込み状態
  */
 export const useImageLoader = (src: string): ImageLoadState => {
-  const [imageSrc, setImageSrc] = useState<string | null>(null)
+  const [imageSrc, setImageSrc] = useState<string | undefined>(undefined)
   const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<string | undefined>(undefined)
 
   useEffect(() => {
     let mounted = true
@@ -61,7 +61,7 @@ export const useImageLoader = (src: string): ImageLoadState => {
       if (!mounted) return
 
       setIsLoading(true)
-      setError(null)
+      setError(undefined)
 
       // 空文字列または未定義の場合はNoImageを表示（トーストなし）
       if (!src || src.trim() === "") {

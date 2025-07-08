@@ -70,7 +70,7 @@ export function useGameActions({
 
           // ゲーム一覧を再取得
           const games = await window.api.database.listGames(searchWord, filter, sort)
-          onGamesUpdate(games)
+          onGamesUpdate(games as GameType[])
           onModalClose()
 
           return createResult

@@ -100,8 +100,8 @@ describe("stringUtils", () => {
       expect(isNonEmptyString("\t\n")).toBe(false)
     })
 
-    it("null/undefinedの場合はfalseを返す", () => {
-      expect(isNonEmptyString(null)).toBe(false)
+    it("undefined/undefinedの場合はfalseを返す", () => {
+      expect(isNonEmptyString(undefined)).toBe(false)
       expect(isNonEmptyString(undefined)).toBe(false)
     })
   })
