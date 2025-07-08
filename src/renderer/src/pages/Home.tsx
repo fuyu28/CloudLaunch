@@ -55,7 +55,8 @@ export default function Home(): React.ReactElement {
     fetchGames()
     return () => {
       cancelled = true
-    } // eslint-disable-next-line react-hooks/exhaustive-deps
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearchWord, filter, sort])
 
   const handleAddGame = createGameAndRefreshList

@@ -77,7 +77,7 @@ export interface GameEditResult {
  * @returns ゲーム編集操作機能
  */
 export function useGameEdit(
-  game: GameType | undefined,
+  game: GameType | null | undefined,
   navigate: NavigateFunction,
   setFilteredGames: SetterOrUpdater<GameType[]>
 ): GameEditResult {

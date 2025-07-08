@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from "react"
 import { useValidateCreds } from "@renderer/hooks/useValidCreds"
 import { useParams, useNavigate, Navigate } from "react-router-dom"
-import { useAtom, useAtomValue } from "jotai"
+import { useAtomValue, useSetAtom } from "jotai"
 import { FaArrowLeftLong } from "react-icons/fa6"
-import { visibleGamesAtom } from "@renderer/state/home"
+import { visibleGamesAtom, currentGameIdAtom } from "@renderer/state/home"
 import { isValidCredsAtom } from "@renderer/state/credentials"
+import type { GameType } from "src/types/game"
 import { useGameSaveData } from "@renderer/hooks/useGameSaveData"
 import { useGameEdit } from "@renderer/hooks/useGameEdit"
 import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
@@ -25,9 +26,13 @@ import { useToastHandler } from "@renderer/hooks/useToastHandler"
 export default function GameDetail(): React.JSX.Element {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const [filteredGames, setFilteredGames] = useAtom(visibleGamesAtom)
+  const setVisibleGames = useSetAtom(visibleGamesAtom)
+  const setCurrentGameId = useSetAtom(currentGameIdAtom)
+  const visibleGames = useAtomValue(visibleGamesAtom)
   const isValidCreds = useAtomValue(isValidCredsAtom)
   const validateCreds = useValidateCreds()
+  const [game, setGame] = useState<GameType | null>(null)
+  const [isLoadingGame, setIsLoadingGame] = useState(true)
   const [isPlaySessionModalOpen, setIsPlaySessionModalOpen] = useState(false)
   const [isProcessModalOpen, setIsProcessModalOpen] = useState(false)
   const [isChapterSettingsModalOpen, setIsChapterSettingsModalOpen] = useState(false)
@@ -36,7 +41,53 @@ export default function GameDetail(): React.JSX.Element {
   const { showToast } = useToastHandler()
   const { formatSmart, formatDate } = useTimeFormat()
 
-  const game = filteredGames.find((g) => g.id === id)
+  // ゲームデータを取得
+  useEffect(() => {
+    if (!id) return
+
+    const fetchGame = async (): Promise<void> => {
+      setIsLoadingGame(true)
+      try {
+        // まずvisibleGamesから検索
+        const existingGame = visibleGames.find((g) => g.id === id)
+        if (existingGame) {
+          setGame(existingGame)
+          setCurrentGameId(id)
+          setIsLoadingGame(false)
+          return
+        }
+
+        // visibleGamesにない場合は直接データベースから取得
+        const fetchedGame = await window.api.database.getGameById(id)
+        if (fetchedGame) {
+          setGame(fetchedGame)
+          setCurrentGameId(id)
+          // visibleGamesも更新
+          setVisibleGames((prev) => {
+            const exists = prev.find((g) => g.id === id)
+            return exists ? prev : [...prev, fetchedGame]
+          })
+        } else {
+          setGame(null)
+        }
+      } catch (error) {
+        console.error("ゲームデータの取得に失敗:", error)
+        setGame(null)
+      } finally {
+        setIsLoadingGame(false)
+      }
+    }
+
+    fetchGame()
+  }, [id, visibleGames, setCurrentGameId, setVisibleGames])
+
+  // コンポーネントのアンマウント時にIDをクリア
+  useEffect(() => {
+    return () => {
+      setCurrentGameId(null)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // カスタムフック
   const { uploadSaveData, downloadSaveData, isUploading, isDownloading } = useGameSaveData()
@@ -53,7 +104,7 @@ export default function GameDetail(): React.JSX.Element {
     handleUpdateGame,
     handleDeleteGame,
     handleLaunchGame
-  } = useGameEdit(game, navigate, setFilteredGames)
+  } = useGameEdit(game, navigate, setVisibleGames)
 
   useEffect(() => {
     validateCreds()
@@ -75,30 +126,30 @@ export default function GameDetail(): React.JSX.Element {
   }, [game, downloadSaveData])
 
   // プレイセッション追加関連のコールバック
-  const handleOpenPlaySessionModal = useCallback(() => {
+  const handleOpenPlaySessionModal = (): void => {
     setIsPlaySessionModalOpen(true)
-  }, [])
+  }
 
-  const handleClosePlaySessionModal = useCallback(() => {
+  const handleClosePlaySessionModal = (): void => {
     setIsPlaySessionModalOpen(false)
-  }, [])
+  }
 
   // 章管理モーダル関連のコールバック
-  const handleOpenChapterSettings = useCallback(() => {
+  const handleOpenChapterSettings = (): void => {
     setIsChapterSettingsModalOpen(true)
-  }, [])
+  }
 
-  const handleCloseChapterSettings = useCallback(() => {
+  const handleCloseChapterSettings = (): void => {
     setIsChapterSettingsModalOpen(false)
-  }, [])
+  }
 
-  const handleOpenChapterAdd = useCallback(() => {
+  const handleOpenChapterAdd = (): void => {
     setIsChapterAddModalOpen(true)
-  }, [])
+  }
 
-  const handleCloseChapterAdd = useCallback(() => {
+  const handleCloseChapterAdd = (): void => {
     setIsChapterAddModalOpen(false)
-  }, [])
+  }
 
   // 全データを再取得する関数
   const refreshGameData = useCallback(async () => {
@@ -108,14 +159,17 @@ export default function GameDetail(): React.JSX.Element {
       // ゲームデータを再取得
       const updatedGame = await window.api.database.getGameById(game.id)
       if (updatedGame) {
-        setFilteredGames((prev) => prev.map((g) => (g.id === game.id ? updatedGame : g)))
+        // ローカルの状態を更新
+        setGame(updatedGame)
+        // visibleGamesも更新
+        setVisibleGames((prev) => prev.map((g) => (g.id === game.id ? updatedGame : g)))
       }
       // リフレッシュキーを更新してコンポーネントの再レンダリングを促す
       setRefreshKey((prev) => prev + 1)
     } catch (error) {
       console.error("ゲームデータの更新に失敗:", error)
     }
-  }, [game?.id, setFilteredGames])
+  }, [game?.id, setVisibleGames])
 
   const handleChaptersUpdated = useCallback(async () => {
     await refreshGameData()
@@ -145,6 +199,17 @@ export default function GameDetail(): React.JSX.Element {
   if (!id) {
     return <Navigate to="/" replace />
   }
+
+  // ローディング中の表示
+  if (isLoadingGame) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="loading loading-spinner loading-lg"></div>
+      </div>
+    )
+  }
+
+  // ゲームが見つからない場合のみリダイレクト
   if (!game) {
     return <Navigate to="/" replace />
   }
