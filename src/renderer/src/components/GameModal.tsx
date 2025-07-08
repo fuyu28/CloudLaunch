@@ -28,6 +28,7 @@ type GameFormModalProps = {
   initialData?: InputGameData | null
   isOpen: boolean
   onClose: () => void
+  onClosed?: () => void
   onSubmit: (gameData: InputGameData) => Promise<ApiResult>
 }
 
@@ -50,6 +51,7 @@ export default function GameFormModal({
   initialData,
   isOpen,
   onClose,
+  onClosed,
   onSubmit
 }: GameFormModalProps): React.JSX.Element {
   const [gameData, setGameData] = useState<InputGameData>(
@@ -142,6 +144,7 @@ export default function GameFormModal({
       id="game-form-modal"
       isOpen={isOpen}
       onClose={onClose}
+      onClosed={onClosed}
       title={mode === "add" ? "ゲームの登録" : "ゲーム情報を編集"}
       size="lg"
       footer={footer}

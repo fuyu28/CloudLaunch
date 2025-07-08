@@ -47,6 +47,7 @@ export default function GameDetail(): React.JSX.Element {
     isLaunching,
     openEdit,
     closeEdit,
+    onEditClosed,
     openDelete,
     closeDelete,
     handleUpdateGame,
@@ -263,6 +264,7 @@ export default function GameDetail(): React.JSX.Element {
         isOpen={isEditModalOpen}
         onSubmit={handleUpdateGame}
         onClose={closeEdit}
+        onClosed={onEditClosed}
       />
 
       {/* プレイセッション追加 */}

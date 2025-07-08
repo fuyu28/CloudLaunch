@@ -40,6 +40,8 @@ export interface BaseModalProps {
   isOpen: boolean
   /** モーダルを閉じる際のコールバック */
   onClose: () => void
+  /** モーダルが完全に閉じた後のコールバック（アニメーション完了後に実行） */
+  onClosed?: () => void
   /** モーダルのタイトル */
   title?: string
   /** モーダルの内容 */
@@ -82,6 +84,7 @@ const sizeClasses: Record<ModalSize, string> = {
 export function BaseModal({
   isOpen,
   onClose,
+  onClosed,
   title,
   children,
   footer,
@@ -105,6 +108,19 @@ export function BaseModal({
     document.addEventListener("keydown", handleEscape)
     return () => document.removeEventListener("keydown", handleEscape)
   }, [isOpen, onClose, closeOnEscape])
+
+  // モーダルが閉じられた後の処理
+  React.useEffect(() => {
+    if (!isOpen && onClosed) {
+      // DaisyUIのアニメーション時間を考慮してコールバックを実行
+      const timer = setTimeout(() => {
+        onClosed()
+      }, 300)
+
+      return () => clearTimeout(timer)
+    }
+    return undefined
+  }, [isOpen, onClosed])
 
   // モーダル外クリック時の処理
   const handleBackdropClick = (event: React.MouseEvent): void => {

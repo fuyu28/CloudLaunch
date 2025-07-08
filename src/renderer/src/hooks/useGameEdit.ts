@@ -52,6 +52,8 @@ export interface GameEditResult {
   openEdit: () => void
   /** 編集モーダルを閉じる */
   closeEdit: () => void
+  /** 編集モーダルが完全に閉じた後の処理 */
+  onEditClosed: () => void
   /** 削除モーダルを開く */
   openDelete: () => void
   /** 削除モーダルを閉じる */
@@ -107,6 +109,12 @@ export function useGameEdit(
    */
   const closeEdit = useCallback(() => {
     setIsEditModalOpen(false)
+  }, [])
+
+  /**
+   * 編集モーダルが完全に閉じた後の処理
+   */
+  const onEditClosed = useCallback(() => {
     setEditData(null)
   }, [])
 
@@ -143,15 +151,13 @@ export function useGameEdit(
 
         // ゲーム一覧を更新
         setFilteredGames((list) => list.map((g) => (g.id === game.id ? { ...g, ...values } : g)))
-
-        closeEdit()
       } else {
         handleApiError(result)
       }
 
       return result
     },
-    [game, setFilteredGames, closeEdit]
+    [game, setFilteredGames]
   )
 
   /**
@@ -205,6 +211,7 @@ export function useGameEdit(
     isLaunching,
     openEdit,
     closeEdit,
+    onEditClosed,
     openDelete,
     closeDelete,
     handleUpdateGame,
