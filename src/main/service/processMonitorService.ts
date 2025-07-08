@@ -4,8 +4,10 @@
  * このサービスは、ゲームの実行プロセスを監視し、プレイ時間を自動計測します。
  *
  * 主な機能：
- * - ps-listを使用したプロセス監視
- * - ゲームの実行状態の検知
+ * - ネイティブコマンド（PowerShell/ps）とps-listによるプロセス監視
+ * - 10秒間のプロセスキャッシュによる効率化（最大1000件制限）
+ * - Unicode正規化による日本語ゲーム対応
+ * - ゲームの実行状態の検知と自動監視対象追加
  * - 自動プレイセッションの記録
  * - プロセス状態の変更通知
  *
@@ -64,10 +66,11 @@ export class ProcessMonitorService extends EventEmitter {
   private readonly sessionTimeoutMs: number = 4000 // 4秒間プロセスが見つからなかったらセッション終了
   private gamesCache: Array<{ id: string; title: string; exePath: string }> = []
   private isInitialized: boolean = false // 初期化フラグ
-  private readonly gameCleanupTimeoutMs: number = 20000 // 1分間プロセスが見つからない場合に監視対象から削除
+  private readonly gameCleanupTimeoutMs: number = 20000 // 20秒間プロセスが見つからない場合に監視対象から削除
   private processCache: Array<{ name?: string; pid: number; cmd?: string }> = []
   private lastProcessCacheUpdate: Date | null = null
   private readonly processCacheExpiryMs: number = 10000 // 10秒間プロセスキャッシュを保持
+  private readonly maxProcessCacheSize: number = 1000 // プロセスキャッシュの最大サイズ
 
   /**
    * ProcessMonitorServiceのコンストラクタ
@@ -284,8 +287,15 @@ export class ProcessMonitorService extends EventEmitter {
           processes = await this.getProcessesNative()
           logger.debug(`ネイティブコマンド: ${processes.length}個のプロセスを取得しました`)
 
-          // プロセスキャッシュを更新
-          this.processCache = processes
+          // プロセスキャッシュを更新（サイズ制限適用）
+          if (processes.length > this.maxProcessCacheSize) {
+            logger.warn(
+              `プロセス数が上限(${this.maxProcessCacheSize})を超過: ${processes.length}個、先頭${this.maxProcessCacheSize}個のみキャッシュ`
+            )
+            this.processCache = processes.slice(0, this.maxProcessCacheSize)
+          } else {
+            this.processCache = processes
+          }
           this.lastProcessCacheUpdate = now
         } catch (error) {
           // ネイティブコマンドが失敗した場合はps-listをフォールバックとして使用
@@ -297,8 +307,15 @@ export class ProcessMonitorService extends EventEmitter {
             processes = await psList()
             logger.debug(`ps-list (フォールバック): ${processes.length}個のプロセスを取得しました`)
 
-            // プロセスキャッシュを更新
-            this.processCache = processes
+            // プロセスキャッシュを更新（サイズ制限適用）
+            if (processes.length > this.maxProcessCacheSize) {
+              logger.warn(
+                `プロセス数が上限(${this.maxProcessCacheSize})を超過: ${processes.length}個、先頭${this.maxProcessCacheSize}個のみキャッシュ`
+              )
+              this.processCache = processes.slice(0, this.maxProcessCacheSize)
+            } else {
+              this.processCache = processes
+            }
             this.lastProcessCacheUpdate = now
           } catch (fallbackError) {
             logger.error("ps-listもフォールバックとして失敗しました:", fallbackError)

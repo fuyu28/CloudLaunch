@@ -7,14 +7,17 @@
  * 主な処理フロー：
  * 1. 認証情報の検証とR2クライアントの作成
  * 2. リモートパス配下のすべてのオブジェクトをリスト取得
- * 3. 各オブジェクトをストリーミングダウンロード
- * 4. ローカルディレクトリ構造の再構築
+ * 3. パストラバーサル攻撃対策による安全性検証
+ * 4. 各オブジェクトを並列バッチ処理でダウンロード
+ * 5. ローカルディレクトリ構造の再構築
  *
  * 技術的特徴：
  * - ページネーション対応のオブジェクト一覧取得
- * - メモリ効率的なストリーミングダウンロード
+ * - 5件ずつの並列バッチ処理によるダウンロード効率化
+ * - パストラバーサル攻撃対策（../パスの検証）
  * - 相対パス構造の保持（リモートの階層構造をローカルでも維持）
  * - 自動ディレクトリ作成（mkdir -p 相当）
+ * - 進捗表示とエラー時のフォールバック処理
  *
  * エラーハンドリング：
  * - AWS SDK固有エラーの詳細分析
@@ -34,6 +37,7 @@ import { ApiResult } from "../../types/result"
 import { withFileOperationErrorHandling } from "../utils/ipcErrorHandler"
 import { validateCredentialsForR2 } from "../utils/credentialValidator"
 import { createRemotePath } from "../../utils/stringUtils"
+import { logger } from "../utils/logger"
 
 /**
  * リモートパス配下のすべてのオブジェクトキーを取得する関数
@@ -146,16 +150,52 @@ export function registerDownloadSaveDataHandler(): void {
         const allObjects = await getAllObjectKeys(r2Client, credentials.bucketName, remotePath)
         const allKeys = allObjects.map((obj) => obj.key)
 
-        // 各ファイルのダウンロード
+        // 各ファイルのダウンロード（並列処理で効率化）
+        const batchSize = 5 // 同時ダウンロード数を制限（ネットワーク負荷を考慮）
+        const validDownloads: Array<{ key: string; outputPath: string }> = []
+
+        // まず有効なダウンロード対象をフィルタリング
         for (const key of allKeys) {
           const relativePath = relative(remotePath, key)
+
+          // パストラバーサル攻撃対策: 相対パスが上位ディレクトリを参照していないかチェック
+          if (relativePath.startsWith("../") || relativePath.includes("/../")) {
+            logger.warn(`パストラバーサル攻撃の可能性があるパスをスキップ: ${key}`)
+            continue
+          }
+
           const outputPath = join(localPath, relativePath)
 
-          // ディレクトリの作成
-          await fs.mkdir(dirname(outputPath), { recursive: true })
+          // 出力パスがlocalPath内にあることを確認
+          if (!outputPath.startsWith(localPath)) {
+            logger.warn(`不正な出力パスをスキップ: ${outputPath}`)
+            continue
+          }
 
-          // ファイルのダウンロード
-          await downloadFile(r2Client, credentials.bucketName, key, outputPath)
+          validDownloads.push({ key, outputPath })
+        }
+
+        // バッチ処理でダウンロード
+        for (let i = 0; i < validDownloads.length; i += batchSize) {
+          const batch = validDownloads.slice(i, i + batchSize)
+          await Promise.all(
+            batch.map(async ({ key, outputPath }) => {
+              try {
+                // ディレクトリの作成
+                await fs.mkdir(dirname(outputPath), { recursive: true })
+
+                // ファイルのダウンロード
+                await downloadFile(r2Client, credentials.bucketName, key, outputPath)
+                logger.debug(`ダウンロード完了: ${relative(localPath, outputPath)}`)
+              } catch (error) {
+                logger.error(`ファイルダウンロードに失敗: ${key}`, error)
+                throw error
+              }
+            })
+          )
+          logger.info(
+            `ダウンロード進捗: ${Math.min(i + batchSize, validDownloads.length)}/${validDownloads.length}`
+          )
         }
 
         return { success: true }
@@ -290,27 +330,51 @@ export function registerDownloadSaveDataHandler(): void {
             }
           }
 
-          // 各ファイルの詳細情報を取得
-          const fileDetails = await Promise.all(
-            objects.map(async (obj) => {
-              const headCommand = new HeadObjectCommand({
-                Bucket: bucketName,
-                Key: obj.key
+          // 各ファイルの詳細情報を取得（10件ずつバッチ処理で効率化）
+          const batchSize = 10 // 同時実行数を制限
+          const fileDetails: Array<{
+            name: string
+            size: number
+            lastModified: Date
+            key: string
+          }> = []
+
+          for (let i = 0; i < objects.length; i += batchSize) {
+            const batch = objects.slice(i, i + batchSize)
+            const batchResults = await Promise.all(
+              batch.map(async (obj) => {
+                try {
+                  const headCommand = new HeadObjectCommand({
+                    Bucket: bucketName,
+                    Key: obj.key
+                  })
+
+                  const headResult = await r2Client.send(headCommand)
+
+                  // ファイル名を取得（パスの最後の部分）
+                  const fileName = obj.key.split("/").pop() || obj.key
+
+                  return {
+                    name: fileName,
+                    size: headResult.ContentLength || 0,
+                    lastModified: headResult.LastModified || obj.lastModified,
+                    key: obj.key
+                  }
+                } catch (error) {
+                  logger.warn(`ファイル詳細情報の取得に失敗: ${obj.key}`, error)
+                  // フォールバック: ListObjectsV2の情報を使用
+                  const fileName = obj.key.split("/").pop() || obj.key
+                  return {
+                    name: fileName,
+                    size: 0,
+                    lastModified: obj.lastModified,
+                    key: obj.key
+                  }
+                }
               })
-
-              const headResult = await r2Client.send(headCommand)
-
-              // ファイル名を取得（パスの最後の部分）
-              const fileName = obj.key.split("/").pop() || obj.key
-
-              return {
-                name: fileName,
-                size: headResult.ContentLength || 0,
-                lastModified: headResult.LastModified || obj.lastModified,
-                key: obj.key
-              }
-            })
-          )
+            )
+            fileDetails.push(...batchResults)
+          }
 
           // 総ファイルサイズを計算
           const totalSize = fileDetails.reduce((sum, file) => sum + file.size, 0)
