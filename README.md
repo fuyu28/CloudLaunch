@@ -1,6 +1,6 @@
 # Cloud Launch
 
-[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE.md)
+[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 **Cloud Launch**は、PCゲームのセーブデータをS3互換のクラウドストレージに同期し、複数のデバイスでゲームの進行状況を管理するためのデスクトップアプリケーションです。プレイ時間の記録やチャプターごとの管理機能も搭載しています。
 
@@ -158,5 +158,5 @@ cloudlaunch/
 
 ## 📄 ライセンス (License)
 
-このプロジェクトは [MIT License](./LICENSE.md) の下で公開されています。
+このプロジェクトは [MIT License](./LICENSE) の下で公開されています。
 
