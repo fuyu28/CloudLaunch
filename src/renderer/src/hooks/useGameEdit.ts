@@ -31,7 +31,7 @@
 import { useState, useCallback } from "react"
 import { NavigateFunction } from "react-router-dom"
 import { handleApiError, showSuccessToast } from "@renderer/utils/errorHandler"
-import type { Game, InputGameData } from "../../../types/game"
+import type { GameType, InputGameData } from "../../../types/game"
 import type { ApiResult } from "../../../types/result"
 
 type SetterOrUpdater<Value> = (value: Value | ((prev: Value) => Value)) => void
@@ -75,9 +75,9 @@ export interface GameEditResult {
  * @returns ゲーム編集操作機能
  */
 export function useGameEdit(
-  game: Game | undefined,
+  game: GameType | undefined,
   navigate: NavigateFunction,
-  setFilteredGames: SetterOrUpdater<Game[]>
+  setFilteredGames: SetterOrUpdater<GameType[]>
 ): GameEditResult {
   const [editData, setEditData] = useState<InputGameData | null>(null)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)

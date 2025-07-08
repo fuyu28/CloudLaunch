@@ -24,16 +24,16 @@
 import { useState, useCallback } from "react"
 import { handleApiError, withLoadingToast } from "@renderer/utils/errorHandler"
 import { createRemotePath } from "../../../utils"
-import type { Game } from "../../../types/game"
+import type { GameType } from "../../../types/game"
 
 /**
  * ゲームセーブデータ操作フックの戻り値
  */
 export interface GameSaveDataResult {
   /** セーブデータアップロード関数 */
-  uploadSaveData: (game: Game) => Promise<void>
+  uploadSaveData: (game: GameType) => Promise<void>
   /** セーブデータダウンロード関数 */
-  downloadSaveData: (game: Game) => Promise<void>
+  downloadSaveData: (game: GameType) => Promise<void>
   /** アップロード中かどうか */
   isUploading: boolean
   /** ダウンロード中かどうか */
@@ -56,7 +56,7 @@ export function useGameSaveData(): GameSaveDataResult {
    *
    * @param game アップロード対象のゲーム
    */
-  const uploadSaveData = useCallback(async (game: Game): Promise<void> => {
+  const uploadSaveData = useCallback(async (game: GameType): Promise<void> => {
     // セーブフォルダパスの存在チェック
     if (!game.saveFolderPath) {
       handleApiError({
@@ -89,7 +89,7 @@ export function useGameSaveData(): GameSaveDataResult {
    *
    * @param game ダウンロード対象のゲーム
    */
-  const downloadSaveData = useCallback(async (game: Game): Promise<void> => {
+  const downloadSaveData = useCallback(async (game: GameType): Promise<void> => {
     // セーブフォルダパスの存在チェック
     if (!game.saveFolderPath) {
       handleApiError({
