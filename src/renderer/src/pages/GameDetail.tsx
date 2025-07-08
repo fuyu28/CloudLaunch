@@ -163,7 +163,7 @@ export default function GameDetail(): React.JSX.Element {
             {/* 左：サムネイル */}
             <figure className="flex-shrink-0 w-full lg:w-80 aspect-[4/3] bg-gray-50 rounded-lg overflow-hidden">
               <DynamicImage
-                src={game.imagePath ?? ""}
+                src={game.imagePath || ""}
                 alt={game.title}
                 className="w-full h-full object-contain text-black"
               />
