@@ -7,6 +7,7 @@ import { registerLoadImageHandler } from "./ipcHandlers/loadImageHandler"
 import { registerProcessMonitorHandlers } from "./ipcHandlers/processMonitorHandlers"
 import { registerSaveDataFolderListHandler } from "./ipcHandlers/saveDataFolderListHandler"
 import { registerUploadSaveDataFolderHandlers } from "./ipcHandlers/uploadSaveDataFolderHandlers"
+import { registerChapterHandlers } from "./ipcHandlers/chapterHandlers"
 
 export function registerAllHandlers(): void {
   registerCredentialHandlers()
@@ -18,4 +19,5 @@ export function registerAllHandlers(): void {
   registerProcessMonitorHandlers()
   registerSaveDataFolderListHandler()
   registerUploadSaveDataFolderHandlers()
+  registerChapterHandlers()
 }

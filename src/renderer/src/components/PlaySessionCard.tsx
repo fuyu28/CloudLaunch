@@ -6,16 +6,10 @@
  */
 
 import { useState, useCallback, useEffect } from "react"
-import { FaPlus, FaGamepad, FaClock } from "react-icons/fa"
+import { FaPlus, FaGamepad, FaCog } from "react-icons/fa"
 import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
 import PlayHeatmap from "./PlayHeatmap"
-
-interface PlaySession {
-  id: string
-  duration: number
-  playedAt: string
-  gameId: string
-}
+import { PlaySessionType } from "src/types/game"
 
 interface PlaySessionCardProps {
   /** ゲームID */
@@ -24,6 +18,10 @@ interface PlaySessionCardProps {
   gameTitle: string
   /** プレイセッション追加のコールバック */
   onAddSession: () => void
+  /** セッション更新時のコールバック */
+  onSessionUpdated?: () => void
+  /** プロセス管理を開くコールバック */
+  onProcessManagement?: () => void
 }
 
 /**
@@ -34,10 +32,11 @@ interface PlaySessionCardProps {
  */
 export default function PlaySessionCard({
   gameId,
-  onAddSession
+  onAddSession,
+  onProcessManagement
 }: PlaySessionCardProps): React.JSX.Element {
   const { formatSmart } = useTimeFormat()
-  const [sessions, setSessions] = useState<PlaySession[]>([])
+  const [sessions, setSessions] = useState<PlaySessionType[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [stats, setStats] = useState({
     totalSessions: 0,
@@ -103,10 +102,16 @@ export default function PlaySessionCard({
             プレイセッション
           </h3>
 
-          <button className="btn btn-primary btn-sm" onClick={onAddSession}>
-            <FaPlus />
-            セッション追加
-          </button>
+          <div className="flex gap-2">
+            <button className="btn btn-outline btn-sm" onClick={onProcessManagement}>
+              <FaCog />
+              セッション管理
+            </button>
+            <button className="btn btn-primary btn-sm" onClick={onAddSession}>
+              <FaPlus />
+              セッション追加
+            </button>
+          </div>
         </div>
 
         {isLoading ? (
@@ -142,33 +147,6 @@ export default function PlaySessionCard({
             <div className="bg-base-200 p-4 rounded-lg">
               <PlayHeatmap sessions={sessions} gameId={gameId} />
             </div>
-
-            {/* 最近のセッション */}
-            {sessions.length > 0 && (
-              <div className="mt-4">
-                <h4 className="font-semibold mb-2 flex items-center gap-2">
-                  <FaClock className="text-base-content/60" />
-                  最近のセッション
-                </h4>
-
-                <div className="space-y-2 max-h-32 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-transparent">
-                  {sessions
-                    .slice(0, 5)
-                    .sort((a, b) => new Date(b.playedAt).getTime() - new Date(a.playedAt).getTime())
-                    .map((session) => (
-                      <div
-                        key={session.id}
-                        className="flex justify-between items-center bg-base-200 p-2 rounded text-sm"
-                      >
-                        <span>{formatSmart(session.duration)}</span>
-                        <span className="text-base-content/60">
-                          {new Date(session.playedAt).toLocaleDateString("ja-JP")}
-                        </span>
-                      </div>
-                    ))}
-                </div>
-              </div>
-            )}
           </>
         )}
       </div>

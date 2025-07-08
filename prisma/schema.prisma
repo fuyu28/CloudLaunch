@@ -31,18 +31,23 @@ model Game {
   playStatus     PlayStatus    @default(unplayed)
   totalPlayTime  Int           @default(0)
   lastPlayed     DateTime?
+  currentChapter String?
   sessions       PlaySession[]
   uploads        Upload[]
+  chapters       Chapter[]
 }
 
 model PlaySession {
-  id       String   @id @default(uuid())
-  game     Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  gameId   String
-  playedAt DateTime @default(now())
-  duration Int
-  upload   Upload?  @relation(fields: [uploadId], references: [id])
-  uploadId String?
+  id          String   @id @default(uuid())
+  game        Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  gameId      String
+  playedAt    DateTime @default(now())
+  duration    Int
+  sessionName String?
+  chapter     Chapter? @relation(fields: [chapterId], references: [id])
+  chapterId   String?
+  upload      Upload?  @relation(fields: [uploadId], references: [id])
+  uploadId    String?
 }
 
 model Upload {
@@ -53,4 +58,17 @@ model Upload {
   game         Game          @relation(fields: [gameId], references: [id], onDelete: Cascade)
   gameId       String
   playSessions PlaySession[]
+}
+
+model Chapter {
+  id           String        @id @default(uuid())
+  name         String
+  order        Int
+  game         Game          @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  gameId       String
+  createdAt    DateTime      @default(now())
+  playSessions PlaySession[]
+
+  @@unique([gameId, order])
+  @@unique([gameId, name])
 }

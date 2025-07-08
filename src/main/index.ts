@@ -5,12 +5,14 @@ import icon from "../../build/icon.ico?asset"
 import { registerAllHandlers } from "./registerHandlers"
 import { registerWindowHandler } from "./ipcHandlers/windowsHandler"
 import { logger } from "./utils/logger"
+import { ProcessMonitorService } from "./service/processMonitorService"
 
 function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 1050,
     height: 750,
+    minWidth: 550,
     show: false,
     autoHideMenuBar: true,
     frame: false,
@@ -62,6 +64,13 @@ app.whenReady().then(() => {
   ipcMain.on("ping", () => logger.debug("pong"))
 
   createWindow()
+
+  // プロセス監視を自動開始
+  setTimeout(() => {
+    const monitor = ProcessMonitorService.getInstance()
+    monitor.startMonitoring()
+    logger.info("アプリケーション起動時にプロセス監視を自動開始しました")
+  }, 2000) // 2秒後に開始（UIの初期化を待つ）
 
   app.on("activate", function () {
     // On macOS it's common to re-create a window in the app when the
