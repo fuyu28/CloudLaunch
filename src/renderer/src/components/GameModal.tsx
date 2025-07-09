@@ -14,7 +14,7 @@
  * - react-hot-toast エラー通知
  */
 
-import React, { useState, useEffect, useCallback } from "react"
+import React, { useState, useEffect, useCallback, useRef } from "react"
 import { handleApiError, handleUnexpectedError } from "../utils/errorHandler"
 import { useFileSelection } from "../hooks/useFileSelection"
 import { useGameFormValidation } from "../hooks/useGameFormValidation"
@@ -59,7 +59,8 @@ export default function GameFormModal({
   )
   const [submitting, setSubmitting] = useState(false)
   const { isBrowsing, selectFile, selectFolder } = useFileSelection()
-  const { canSubmit } = useGameFormValidation(gameData)
+  const validation = useGameFormValidation(gameData)
+  const prevIsOpenRef = useRef(isOpen)
 
   useEffect(() => {
     if (mode === "edit" && initialData) {
@@ -68,6 +69,14 @@ export default function GameFormModal({
       setGameData(initialValues)
     }
   }, [initialData, isOpen, mode])
+
+  // モーダルが開かれるたびにtouchedFieldsをリセット
+  useEffect(() => {
+    if (isOpen && !prevIsOpenRef.current) {
+      validation.resetTouchedFields()
+    }
+    prevIsOpenRef.current = isOpen
+  }, [isOpen])
 
   const browseImage = useCallback(async () => {
     await selectFile([{ name: "Image", extensions: ["png", "jpg", "jpeg", "gif"] }], (filePath) => {
@@ -97,6 +106,15 @@ export default function GameFormModal({
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault()
+
+    // 送信前にすべてのフィールドをタッチ済みにしてエラーを表示
+    validation.markAllFieldsAsTouched()
+
+    // バリデーションエラーがある場合は送信を停止
+    if (!validation.canSubmit) {
+      return
+    }
+
     setSubmitting(true)
     try {
       const result = await onSubmit(gameData)
@@ -116,6 +134,7 @@ export default function GameFormModal({
   const resetForm = (): void => {
     setGameData(initialValues)
     setSubmitting(false)
+    validation.resetTouchedFields()
   }
 
   const handleCancel = (): void => {
@@ -132,7 +151,7 @@ export default function GameFormModal({
         type="submit"
         className="btn btn-primary"
         onClick={handleSubmit}
-        disabled={submitting || !canSubmit}
+        disabled={submitting || !validation.canSubmit}
       >
         {`${modeMap[mode]}${submitting ? "中…" : ""}`}
       </button>
@@ -157,6 +176,7 @@ export default function GameFormModal({
           onBrowseExe={browseExe}
           onBrowseSaveFolder={browseSaveFolder}
           disabled={submitting || isBrowsing}
+          validation={validation}
         />
       </form>
     </BaseModal>

@@ -25,6 +25,7 @@
 import React from "react"
 import { FileSelectButton } from "./FileSelectButton"
 import type { InputGameData } from "../../../types/game"
+import type { GameFormValidationResult } from "../hooks/useGameFormValidation"
 
 /**
  * ゲームフォームフィールドコンポーネントのprops
@@ -42,6 +43,8 @@ export interface GameFormFieldsProps {
   onBrowseSaveFolder: () => void
   /** フィールドを無効化する場合は true */
   disabled?: boolean
+  /** バリデーション結果 */
+  validation: GameFormValidationResult
 }
 
 /**
@@ -58,7 +61,8 @@ export function GameFormFields({
   onBrowseImage,
   onBrowseExe,
   onBrowseSaveFolder,
-  disabled = false
+  disabled = false,
+  validation
 }: GameFormFieldsProps): React.JSX.Element {
   return (
     <div className="space-y-4">
@@ -73,10 +77,16 @@ export function GameFormFields({
           name="title"
           value={gameData.title}
           onChange={onChange}
-          className="input input-bordered w-full"
+          onBlur={() => validation.markFieldAsTouched("title")}
+          className={`input input-bordered w-full ${validation.errors.title ? "input-error" : ""}`}
           required
           disabled={disabled}
         />
+        {validation.errors.title && (
+          <div className="label">
+            <span className="label-text-alt text-error">{validation.errors.title}</span>
+          </div>
+        )}
       </div>
 
       {/* ブランド */}
@@ -90,10 +100,16 @@ export function GameFormFields({
           name="publisher"
           value={gameData.publisher}
           onChange={onChange}
-          className="input input-bordered w-full"
+          onBlur={() => validation.markFieldAsTouched("publisher")}
+          className={`input input-bordered w-full ${validation.errors.publisher ? "input-error" : ""}`}
           required
           disabled={disabled}
         />
+        {validation.errors.publisher && (
+          <div className="label">
+            <span className="label-text-alt text-error">{validation.errors.publisher}</span>
+          </div>
+        )}
       </div>
 
       {/* サムネイル画像 */}
@@ -103,8 +119,10 @@ export function GameFormFields({
         value={gameData.imagePath || ""}
         onChange={onChange}
         onBrowse={onBrowseImage}
+        onBlur={() => validation.markFieldAsTouched("imagePath")}
         disabled={disabled}
         placeholder="画像ファイルを選択してください"
+        errorMessage={validation.errors.imagePath}
       />
 
       {/* 実行ファイル */}
@@ -114,9 +132,11 @@ export function GameFormFields({
         value={gameData.exePath}
         onChange={onChange}
         onBrowse={onBrowseExe}
+        onBlur={() => validation.markFieldAsTouched("exePath")}
         disabled={disabled}
         placeholder="実行ファイルを選択してください"
         required
+        errorMessage={validation.errors.exePath}
       />
 
       {/* セーブデータフォルダ */}
@@ -126,8 +146,10 @@ export function GameFormFields({
         value={gameData.saveFolderPath || ""}
         onChange={onChange}
         onBrowse={onBrowseSaveFolder}
+        onBlur={() => validation.markFieldAsTouched("saveFolderPath")}
         disabled={disabled}
         placeholder="セーブデータフォルダを選択してください"
+        errorMessage={validation.errors.saveFolderPath}
       />
     </div>
   )

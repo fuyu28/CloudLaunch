@@ -47,6 +47,10 @@ export interface FileSelectButtonProps {
   required?: boolean
   /** 参照ボタンのテキスト */
   browseButtonText?: string
+  /** エラーメッセージ */
+  errorMessage?: string
+  /** フィールドがフォーカスを失った時のコールバック */
+  onBlur?: () => void
 }
 
 /**
@@ -66,7 +70,9 @@ export function FileSelectButton({
   placeholder = "",
   name,
   required = false,
-  browseButtonText = MESSAGES.UI.BROWSE
+  browseButtonText = MESSAGES.UI.BROWSE,
+  errorMessage,
+  onBlur
 }: FileSelectButtonProps): React.JSX.Element {
   const inputId = name || label.replace(/\s+/g, "-").toLowerCase()
 
@@ -82,7 +88,8 @@ export function FileSelectButton({
           name={name}
           value={value}
           onChange={onChange}
-          className="input input-bordered flex-1"
+          onBlur={onBlur}
+          className={`input input-bordered flex-1 ${errorMessage ? "input-error" : ""}`}
           placeholder={placeholder}
           required={required}
           disabled={disabled}
@@ -91,6 +98,11 @@ export function FileSelectButton({
           {browseButtonText}
         </button>
       </div>
+      {errorMessage && (
+        <div className="label">
+          <span className="label-text-alt text-error">{errorMessage}</span>
+        </div>
+      )}
     </div>
   )
 }
