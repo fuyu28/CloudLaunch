@@ -85,150 +85,154 @@ export default function GeneralSettings(): React.JSX.Element {
 
   return (
     <div className="card bg-base-100 shadow-md rounded-lg p-6">
-      <h2 className="text-xl font-semibold mb-4">一般設定</h2>
+      <h2 className="text-xl font-semibold mb-6">一般設定</h2>
 
-      <div className="space-y-8">
-        {/* テーマ選択セクション */}
-        <div className="space-y-4">
-          <div>
-            <h3 className="text-lg font-medium">テーマ</h3>
-            <p className="text-sm text-base-content/70">
-              アプリケーションの外観テーマを選択できます
-            </p>
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* 外観設定グループ */}
+        <div className="space-y-6">
+          <div className="border-l-4 border-primary pl-4">
+            <h3 className="text-lg font-semibold text-primary mb-1">外観設定</h3>
+            <p className="text-sm text-base-content/60">アプリケーションの見た目を設定</p>
           </div>
 
-          <div className="form-control max-w-sm">
-            <label className="label pb-2">
-              <span className="label-text">現在のテーマ: {currentTheme}</span>
-            </label>
-            <div className="flex items-center space-x-2">
-              <select
-                className="select select-bordered scrollbar-thin scrollbar-thumb-base-content/20 scrollbar-track-transparent"
-                value={currentTheme}
-                onChange={(e) => changeTheme(e.target.value as typeof currentTheme)}
-                disabled={isChangingTheme}
-              >
-                {DAISYUI_THEMES.map((theme) => (
-                  <option key={theme} value={theme}>
-                    {theme}
-                  </option>
-                ))}
-              </select>
-              {isChangingTheme && <button className="btn btn-square btn-ghost loading" disabled />}
+          {/* テーマ選択 */}
+          <div className="bg-base-200 p-4 rounded-lg">
+            <div className="mb-3">
+              <h4 className="font-medium">テーマ</h4>
+              <p className="text-sm text-base-content/70">外観テーマを選択</p>
+            </div>
+            <div className="form-control">
+              <label className="label pb-1">
+                <span className="label-text text-sm">現在: {currentTheme}</span>
+              </label>
+              <div className="flex items-center gap-2">
+                <select
+                  className="select select-bordered select-sm"
+                  value={currentTheme}
+                  onChange={(e) => changeTheme(e.target.value as typeof currentTheme)}
+                  disabled={isChangingTheme}
+                >
+                  {DAISYUI_THEMES.map((theme) => (
+                    <option key={theme} value={theme}>
+                      {theme}
+                    </option>
+                  ))}
+                </select>
+                {isChangingTheme && <span className="loading loading-spinner loading-sm"></span>}
+              </div>
             </div>
           </div>
         </div>
 
-        {/* デフォルトソート設定セクション */}
-        <div className="space-y-4">
-          <div>
-            <h3 className="text-lg font-medium">デフォルトソート順</h3>
-            <p className="text-sm text-base-content/70">
-              ホーム画面で最初に表示されるソート順を設定できます
-            </p>
+        {/* 動作設定グループ */}
+        <div className="space-y-6">
+          <div className="border-l-4 border-secondary pl-4">
+            <h3 className="text-lg font-semibold text-secondary mb-1">動作設定</h3>
+            <p className="text-sm text-base-content/60">アプリケーションの動作を設定</p>
           </div>
 
-          <div className="form-control max-w-sm">
-            <label className="label pb-2">
-              <span className="label-text">現在の設定: {sortOptionLabels[defaultSortOption]}</span>
-            </label>
-            <select
-              className="select select-bordered"
-              value={defaultSortOption}
-              onChange={(e) => handleSortChange(e.target.value as SortOption)}
-            >
-              {Object.entries(sortOptionLabels).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+          {/* オフラインモード & 自動計測 */}
+          <div className="bg-base-200 p-4 rounded-lg space-y-4">
+            <div>
+              <h4 className="font-medium mb-3">機能設定</h4>
 
-        {/* デフォルトフィルター設定セクション */}
-        <div className="space-y-4">
-          <div>
-            <h3 className="text-lg font-medium">デフォルトフィルター</h3>
-            <p className="text-sm text-base-content/70">
-              ホーム画面で最初に表示されるフィルター状態を設定できます
-            </p>
-          </div>
+              {/* オフラインモード */}
+              <div className="form-control mb-4">
+                <label className="label cursor-pointer justify-start p-0">
+                  <input
+                    type="checkbox"
+                    className="toggle toggle-primary mr-3"
+                    checked={offlineMode}
+                    onChange={(e) => handleOfflineModeChange(e.target.checked)}
+                  />
+                  <div>
+                    <span className="label-text font-medium">オフラインモード</span>
+                    <p className="text-xs text-base-content/50 mt-1">
+                      {offlineMode ? "クラウド機能が無効" : "すべての機能が利用可能"}
+                    </p>
+                  </div>
+                </label>
+              </div>
 
-          <div className="form-control max-w-sm">
-            <label className="label pb-2">
-              <span className="label-text">
-                現在の設定: {filterStateLabels[defaultFilterState]}
-              </span>
-            </label>
-            <select
-              className="select select-bordered"
-              value={defaultFilterState}
-              onChange={(e) => handleFilterChange(e.target.value as FilterOption)}
-            >
-              {Object.entries(filterStateLabels).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* オフラインモード設定セクション */}
-        <div className="space-y-4">
-          <div>
-            <h3 className="text-lg font-medium">オフラインモード</h3>
-            <p className="text-sm text-base-content/70">
-              ネットワーク接続が必要な機能（クラウド同期等）を無効にします
-            </p>
-          </div>
-
-          <div className="form-control max-w-sm">
-            <label className="label cursor-pointer justify-start">
-              <input
-                type="checkbox"
-                className="toggle toggle-primary mr-3"
-                checked={offlineMode}
-                onChange={(e) => handleOfflineModeChange(e.target.checked)}
-              />
-              <span className="label-text">
-                {offlineMode ? "オフラインモード有効" : "オフラインモード無効"}
-              </span>
-            </label>
-            <div className="mt-2">
-              <p className="text-xs text-base-content/50">
-                {offlineMode ? "クラウド機能が無効になっています" : "すべての機能が利用可能です"}
-              </p>
+              {/* 自動計測 */}
+              <div className="form-control">
+                <label className="label cursor-pointer justify-start p-0">
+                  <input
+                    type="checkbox"
+                    className="toggle toggle-primary mr-3"
+                    checked={autoTracking}
+                    onChange={(e) => handleAutoTrackingChange(e.target.checked)}
+                  />
+                  <div>
+                    <span className="label-text font-medium">起動時の自動計測</span>
+                    <p className="text-xs text-base-content/50 mt-1">
+                      {autoTracking ? "ゲーム起動時に自動計測開始" : "手動でセッション追加が必要"}
+                    </p>
+                  </div>
+                </label>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* 起動時の自動計測設定セクション */}
-        <div className="space-y-4">
-          <div>
-            <h3 className="text-lg font-medium">起動時の自動計測</h3>
-            <p className="text-sm text-base-content/70">
-              アプリ起動時にプレイ時間の計測を自動で開始するかどうかを設定できます
-            </p>
+        {/* デフォルト設定グループ */}
+        <div className="lg:col-span-2 space-y-6">
+          <div className="border-l-4 border-accent pl-4">
+            <h3 className="text-lg font-semibold text-accent mb-1">デフォルト設定</h3>
+            <p className="text-sm text-base-content/60">ホーム画面の初期表示設定</p>
           </div>
 
-          <div className="form-control max-w-sm">
-            <label className="label cursor-pointer justify-start">
-              <input
-                type="checkbox"
-                className="toggle toggle-primary mr-3"
-                checked={autoTracking}
-                onChange={(e) => handleAutoTrackingChange(e.target.checked)}
-              />
-              <span className="label-text">{autoTracking ? "自動計測有効" : "自動計測無効"}</span>
-            </label>
-            <div className="mt-2">
-              <p className="text-xs text-base-content/50">
-                {autoTracking
-                  ? "アプリ起動時に自動でプレイ時間計測を開始します"
-                  : "手動で自動検出を有効化する必要があります"}
-              </p>
+          <div className="grid gap-4 md:grid-cols-2">
+            {/* デフォルトソート */}
+            <div className="bg-base-200 p-4 rounded-lg">
+              <div className="mb-3">
+                <h4 className="font-medium">ソート順</h4>
+                <p className="text-sm text-base-content/70">初期表示時のソート方法</p>
+              </div>
+              <div className="form-control">
+                <div className="mb-2">
+                  <p className="text-xs text-base-content/60 mt-1">
+                    {`現在: ${sortOptionLabels[defaultSortOption]}`}
+                  </p>
+                </div>
+                <select
+                  className="select select-bordered select-sm"
+                  value={defaultSortOption}
+                  onChange={(e) => handleSortChange(e.target.value as SortOption)}
+                >
+                  {Object.entries(sortOptionLabels).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* デフォルトフィルター */}
+            <div className="bg-base-200 p-4 rounded-lg">
+              <div className="mb-3">
+                <h4 className="font-medium">フィルター</h4>
+                <p className="text-sm text-base-content/70">初期表示時のフィルター状態</p>
+              </div>
+              <div className="form-control">
+                <div className="mb-2">
+                  <p className="text-xs text-base-content/60 mt-1">
+                    {`現在: ${filterStateLabels[defaultFilterState]}`}
+                  </p>
+                </div>
+                <select
+                  className="select select-bordered select-sm"
+                  value={defaultFilterState}
+                  onChange={(e) => handleFilterChange(e.target.value as FilterOption)}
+                >
+                  {Object.entries(filterStateLabels).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
         </div>
