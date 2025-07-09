@@ -41,9 +41,10 @@ const filterMap: Record<FilterOption, Prisma.GameWhereInput> = {
 }
 const sortMap: Record<SortOption, { [key: string]: "asc" | "desc" }> = {
   title: { title: "asc" },
-  recentlyPlayed: { lastPlayed: "desc" },
-  longestPlayed: { totalPlayTime: "desc" },
-  recentlyRegistered: { createdAt: "desc" }
+  lastPlayed: { lastPlayed: "desc" },
+  totalPlayTime: { totalPlayTime: "desc" },
+  publisher: { publisher: "asc" },
+  lastRegistered: { createdAt: "desc" }
 }
 
 export function registerDatabaseHandlers(): void {
