@@ -8,6 +8,7 @@
  * - デフォルトソート順の設定
  * - デフォルトフィルター状態の設定
  * - オフラインモードの設定
+ * - 起動時の自動計測の設定
  * - 設定の永続化
  * - リアルタイムでの変更反映
  *
@@ -26,6 +27,7 @@ import {
   defaultSortOptionAtom,
   defaultFilterStateAtom,
   offlineModeAtom,
+  autoTrackingAtom,
   sortOptionLabels,
   filterStateLabels
 } from "../state/settings"
@@ -36,7 +38,7 @@ import type { SortOption, FilterOption } from "src/types/menu"
  * 一般設定コンポーネント
  *
  * テーマ選択、デフォルトソート順、デフォルトフィルター状態、
- * オフラインモードなど、アプリケーションの一般的な設定を提供します。
+ * オフラインモード、起動時の自動計測など、アプリケーションの一般的な設定を提供します。
  *
  * @returns 一般設定コンポーネント要素
  */
@@ -47,6 +49,7 @@ export default function GeneralSettings(): React.JSX.Element {
   const [defaultSortOption, setDefaultSortOption] = useAtom(defaultSortOptionAtom)
   const [defaultFilterState, setDefaultFilterState] = useAtom(defaultFilterStateAtom)
   const [offlineMode, setOfflineMode] = useAtom(offlineModeAtom)
+  const [autoTracking, setAutoTracking] = useAtom(autoTrackingAtom)
 
   // ソート変更ハンドラー
   const handleSortChange = (newSortOption: SortOption): void => {
@@ -67,6 +70,16 @@ export default function GeneralSettings(): React.JSX.Element {
       toast.success("オフラインモードを有効にしました")
     } else {
       toast.success("オフラインモードを無効にしました")
+    }
+  }
+
+  // 自動計測変更ハンドラー
+  const handleAutoTrackingChange = (enabled: boolean): void => {
+    setAutoTracking(enabled)
+    if (enabled) {
+      toast.success("起動時の自動計測を有効にしました")
+    } else {
+      toast.success("起動時の自動計測を無効にしました")
     }
   }
 
@@ -186,6 +199,35 @@ export default function GeneralSettings(): React.JSX.Element {
             <div className="mt-2">
               <p className="text-xs text-base-content/50">
                 {offlineMode ? "クラウド機能が無効になっています" : "すべての機能が利用可能です"}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* 起動時の自動計測設定セクション */}
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-lg font-medium">起動時の自動計測</h3>
+            <p className="text-sm text-base-content/70">
+              アプリ起動時にプレイ時間の計測を自動で開始するかどうかを設定できます
+            </p>
+          </div>
+
+          <div className="form-control max-w-sm">
+            <label className="label cursor-pointer justify-start">
+              <input
+                type="checkbox"
+                className="toggle toggle-primary mr-3"
+                checked={autoTracking}
+                onChange={(e) => handleAutoTrackingChange(e.target.checked)}
+              />
+              <span className="label-text">{autoTracking ? "自動計測有効" : "自動計測無効"}</span>
+            </label>
+            <div className="mt-2">
+              <p className="text-xs text-base-content/50">
+                {autoTracking
+                  ? "アプリ起動時に自動でプレイ時間計測を開始します"
+                  : "手動で自動検出を有効化する必要があります"}
               </p>
             </div>
           </div>

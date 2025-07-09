@@ -9,6 +9,7 @@
  * - デフォルトソート順の管理
  * - デフォルトフィルターの管理
  * - オフラインモードの管理
+ * - 起動時の自動計測の管理
  * - LocalStorageとの自動同期
  */
 
@@ -45,6 +46,12 @@ export const defaultFilterStateAtom = atomWithStorage<FilterOption>("defaultFilt
  * LocalStorageに自動保存される
  */
 export const offlineModeAtom = atomWithStorage<boolean>("offlineMode", false)
+
+/**
+ * 起動時の自動計測設定atom
+ * LocalStorageに自動保存される
+ */
+export const autoTrackingAtom = atomWithStorage<boolean>("autoTracking", true)
 
 /**
  * テーマ変更中の状態atom
