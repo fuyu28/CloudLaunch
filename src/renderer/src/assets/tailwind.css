@@ -1,9 +1,8 @@
 @import "tailwindcss";
 @plugin 'daisyui' {
   themes:
-    light --default,
-    dark --prefersdark,
-    cupcake;
+    /* light --default,
+    dark --prefersdark, */ all;
   exclude: rootscrollgutter;
 }
 @plugin 'tailwind-scrollbar';

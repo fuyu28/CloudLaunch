@@ -1,99 +1,60 @@
-import { useEffect } from "react"
-import { useSettingsForm } from "@renderer/hooks/useSettingsForm"
-import { useConnectionStatus } from "@renderer/hooks/useConnectionStatus"
-import { FaCheck, FaSyncAlt, FaTimes } from "react-icons/fa"
-import SettingsFormField from "@renderer/components/SettingsFormField"
+/**
+ * @fileoverview 設定ページ
+ *
+ * アプリケーションの各種設定を管理するページです。
+ * タブ形式で一般設定とR2/S3設定を分けています。
+ *
+ * 主な機能：
+ * - タブナビゲーション
+ * - 一般設定（テーマ変更等）
+ * - R2/S3設定（クラウドストレージ）
+ *
+ * 使用技術：
+ * - React Hooks（useState）
+ * - DaisyUI タブコンポーネント
+ * - 分離されたコンポーネント
+ */
 
+import React, { useState } from "react"
+import GeneralSettings from "@renderer/components/GeneralSettings"
+import R2S3Settings from "@renderer/components/R2S3Settings"
+
+type TabType = "general" | "r2s3"
+
+/**
+ * 設定ページコンポーネント
+ *
+ * タブ形式で一般設定とR2/S3設定を提供します。
+ *
+ * @returns 設定ページ要素
+ */
 export default function Settings(): React.JSX.Element {
-  // カスタムフック
-  const { formData, updateField, canSubmit, isSaving, handleSave, fieldErrors } = useSettingsForm()
-  const { status, message, check } = useConnectionStatus()
-
-  // 初回マウント時に接続チェック
-  useEffect(() => {
-    check()
-  }, [check])
+  const [activeTab, setActiveTab] = useState<TabType>("general")
 
   return (
-    <div className="relative container mx-auto px-6 mt-10">
-      <div className="card w-full bg-base-100 shadow-lg">
-        <div className="card-body">
-          <h2 className="card-title mb-2 flex items-center justify-between">
-            R2/S3 設定
-            <div className="text-sm flex items-center space-x-1">
-              {status === "loading" && (
-                <FaSyncAlt className="animate-spin text-gray-600 dark:text-gray-300" />
-              )}
-              {status === "success" && <FaCheck className="text-green-600 dark:text-green-400" />}
-              {status === "error" && <FaTimes className="text-red-600 dark:text-red-400" />}
-              <span className="text-gray-800 dark:text-gray-200">
-                {status === "loading" ? "接続確認中..." : status === "success" ? "接続OK" : message}
-              </span>
-            </div>
-          </h2>
+    <div className="container mx-auto px-6 py-8">
+      <h1 className="text-3xl font-bold mb-6">設定</h1>
 
-          <div className="flex flex-col space-y-4">
-            {/* フォームフィールド群 */}
-            <SettingsFormField
-              label="Bucket Name"
-              value={formData.bucketName}
-              onChange={(value) => updateField("bucketName", value)}
-              placeholder="バケット名を入力"
-              required
-              error={fieldErrors.bucketName}
-              helpText="S3互換ストレージのバケット名"
-            />
+      {/* タブナビゲーション */}
+      <div className="tabs tabs-lifted mb-6">
+        <button
+          className={`tab tab-lifted ${activeTab === "general" ? "tab-active" : ""}`}
+          onClick={() => setActiveTab("general")}
+        >
+          一般設定
+        </button>
+        <button
+          className={`tab tab-lifted ${activeTab === "r2s3" ? "tab-active" : ""}`}
+          onClick={() => setActiveTab("r2s3")}
+        >
+          R2/S3 設定
+        </button>
+      </div>
 
-            <SettingsFormField
-              label="Endpoint"
-              value={formData.endpoint}
-              onChange={(value) => updateField("endpoint", value)}
-              placeholder="https://<アカウント>.r2.cloudflarestorage.com"
-              required
-              error={fieldErrors.endpoint}
-              helpText="R2またはS3互換ストレージのエンドポイントURL"
-            />
-
-            <SettingsFormField
-              label="Region"
-              value={formData.region}
-              onChange={(value) => updateField("region", value)}
-              placeholder="auto"
-              helpText="ストレージのリージョン（通常は auto で問題ありません）"
-            />
-
-            <SettingsFormField
-              label="Access Key ID"
-              value={formData.accessKeyId}
-              onChange={(value) => updateField("accessKeyId", value)}
-              placeholder="アクセスキーを入力"
-              required
-              error={fieldErrors.accessKeyId}
-              helpText="ストレージアクセス用のアクセスキーID"
-            />
-
-            <SettingsFormField
-              label="Secret Access Key"
-              value={formData.secretAccessKey}
-              onChange={(value) => updateField("secretAccessKey", value)}
-              placeholder="シークレットアクセスキーを入力"
-              type="password"
-              required
-              error={fieldErrors.secretAccessKey}
-              helpText="ストレージアクセス用のシークレットキー"
-            />
-          </div>
-
-          <div className="form-control mt-6 flex justify-end">
-            <button
-              className="btn btn-primary"
-              onClick={handleSave}
-              disabled={!canSubmit || isSaving}
-            >
-              保存
-            </button>
-          </div>
-        </div>
+      {/* タブコンテンツ */}
+      <div className="bg-base-100 p-6 rounded-lg shadow">
+        {activeTab === "general" && <GeneralSettings />}
+        {activeTab === "r2s3" && <R2S3Settings />}
       </div>
     </div>
   )
