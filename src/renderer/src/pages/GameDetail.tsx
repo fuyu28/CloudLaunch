@@ -23,6 +23,7 @@ import ChapterAddModal from "@renderer/components/ChapterAddModal"
 import PlaySessionManagementModal from "@renderer/components/PlaySessionManagementModal"
 import PlayStatusSelector from "@renderer/components/PlayStatusSelector"
 import { useToastHandler } from "@renderer/hooks/useToastHandler"
+import { useOfflineMode } from "@renderer/hooks/useOfflineMode"
 
 export default function GameDetail(): React.JSX.Element {
   const { id } = useParams<{ id: string }>()
@@ -42,6 +43,7 @@ export default function GameDetail(): React.JSX.Element {
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
   const { showToast } = useToastHandler()
   const { formatSmart, formatDate } = useTimeFormat()
+  const { isOfflineMode, checkNetworkFeature } = useOfflineMode()
 
   // ゲームデータを取得
   useEffect(() => {
@@ -111,23 +113,31 @@ export default function GameDetail(): React.JSX.Element {
   } = useGameEdit(game, navigate, setVisibleGames)
 
   useEffect(() => {
-    validateCreds()
-  }, [validateCreds])
+    if (!isOfflineMode) {
+      validateCreds()
+    }
+  }, [validateCreds, isOfflineMode])
 
   const handleBack = useCallback(() => navigate(-1), [navigate])
 
   // セーブデータ操作のコールバック
   const handleUploadSaveData = useCallback(async (): Promise<void> => {
+    if (!checkNetworkFeature("セーブデータアップロード")) {
+      return
+    }
     if (game) {
       await uploadSaveData(game)
     }
-  }, [game, uploadSaveData])
+  }, [game, uploadSaveData, checkNetworkFeature])
 
   const handleDownloadSaveData = useCallback(async (): Promise<void> => {
+    if (!checkNetworkFeature("セーブデータダウンロード")) {
+      return
+    }
     if (game) {
       await downloadSaveData(game)
     }
-  }, [game, downloadSaveData])
+  }, [game, downloadSaveData, checkNetworkFeature])
 
   // プレイセッション追加関連のコールバック
   const handleOpenPlaySessionModal = (): void => {
