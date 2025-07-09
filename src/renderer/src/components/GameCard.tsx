@@ -29,7 +29,7 @@ export default function GameCard({
       "
     >
       <Link to={`/games/${id}`}>
-        <div className="group relative h-40 w-full bg-gray-100">
+        <div className="group relative h-40 w-full bg-base-200">
           <DynamicImage
             src={imagePath || ""}
             alt={title}
@@ -51,10 +51,10 @@ export default function GameCard({
                 onLaunchGame(exePath)
               }}
               aria-label="ゲームを起動"
-              className="bg-white/80
+              className="bg-base-100/80
               rounded-full p-2 shadow-md
               flex items-center justify-center
-              hover:bg-white/90 focus:outline-none
+              hover:bg-base-100/90 focus:outline-none
               focus:ring-2 focus:ring-primary
               transition"
             >

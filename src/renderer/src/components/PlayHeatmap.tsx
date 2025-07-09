@@ -129,7 +129,7 @@ export default function PlayHeatmap({ sessions, gameId }: PlayHeatmapProps): Rea
   )
 
   return (
-    <div className="w-full overflow-auto scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-transparent">
+    <div className="w-full overflow-auto scrollbar-thin scrollbar-thumb-base-content/30 scrollbar-track-transparent">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-semibold">プレイ活動</h3>
         <div className="flex items-center gap-2 text-xs text-base-content/60">

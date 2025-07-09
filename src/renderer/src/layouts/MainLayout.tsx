@@ -30,7 +30,7 @@ export default function MainLayout(): React.JSX.Element {
 
       {/* サイドバー */}
       <div className="drawer-side">
-        <label htmlFor="main-drawer" className="drawer-overlay bg-[rgba(0,0,0,0.15)] z-40" />
+        <label htmlFor="main-drawer" className="drawer-overlay bg-black/15 z-40" />
 
         <aside
           className="
@@ -52,9 +52,7 @@ export default function MainLayout(): React.JSX.Element {
                   to="/"
                   className={({ isActive }) =>
                     `flex items-center w-full p-3 rounded-md ${
-                      isActive
-                        ? "bg-primary text-primary-content font-medium"
-                        : "hover:bg-base-300 dark:hover:bg-base-700"
+                      isActive ? "bg-primary text-primary-content font-medium" : "hover:bg-base-300"
                     }`
                   }
                   onClick={closeDrawer}
@@ -72,9 +70,7 @@ export default function MainLayout(): React.JSX.Element {
                   to="/settings"
                   className={({ isActive }) =>
                     `flex items-center w-full p-3 rounded-md ${
-                      isActive
-                        ? "bg-primary text-primary-content font-medium"
-                        : "hover:bg-base-300 dark:hover:bg-base-700"
+                      isActive ? "bg-primary text-primary-content font-medium" : "hover:bg-base-300"
                     }`
                   }
                   onClick={closeDrawer}
@@ -108,7 +104,7 @@ export default function MainLayout(): React.JSX.Element {
               flex items-center justify-center
               h-full w-10
               btn btn-ghost p-0 focus:outline-none
-            hover:bg-gray-300/80 dark:hover:bg-neutral-focus
+            hover:bg-base-300
               [-webkit-app-region:no-drag]
             "
           >
@@ -124,19 +120,19 @@ export default function MainLayout(): React.JSX.Element {
           <div className="absolute inset-y-0 right-0 flex [-webkit-app-region:no-drag]">
             <button
               onClick={() => window.api.window.minimize()}
-              className="h-10 w-10 flex items-center justify-center hover:bg-gray-300/80 dark:hover:bg-neutral-focus"
+              className="h-10 w-10 flex items-center justify-center hover:bg-base-300"
             >
               <VscChromeMinimize />
             </button>
             <button
               onClick={() => window.api.window.toggleMaximize()}
-              className="h-10 w-10 flex items-center justify-center hover:bg-gray-300/80 dark:hover:bg-neutral-focus"
+              className="h-10 w-10 flex items-center justify-center hover:bg-base-300"
             >
               <VscChromeMaximize />
             </button>
             <button
               onClick={() => window.api.window.close()}
-              className="h-10 w-10 flex items-center justify-center hover:bg-red-500/90 hover:text-white"
+              className="h-10 w-10 flex items-center justify-center hover:bg-error hover:text-error-content"
             >
               <VscChromeClose />
             </button>
@@ -144,7 +140,7 @@ export default function MainLayout(): React.JSX.Element {
         </header>
 
         {/* ページ固有部分 */}
-        <main className="flex-1 pt-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-transparent min-h-0">
+        <main className="flex-1 pt-4 overflow-y-auto scrollbar-thin scrollbar-thumb-base-content/20 scrollbar-track-transparent min-h-0">
           <Outlet />
         </main>
 

@@ -243,7 +243,7 @@ export default function PlaySessionManagementModal({
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-transparent">
+          <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-base-content/30 scrollbar-track-transparent">
             {loading ? (
               <div className="flex justify-center items-center py-8">
                 <span className="loading loading-spinner loading-md"></span>

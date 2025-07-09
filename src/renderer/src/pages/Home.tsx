@@ -128,7 +128,7 @@ export default function Home(): React.ReactElement {
       {/* エラー */}
 
       {/* ゲーム一覧 */}
-      <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-transparent min-h-0">
+      <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-base-content/20 scrollbar-track-transparent min-h-0">
         <div className="relative">
           <div
             className="grid gap-4 justify-center px-6 pb-6"

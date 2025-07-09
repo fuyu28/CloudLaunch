@@ -41,7 +41,7 @@ const DynamicImage = memo(function DynamicImage({
   if (isLoading && !imageSrc) {
     return (
       <div
-        className="flex items-center justify-center bg-gray-100 text-base-content"
+        className="flex items-center justify-center bg-base-200 text-base-content"
         style={{
           width: imgProps.width || "100%",
           height: imgProps.height || "200px",

@@ -238,7 +238,7 @@ function CloudDataCard({
                     <span className="font-medium text-sm">ファイル一覧</span>
                   </div>
 
-                  <div className="max-h-40 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-transparent">
+                  <div className="max-h-40 overflow-y-auto scrollbar-thin scrollbar-thumb-base-content/30 scrollbar-track-transparent">
                     <div className="space-y-1">
                       {fileDetails.files.map((file, index) => (
                         <div

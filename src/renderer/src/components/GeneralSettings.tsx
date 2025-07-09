@@ -50,7 +50,7 @@ export default function GeneralSettings(): React.JSX.Element {
             </label>
             <div className="flex items-center space-x-2">
               <select
-                className="select select-bordered flex-none w-auto inline-block scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-transparent"
+                className="select select-bordered flex-none w-auto inline-block scrollbar-thin scrollbar-thumb-base-content/20 scrollbar-track-transparent"
                 value={currentTheme}
                 onChange={(e) => changeTheme(e.target.value as typeof currentTheme)}
                 disabled={isChangingTheme}

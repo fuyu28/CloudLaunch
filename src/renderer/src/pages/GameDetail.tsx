@@ -268,7 +268,7 @@ export default function GameDetail(): React.JSX.Element {
         <div className="card-body">
           <div className="flex flex-col lg:flex-row gap-6">
             {/* 左：サムネイル */}
-            <figure className="flex-shrink-0 w-full lg:w-80 aspect-[4/3] bg-gray-50 rounded-lg overflow-hidden">
+            <figure className="flex-shrink-0 w-full lg:w-80 aspect-[4/3] bg-base-200 rounded-lg overflow-hidden">
               <DynamicImage
                 src={game.imagePath || ""}
                 alt={game.title}

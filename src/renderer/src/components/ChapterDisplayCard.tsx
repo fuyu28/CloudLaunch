@@ -209,7 +209,7 @@ export default function ChapterDisplayCard({
         {/* 章一覧 */}
         <div className="space-y-2">
           <div className="text-sm font-medium text-base-content/80 mb-2">章一覧</div>
-          <div className="max-h-40 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-transparent space-y-1">
+          <div className="max-h-40 overflow-y-auto scrollbar-thin scrollbar-thumb-base-content/30 scrollbar-track-transparent space-y-1">
             {chapters.map((chapter) => (
               <button
                 key={chapter.id}
