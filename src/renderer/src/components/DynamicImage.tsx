@@ -41,7 +41,7 @@ const DynamicImage = memo(function DynamicImage({
   if (isLoading && !imageSrc) {
     return (
       <div
-        className="flex items-center justify-center bg-gray-100 text-gray-400"
+        className="flex items-center justify-center bg-gray-100 text-base-content"
         style={{
           width: imgProps.width || "100%",
           height: imgProps.height || "200px",
@@ -61,7 +61,7 @@ const DynamicImage = memo(function DynamicImage({
   // フォールバック（通常は発生しない）
   return (
     <div
-      className="flex items-center justify-center bg-gray-100 text-gray-400"
+      className="flex items-center justify-center bg-gray-100 text-base-content"
       style={{
         width: imgProps.width || "100%",
         height: imgProps.height || "200px",

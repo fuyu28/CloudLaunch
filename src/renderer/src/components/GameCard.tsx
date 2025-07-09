@@ -58,13 +58,13 @@ export default function GameCard({
               focus:ring-2 focus:ring-primary
               transition"
             >
-              <IoIosPlay size={32} className="pl-1 text-gray-600" />
+              <IoIosPlay size={32} className="pl-1 text-base-content" />
             </button>
           </div>
         </div>
         <div className="p-2 h-20">
           <h3 className="text-base font-semibold line-clamp-2">{title}</h3>
-          <p className="text-sm text-gray-500 line-clamp-2">{publisher}</p>
+          <p className="text-sm text-base-content line-clamp-2">{publisher}</p>
         </div>
       </Link>
     </div>

@@ -42,11 +42,9 @@ export default function R2S3Settings(): React.JSX.Element {
       <h2 className="text-xl font-semibold mb-2 flex items-center justify-between">
         R2/S3 設定
         <div className="text-sm flex items-center space-x-1">
-          {status === "loading" && (
-            <FaSyncAlt className="animate-spin text-gray-600 dark:text-gray-300" />
-          )}
-          {status === "success" && <FaCheck className="text-green-600 dark:text-green-400" />}
-          {status === "error" && <FaTimes className="text-red-600 dark:text-red-400" />}
+          {status === "loading" && <FaSyncAlt className="animate-spin text-base-content" />}
+          {status === "success" && <FaCheck className="text-success" />}
+          {status === "error" && <FaTimes className="text-error" />}
           <span className="text-base-content/80">
             {status === "loading" ? "接続確認中..." : status === "success" ? "接続OK" : message}
           </span>
