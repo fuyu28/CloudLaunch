@@ -74,7 +74,7 @@ export function SettingsFormField({
       <div className="flex items-center">
         <span className={`${labelWidth} text-sm font-medium`}>
           {label}
-          {required && <span className="text-red-500 ml-1">*</span>}
+          {required && <span className="text-error ml-1">*</span>}
         </span>
         <input
           type={type}
@@ -88,10 +88,10 @@ export function SettingsFormField({
       </div>
 
       {/* エラーメッセージ */}
-      {error && <div className="text-red-500 text-sm ml-36">{error}</div>}
+      {error && <div className="text-error text-sm ml-36">{error}</div>}
 
       {/* ヘルプテキスト */}
-      {helpText && !error && <div className="text-gray-500 text-xs ml-36">{helpText}</div>}
+      {helpText && !error && <div className="text-base-content text-xs ml-36">{helpText}</div>}
     </div>
   )
 }

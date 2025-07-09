@@ -110,19 +110,20 @@ export default function ChapterBarChart({ gameId }: ChapterBarChartProps): React
   }
 
   // 色の配列（章ごとに異なる色を使用）
+  // daisyUIテーマに対応した色を使用
   const chapterColors = [
-    "#6366F1", // Indigo 500
-    "#EC4899", // Pink 500
-    "#10B981", // Emerald 500
-    "#F59E0B", // Amber 500
-    "#14B8A6", // Teal 500
-    "#8B5CF6", // Violet 500
-    "#F43F5E", // Rose 500
-    "#0EA5E9", // Sky 500
-    "#84CC16", // Lime 500
-    "#F97316", // Orange 500
-    "#3B82F6", // Blue 500
-    "#22C55E" // Green 500
+    "oklch(var(--pc))", // Primary color
+    "oklch(var(--sc))", // Secondary color
+    "oklch(var(--ac))", // Accent color
+    "oklch(var(--nc))", // Neutral color
+    "oklch(var(--inc))", // Info color
+    "oklch(var(--suc))", // Success color
+    "oklch(var(--wac))", // Warning color
+    "oklch(var(--erc))", // Error color
+    "#6366F1", // Indigo 500 (fallback)
+    "#EC4899", // Pink 500 (fallback)
+    "#10B981", // Emerald 500 (fallback)
+    "#F59E0B" // Amber 500 (fallback)
   ]
 
   return (

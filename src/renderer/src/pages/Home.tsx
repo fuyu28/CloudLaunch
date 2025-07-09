@@ -106,9 +106,10 @@ export default function Home(): React.ReactElement {
             className="select select-bordered text-sm w-40 h-9"
           >
             <option value="title">タイトル順</option>
-            <option value="recentlyPlayed">最近プレイした順</option>
-            <option value="longestPlayed">プレイ時間が長い順</option>
-            <option value="recentlyRegistered">最近登録した順</option>
+            <option value="lastPlayed">最近プレイした順</option>
+            <option value="lastRegistered">最近登録した順</option>
+            <option value="totalPlayTime">プレイ時間が長い順</option>
+            <option value="publisher">ブランド順</option>
           </select>
           <span className="text-sm leading-tight">プレイ状況 :</span>
           <select
@@ -127,7 +128,7 @@ export default function Home(): React.ReactElement {
       {/* エラー */}
 
       {/* ゲーム一覧 */}
-      <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-transparent min-h-0">
+      <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-base-content/20 scrollbar-track-transparent min-h-0">
         <div className="relative">
           <div
             className="grid gap-4 justify-center px-6 pb-6"

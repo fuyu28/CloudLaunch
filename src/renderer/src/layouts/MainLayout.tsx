@@ -1,14 +1,17 @@
-import React, { useRef } from "react"
+import React, { useRef, useEffect } from "react"
 import { Outlet, NavLink, useLocation } from "react-router-dom"
 import { FiMenu } from "react-icons/fi"
 import { IoIosHome, IoIosSettings } from "react-icons/io"
 import { VscChromeClose, VscChromeMaximize, VscChromeMinimize } from "react-icons/vsc"
 import { Toaster } from "react-hot-toast"
+import { useAtom } from "jotai"
+import { themeAtom } from "@renderer/state/settings"
 import PlayStatusBar from "@renderer/components/PlayStatusBar"
 
 export default function MainLayout(): React.JSX.Element {
   const location = useLocation()
   const drawerRef = useRef<HTMLInputElement>(null)
+  const [currentTheme] = useAtom(themeAtom)
   const isHome = location.pathname === "/"
   const isSettings = location.pathname === "/settings"
 
@@ -16,13 +19,18 @@ export default function MainLayout(): React.JSX.Element {
     if (drawerRef.current) drawerRef.current.checked = false
   }
 
+  // テーマ初期化：アプリケーション起動時にHTMLのdata-theme属性を設定
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", currentTheme)
+  }, [currentTheme])
+
   return (
     <div className="drawer drawer-mobile min-h-screen bg-base-200">
       <input id="main-drawer" type="checkbox" className="drawer-toggle" ref={drawerRef} />
 
       {/* サイドバー */}
       <div className="drawer-side">
-        <label htmlFor="main-drawer" className="drawer-overlay bg-[rgba(0,0,0,0.15)] z-40" />
+        <label htmlFor="main-drawer" className="drawer-overlay bg-black/15 z-40" />
 
         <aside
           className="
@@ -44,9 +52,7 @@ export default function MainLayout(): React.JSX.Element {
                   to="/"
                   className={({ isActive }) =>
                     `flex items-center w-full p-3 rounded-md ${
-                      isActive
-                        ? "bg-primary text-primary-content font-medium"
-                        : "hover:bg-base-300 dark:hover:bg-base-700"
+                      isActive ? "bg-primary text-primary-content font-medium" : "hover:bg-base-300"
                     }`
                   }
                   onClick={closeDrawer}
@@ -64,9 +70,7 @@ export default function MainLayout(): React.JSX.Element {
                   to="/settings"
                   className={({ isActive }) =>
                     `flex items-center w-full p-3 rounded-md ${
-                      isActive
-                        ? "bg-primary text-primary-content font-medium"
-                        : "hover:bg-base-300 dark:hover:bg-base-700"
+                      isActive ? "bg-primary text-primary-content font-medium" : "hover:bg-base-300"
                     }`
                   }
                   onClick={closeDrawer}
@@ -100,7 +104,7 @@ export default function MainLayout(): React.JSX.Element {
               flex items-center justify-center
               h-full w-10
               btn btn-ghost p-0 focus:outline-none
-            hover:bg-gray-300/80 dark:hover:bg-neutral-focus
+            hover:bg-base-300
               [-webkit-app-region:no-drag]
             "
           >
@@ -116,19 +120,19 @@ export default function MainLayout(): React.JSX.Element {
           <div className="absolute inset-y-0 right-0 flex [-webkit-app-region:no-drag]">
             <button
               onClick={() => window.api.window.minimize()}
-              className="h-10 w-10 flex items-center justify-center hover:bg-gray-300/80 dark:hover:bg-neutral-focus"
+              className="h-10 w-10 flex items-center justify-center hover:bg-base-300"
             >
               <VscChromeMinimize />
             </button>
             <button
               onClick={() => window.api.window.toggleMaximize()}
-              className="h-10 w-10 flex items-center justify-center hover:bg-gray-300/80 dark:hover:bg-neutral-focus"
+              className="h-10 w-10 flex items-center justify-center hover:bg-base-300"
             >
               <VscChromeMaximize />
             </button>
             <button
               onClick={() => window.api.window.close()}
-              className="h-10 w-10 flex items-center justify-center hover:bg-red-500/90 hover:text-white"
+              className="h-10 w-10 flex items-center justify-center hover:bg-error hover:text-error-content"
             >
               <VscChromeClose />
             </button>
@@ -136,7 +140,7 @@ export default function MainLayout(): React.JSX.Element {
         </header>
 
         {/* ページ固有部分 */}
-        <main className="flex-1 pt-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-transparent min-h-0">
+        <main className="flex-1 pt-4 overflow-y-auto scrollbar-thin scrollbar-thumb-base-content/20 scrollbar-track-transparent min-h-0">
           <Outlet />
         </main>
 

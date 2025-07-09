@@ -24,6 +24,7 @@ export function transformGame(game: Game): GameType {
     imagePath: nullToUndefined(game.imagePath), // undefined - オプショナル設定
     saveFolderPath: nullToUndefined(game.saveFolderPath), // undefined - オプショナル設定
     lastPlayed: game.lastPlayed, // null - 明確な「未プレイ」状態
+    clearedAt: game.clearedAt, // null - 明確な「未クリア」状態
     currentChapter: game.currentChapter // null - 明確な「未選択」状態
   }
 }
