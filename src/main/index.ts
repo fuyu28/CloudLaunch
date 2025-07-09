@@ -1,11 +1,15 @@
 import { app, shell, BrowserWindow, ipcMain } from "electron"
 import { join } from "path"
 import { electronApp, optimizer, is } from "@electron-toolkit/utils"
+import Store from "electron-store"
 import icon from "../../build/icon.ico?asset"
 import { registerAllHandlers } from "./registerHandlers"
 import { registerWindowHandler } from "./ipcHandlers/windowsHandler"
 import { logger } from "./utils/logger"
 import { ProcessMonitorService } from "./service/processMonitorService"
+
+// 設定ストア
+const store = new Store()
 
 function createWindow(): void {
   // Create the browser window.
@@ -65,11 +69,16 @@ app.whenReady().then(() => {
 
   createWindow()
 
-  // プロセス監視を自動開始
+  // 自動計測設定を確認してプロセス監視を開始
   setTimeout(async () => {
-    const monitor = ProcessMonitorService.getInstance()
-    await monitor.startMonitoring()
-    logger.info("アプリケーション起動時にプロセス監視を自動開始しました")
+    const autoTracking = store.get("autoTracking", true) as boolean
+    if (autoTracking) {
+      const monitor = ProcessMonitorService.getInstance()
+      await monitor.startMonitoring()
+      logger.info("アプリケーション起動時にプロセス監視を自動開始しました")
+    } else {
+      logger.info("自動計測が無効のため、プロセス監視を開始しませんでした")
+    }
   }, 2000) // 2秒後に開始（UIの初期化を待つ）
 
   app.on("activate", function () {

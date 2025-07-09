@@ -74,12 +74,24 @@ export default function GeneralSettings(): React.JSX.Element {
   }
 
   // 自動計測変更ハンドラー
-  const handleAutoTrackingChange = (enabled: boolean): void => {
+  const handleAutoTrackingChange = async (enabled: boolean): Promise<void> => {
     setAutoTracking(enabled)
-    if (enabled) {
-      toast.success("起動時の自動計測を有効にしました")
-    } else {
-      toast.success("起動時の自動計測を無効にしました")
+
+    // メインプロセスに設定変更を通知
+    try {
+      const result = await window.api.settings.updateAutoTracking(enabled)
+      if (result.success) {
+        if (enabled) {
+          toast.success("起動時の自動計測を有効にしました（次回起動時に反映）")
+        } else {
+          toast.success("起動時の自動計測を無効にしました（次回起動時に反映）")
+        }
+      } else {
+        toast.error("設定の更新に失敗しました")
+      }
+    } catch (error) {
+      console.error("自動計測設定の更新エラー:", error)
+      toast.error("設定の更新に失敗しました")
     }
   }
 
@@ -166,7 +178,7 @@ export default function GeneralSettings(): React.JSX.Element {
                   <div>
                     <span className="label-text font-medium">起動時の自動計測</span>
                     <p className="text-xs text-base-content/50 mt-1">
-                      {autoTracking ? "ゲーム起動時に自動計測開始" : "手動でセッション追加が必要"}
+                      {autoTracking ? "ゲーム起動時に自動計測開始" : "手動で自動検出の開始が必要"}
                     </p>
                   </div>
                 </label>
