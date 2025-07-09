@@ -76,10 +76,10 @@ export const changeThemeAtom = atom(null, async (_, set, newTheme: ThemeName) =>
  */
 export const sortOptionLabels: Record<SortOption, string> = {
   title: "タイトル順",
-  lastPlayed: "最終プレイ日時順",
-  totalPlayTime: "総プレイ時間順",
-  publisher: "発行元順",
-  lastRegistered: "最終登録順"
+  lastPlayed: "最近プレイした順",
+  totalPlayTime: "プレイ時間が長い順",
+  publisher: "ブランド順",
+  lastRegistered: "最近登録した順"
 }
 
 /**
