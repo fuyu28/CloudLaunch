@@ -21,6 +21,7 @@
 
 import psList from "ps-list"
 import { EventEmitter } from "events"
+import Store from "electron-store"
 import { prisma } from "../db"
 import { logger } from "../utils/logger"
 import path from "path"
@@ -71,6 +72,7 @@ export class ProcessMonitorService extends EventEmitter {
   private lastProcessCacheUpdate: Date | undefined = undefined
   private readonly processCacheExpiryMs: number = 10000 // 10秒間プロセスキャッシュを保持
   private readonly maxProcessCacheSize: number = 1000 // プロセスキャッシュの最大サイズ
+  private store: Store = new Store() // 設定ストア
 
   /**
    * ProcessMonitorServiceのコンストラクタ
@@ -164,6 +166,13 @@ export class ProcessMonitorService extends EventEmitter {
    * @param exePath 実行ファイルパス
    */
   public addGame(gameId: string, gameTitle: string, exePath: string): void {
+    // 自動計測設定をチェック
+    const autoTracking = this.store.get("autoTracking", true) as boolean
+    if (!autoTracking) {
+      logger.info(`自動計測が無効のため、ゲーム監視を追加しません: ${gameTitle}`)
+      return
+    }
+
     const exeName = path.basename(exePath)
     const game: MonitoredGame = {
       gameId,
@@ -516,6 +525,12 @@ export class ProcessMonitorService extends EventEmitter {
     processes: Array<{ name?: string; pid: number; cmd?: string }>
   ): Promise<void> {
     try {
+      // 自動計測設定をチェック
+      const autoTracking = this.store.get("autoTracking", true) as boolean
+      if (!autoTracking) {
+        return
+      }
+
       // キャッシュが空の場合はスキップ（初期化済みの場合のみ実行）
       if (this.gamesCache.length === 0) {
         return

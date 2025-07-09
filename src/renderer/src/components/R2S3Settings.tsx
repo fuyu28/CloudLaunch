@@ -18,8 +18,10 @@
 import React, { useEffect } from "react"
 import { useSettingsForm } from "../hooks/useSettingsForm"
 import { useConnectionStatus } from "../hooks/useConnectionStatus"
+import { useOfflineMode } from "../hooks/useOfflineMode"
 import { FaCheck, FaSyncAlt, FaTimes } from "react-icons/fa"
 import SettingsFormField from "./SettingsFormField"
+import { getOfflineDisabledClasses } from "../utils/offlineUtils"
 
 /**
  * R2/S3設定コンポーネント
@@ -31,23 +33,50 @@ import SettingsFormField from "./SettingsFormField"
 export default function R2S3Settings(): React.JSX.Element {
   const { formData, updateField, canSubmit, isSaving, handleSave, fieldErrors } = useSettingsForm()
   const { status, message, check } = useConnectionStatus()
+  const { isOfflineMode, checkNetworkFeature } = useOfflineMode()
 
-  // 初回マウント時に接続チェック
+  // 初回マウント時に接続チェック（オフラインモード時は無効）
   useEffect(() => {
+    if (!isOfflineMode) {
+      check()
+    }
+  }, [check, isOfflineMode])
+
+  // 接続テスト実行
+  const handleConnectionTest = (): void => {
+    if (!checkNetworkFeature("接続テスト")) {
+      return
+    }
     check()
-  }, [check])
+  }
+
+  // 設定保存
+  const handleSaveSettings = (): void => {
+    if (!checkNetworkFeature("設定保存")) {
+      return
+    }
+    handleSave()
+  }
+
+  const disabledClasses = getOfflineDisabledClasses(isOfflineMode)
 
   return (
-    <div>
+    <div className={disabledClasses}>
       <h2 className="text-xl font-semibold mb-2 flex items-center justify-between">
         R2/S3 設定
         <div className="text-sm flex items-center space-x-1">
-          {status === "loading" && <FaSyncAlt className="animate-spin text-base-content" />}
-          {status === "success" && <FaCheck className="text-success" />}
-          {status === "error" && <FaTimes className="text-error" />}
-          <span className="text-base-content/80">
-            {status === "loading" ? "接続確認中..." : status === "success" ? "接続OK" : message}
-          </span>
+          {isOfflineMode ? (
+            <span className="text-warning">オフラインモード</span>
+          ) : (
+            <>
+              {status === "loading" && <FaSyncAlt className="animate-spin text-base-content" />}
+              {status === "success" && <FaCheck className="text-success" />}
+              {status === "error" && <FaTimes className="text-error" />}
+              <span className="text-base-content/80">
+                {status === "loading" ? "接続確認中..." : status === "success" ? "接続OK" : message}
+              </span>
+            </>
+          )}
         </div>
       </h2>
 
@@ -103,11 +132,34 @@ export default function R2S3Settings(): React.JSX.Element {
         />
       </div>
 
-      <div className="form-control mt-6 flex justify-end">
-        <button className="btn btn-primary" onClick={handleSave} disabled={!canSubmit || isSaving}>
+      <div className="form-control mt-6 flex justify-end space-x-2">
+        {!isOfflineMode && (
+          <button
+            className="btn btn-outline"
+            onClick={handleConnectionTest}
+            disabled={status === "loading"}
+          >
+            接続テスト
+          </button>
+        )}
+        <button
+          className="btn btn-primary"
+          onClick={handleSaveSettings}
+          disabled={!canSubmit || isSaving || isOfflineMode}
+        >
           保存
         </button>
       </div>
+
+      {isOfflineMode && (
+        <div className="mt-4 p-4 bg-warning/10 border border-warning/20 rounded-lg">
+          <p className="text-sm text-warning">
+            オフラインモードでは R2/S3 設定の変更や接続テストはできません。
+            <br />
+            設定を変更するには、一般設定からオフラインモードを無効にしてください。
+          </p>
+        </div>
+      )}
     </div>
   )
 }

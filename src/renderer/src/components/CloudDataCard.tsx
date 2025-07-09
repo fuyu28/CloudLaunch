@@ -8,6 +8,8 @@
 import { useCallback, useEffect, useState, memo } from "react"
 import { FaUpload, FaDownload, FaCloud, FaCloudDownloadAlt, FaFile } from "react-icons/fa"
 import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
+import { useOfflineMode } from "@renderer/hooks/useOfflineMode"
+import { getOfflineDisabledClasses } from "@renderer/utils/offlineUtils"
 
 interface CloudDataInfo {
   exists: boolean
@@ -62,6 +64,7 @@ function CloudDataCard({
   onDownload
 }: CloudDataCardProps): React.JSX.Element {
   const { formatDate } = useTimeFormat()
+  const { isOfflineMode, checkNetworkFeature } = useOfflineMode()
   const [cloudData, setCloudData] = useState<CloudDataInfo>({ exists: false })
   const [fileDetails, setFileDetails] = useState<CloudFileDetails | undefined>(undefined)
   const [isLoading, setIsLoading] = useState(true)
@@ -71,7 +74,7 @@ function CloudDataCard({
   // ファイル詳細情報を取得
   const fetchFileDetails = useCallback(
     async (forceRefresh = false) => {
-      if (!isValidCreds || !gameId) return
+      if (!isValidCreds || !gameId || isOfflineMode) return
 
       // 同じゲームIDで既にデータを取得済みの場合はスキップ（強制リフレッシュ以外）
       if (!forceRefresh && lastFetchedGameId === gameId && fileDetails !== undefined) {
@@ -117,7 +120,7 @@ function CloudDataCard({
         setIsLoading(false)
       }
     },
-    [fileDetails, gameId, isValidCreds, lastFetchedGameId]
+    [fileDetails, gameId, isValidCreds, lastFetchedGameId, isOfflineMode]
   )
 
   // gameIdが変わった場合に状態をリセット
@@ -130,17 +133,28 @@ function CloudDataCard({
   }, [gameId, lastFetchedGameId])
 
   useEffect(() => {
-    // gameIdまたはisValidCredsが変わった場合のみ実行
-    if (gameId && isValidCreds) {
+    // gameIdまたはisValidCredsが変わった場合のみ実行（オフライン時は除く）
+    if (gameId && isValidCreds && !isOfflineMode) {
       fetchFileDetails()
     }
-  }, [gameId, isValidCreds, fetchFileDetails]) // fetchFileDetailsを依存配列から削除
+  }, [gameId, isValidCreds, isOfflineMode, fetchFileDetails])
 
   // アップロード完了後にデータを再取得
   const handleUpload = useCallback(async () => {
+    if (!checkNetworkFeature("セーブデータアップロード")) {
+      return
+    }
     await onUpload()
     await fetchFileDetails(true) // 強制リフレッシュ
-  }, [onUpload, fetchFileDetails])
+  }, [onUpload, fetchFileDetails, checkNetworkFeature])
+
+  // ダウンロード実行
+  const handleDownload = useCallback(async () => {
+    if (!checkNetworkFeature("セーブデータダウンロード")) {
+      return
+    }
+    await onDownload()
+  }, [onDownload, checkNetworkFeature])
 
   // ファイルサイズをフォーマット
   const formatFileSize = (bytes?: number): string => {
@@ -158,8 +172,10 @@ function CloudDataCard({
     return `${size.toFixed(1)} ${units[unitIndex]}`
   }
 
+  const disabledClasses = getOfflineDisabledClasses(isOfflineMode)
+
   return (
-    <div className="card bg-base-100 shadow-xl h-full">
+    <div className={`card bg-base-100 shadow-xl h-full ${disabledClasses}`}>
       <div className="card-body flex flex-col h-full">
         <div className="flex justify-between items-center pb-4">
           <h3 className="card-title flex items-center gap-2">
@@ -171,7 +187,9 @@ function CloudDataCard({
             <button
               className="btn btn-outline btn-sm"
               onClick={handleUpload}
-              disabled={!hasSaveFolder || !isValidCreds || isUploading || isDownloading}
+              disabled={
+                !hasSaveFolder || !isValidCreds || isUploading || isDownloading || isOfflineMode
+              }
             >
               {isUploading ? (
                 <>
@@ -187,8 +205,10 @@ function CloudDataCard({
             </button>
             <button
               className="btn btn-primary btn-sm"
-              onClick={onDownload}
-              disabled={!cloudData.exists || !isValidCreds || isUploading || isDownloading}
+              onClick={handleDownload}
+              disabled={
+                !cloudData.exists || !isValidCreds || isUploading || isDownloading || isOfflineMode
+              }
             >
               {isDownloading ? (
                 <>
@@ -207,7 +227,11 @@ function CloudDataCard({
 
         {/* クラウドデータ情報 */}
         <div className="mb-4 flex-1">
-          {isLoading || isFileDetailsLoading ? (
+          {isOfflineMode ? (
+            <div className="flex items-center justify-center p-4">
+              <div className="badge badge-warning badge-lg gap-2">オフラインモード</div>
+            </div>
+          ) : isLoading || isFileDetailsLoading ? (
             <div className="flex items-center gap-2 text-base-content/60">
               <span className="loading loading-spinner loading-sm"></span>
               <span>データ情報を取得中...</span>
@@ -268,7 +292,13 @@ function CloudDataCard({
         </div>
 
         {/* 警告メッセージ */}
-        {!isValidCreds && (
+        {isOfflineMode && (
+          <div className="alert alert-warning mt-2">
+            <span className="text-xs">オフラインモードではクラウド機能を使用できません</span>
+          </div>
+        )}
+
+        {!isOfflineMode && !isValidCreds && (
           <div className="alert alert-warning mt-2">
             <span className="text-xs">
               クラウド機能を使用するには設定画面で認証情報を入力してください
@@ -276,7 +306,7 @@ function CloudDataCard({
           </div>
         )}
 
-        {!hasSaveFolder && isValidCreds && (
+        {!isOfflineMode && !hasSaveFolder && isValidCreds && (
           <div className="alert alert-info mt-2">
             <span className="text-xs">セーブフォルダが設定されていません</span>
           </div>

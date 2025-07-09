@@ -125,6 +125,11 @@ export interface ChapterAPI {
   setCurrentChapter(gameId: string, chapterId: string): Promise<ApiResult<void>>
 }
 
+export interface SettingsAPI {
+  updateAutoTracking(enabled: boolean): Promise<ApiResult>
+  getAutoTracking(): Promise<ApiResult<boolean>>
+}
+
 export interface API {
   file: FileAPI
   window: WindowAPI
@@ -139,4 +144,5 @@ export interface API {
   game: LaunchGameAPI
   processMonitor: ProcessMonitorAPI
   chapter: ChapterAPI
+  settings: SettingsAPI
 }

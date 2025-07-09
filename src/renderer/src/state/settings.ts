@@ -8,6 +8,8 @@
  * - テーマ設定の管理
  * - デフォルトソート順の管理
  * - デフォルトフィルターの管理
+ * - オフラインモードの管理
+ * - 起動時の自動計測の管理
  * - LocalStorageとの自動同期
  */
 
@@ -38,6 +40,18 @@ export const defaultSortOptionAtom = atomWithStorage<SortOption>("defaultSortOpt
  * LocalStorageに自動保存される
  */
 export const defaultFilterStateAtom = atomWithStorage<FilterOption>("defaultFilterState", "all")
+
+/**
+ * オフラインモード設定atom
+ * LocalStorageに自動保存される
+ */
+export const offlineModeAtom = atomWithStorage<boolean>("offlineMode", false)
+
+/**
+ * 起動時の自動計測設定atom
+ * LocalStorageに自動保存される
+ */
+export const autoTrackingAtom = atomWithStorage<boolean>("autoTracking", true)
 
 /**
  * テーマ変更中の状態atom
@@ -76,10 +90,10 @@ export const changeThemeAtom = atom(null, async (_, set, newTheme: ThemeName) =>
  */
 export const sortOptionLabels: Record<SortOption, string> = {
   title: "タイトル順",
-  lastPlayed: "最終プレイ日時順",
-  totalPlayTime: "総プレイ時間順",
-  publisher: "発行元順",
-  lastRegistered: "最終登録順"
+  lastPlayed: "最近プレイした順",
+  totalPlayTime: "プレイ時間が長い順",
+  publisher: "ブランド順",
+  lastRegistered: "最近登録した順"
 }
 
 /**
