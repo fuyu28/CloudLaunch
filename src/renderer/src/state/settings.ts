@@ -8,6 +8,7 @@
  * - テーマ設定の管理
  * - デフォルトソート順の管理
  * - デフォルトフィルターの管理
+ * - オフラインモードの管理
  * - LocalStorageとの自動同期
  */
 
@@ -38,6 +39,12 @@ export const defaultSortOptionAtom = atomWithStorage<SortOption>("defaultSortOpt
  * LocalStorageに自動保存される
  */
 export const defaultFilterStateAtom = atomWithStorage<FilterOption>("defaultFilterState", "all")
+
+/**
+ * オフラインモード設定atom
+ * LocalStorageに自動保存される
+ */
+export const offlineModeAtom = atomWithStorage<boolean>("offlineMode", false)
 
 /**
  * テーマ変更中の状態atom

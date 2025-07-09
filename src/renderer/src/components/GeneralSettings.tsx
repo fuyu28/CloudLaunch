@@ -7,6 +7,7 @@
  * - DaisyUIテーマの選択・変更
  * - デフォルトソート順の設定
  * - デフォルトフィルター状態の設定
+ * - オフラインモードの設定
  * - 設定の永続化
  * - リアルタイムでの変更反映
  *
@@ -24,6 +25,7 @@ import {
   isChangingThemeAtom,
   defaultSortOptionAtom,
   defaultFilterStateAtom,
+  offlineModeAtom,
   sortOptionLabels,
   filterStateLabels
 } from "../state/settings"
@@ -33,8 +35,8 @@ import type { SortOption, FilterOption } from "src/types/menu"
 /**
  * 一般設定コンポーネント
  *
- * テーマ選択、デフォルトソート順、デフォルトフィルター状態など、
- * アプリケーションの一般的な設定を提供します。
+ * テーマ選択、デフォルトソート順、デフォルトフィルター状態、
+ * オフラインモードなど、アプリケーションの一般的な設定を提供します。
  *
  * @returns 一般設定コンポーネント要素
  */
@@ -44,6 +46,7 @@ export default function GeneralSettings(): React.JSX.Element {
   const [, changeTheme] = useAtom(changeThemeAtom)
   const [defaultSortOption, setDefaultSortOption] = useAtom(defaultSortOptionAtom)
   const [defaultFilterState, setDefaultFilterState] = useAtom(defaultFilterStateAtom)
+  const [offlineMode, setOfflineMode] = useAtom(offlineModeAtom)
 
   // ソート変更ハンドラー
   const handleSortChange = (newSortOption: SortOption): void => {
@@ -55,6 +58,16 @@ export default function GeneralSettings(): React.JSX.Element {
   const handleFilterChange = (newFilterState: FilterOption): void => {
     setDefaultFilterState(newFilterState)
     toast.success(`デフォルトフィルターを「${filterStateLabels[newFilterState]}」に変更しました`)
+  }
+
+  // オフラインモード変更ハンドラー
+  const handleOfflineModeChange = (enabled: boolean): void => {
+    setOfflineMode(enabled)
+    if (enabled) {
+      toast.success("オフラインモードを有効にしました")
+    } else {
+      toast.success("オフラインモードを無効にしました")
+    }
   }
 
   return (
@@ -146,6 +159,35 @@ export default function GeneralSettings(): React.JSX.Element {
                 </option>
               ))}
             </select>
+          </div>
+        </div>
+
+        {/* オフラインモード設定セクション */}
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-lg font-medium">オフラインモード</h3>
+            <p className="text-sm text-base-content/70">
+              ネットワーク接続が必要な機能（クラウド同期等）を無効にします
+            </p>
+          </div>
+
+          <div className="form-control max-w-sm">
+            <label className="label cursor-pointer justify-start">
+              <input
+                type="checkbox"
+                className="toggle toggle-primary mr-3"
+                checked={offlineMode}
+                onChange={(e) => handleOfflineModeChange(e.target.checked)}
+              />
+              <span className="label-text">
+                {offlineMode ? "オフラインモード有効" : "オフラインモード無効"}
+              </span>
+            </label>
+            <div className="mt-2">
+              <p className="text-xs text-base-content/50">
+                {offlineMode ? "クラウド機能が無効になっています" : "すべての機能が利用可能です"}
+              </p>
+            </div>
           </div>
         </div>
       </div>
