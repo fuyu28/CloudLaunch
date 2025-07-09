@@ -47,7 +47,7 @@ export default function R2S3Settings(): React.JSX.Element {
           )}
           {status === "success" && <FaCheck className="text-green-600 dark:text-green-400" />}
           {status === "error" && <FaTimes className="text-red-600 dark:text-red-400" />}
-          <span className="text-gray-800 dark:text-gray-200">
+          <span className="text-base-content/80">
             {status === "loading" ? "接続確認中..." : status === "success" ? "接続OK" : message}
           </span>
         </div>
