@@ -63,10 +63,10 @@ function CloudDataCard({
 }: CloudDataCardProps): React.JSX.Element {
   const { formatDate } = useTimeFormat()
   const [cloudData, setCloudData] = useState<CloudDataInfo>({ exists: false })
-  const [fileDetails, setFileDetails] = useState<CloudFileDetails | null>(null)
+  const [fileDetails, setFileDetails] = useState<CloudFileDetails | undefined>(undefined)
   const [isLoading, setIsLoading] = useState(true)
   const [isFileDetailsLoading, setIsFileDetailsLoading] = useState(false)
-  const [lastFetchedGameId, setLastFetchedGameId] = useState<string | null>(null)
+  const [lastFetchedGameId, setLastFetchedGameId] = useState<string | undefined>(undefined)
 
   // ファイル詳細情報を取得
   const fetchFileDetails = useCallback(
@@ -74,7 +74,7 @@ function CloudDataCard({
       if (!isValidCreds || !gameId) return
 
       // 同じゲームIDで既にデータを取得済みの場合はスキップ（強制リフレッシュ以外）
-      if (!forceRefresh && lastFetchedGameId === gameId && fileDetails !== null) {
+      if (!forceRefresh && lastFetchedGameId === gameId && fileDetails !== undefined) {
         setIsLoading(false)
         return
       }
@@ -125,7 +125,7 @@ function CloudDataCard({
     if (lastFetchedGameId !== gameId) {
       setIsLoading(true)
       setCloudData({ exists: false })
-      setFileDetails(null)
+      setFileDetails(undefined)
     }
   }, [gameId, lastFetchedGameId])
 

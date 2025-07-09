@@ -22,7 +22,7 @@ import type { FilterOption, SortOption } from "../../../../types/menu"
 jest.mock("../useLoadingState", () => ({
   useLoadingState: () => ({
     isLoading: false,
-    error: null,
+    error: undefined,
     setLoading: jest.fn(),
     setError: jest.fn(),
     reset: jest.fn(),
@@ -74,7 +74,8 @@ describe("useGameActions", () => {
       lastPlayed: null,
       playStatus: "unplayed",
       createdAt: new Date("2024-01-01"),
-      currentChapter: null
+      currentChapter: null,
+      clearedAt: null
     }
   ]
 
@@ -104,7 +105,7 @@ describe("useGameActions", () => {
 
       jest.mocked(useLoadingState).mockReturnValue({
         isLoading: false,
-        error: null,
+        error: undefined,
         setLoading: jest.fn(),
         setError: jest.fn(),
         reset: jest.fn(),
@@ -141,7 +142,7 @@ describe("useGameActions", () => {
 
       jest.mocked(useLoadingState).mockReturnValue({
         isLoading: false,
-        error: null,
+        error: undefined,
         setLoading: jest.fn(),
         setError: jest.fn(),
         reset: jest.fn(),
@@ -180,7 +181,7 @@ describe("useGameActions", () => {
 
       jest.mocked(useLoadingState).mockReturnValue({
         isLoading: false,
-        error: null,
+        error: undefined,
         setLoading: jest.fn(),
         setError: jest.fn(),
         reset: jest.fn(),
@@ -222,7 +223,7 @@ describe("useGameActions", () => {
 
       jest.mocked(useLoadingState).mockReturnValue({
         isLoading: false,
-        error: null,
+        error: undefined,
         setLoading: jest.fn(),
         setError: jest.fn(),
         reset: jest.fn(),
@@ -303,7 +304,7 @@ describe("useGameActions", () => {
 
       jest.mocked(useLoadingState).mockReturnValue({
         isLoading: false,
-        error: null,
+        error: undefined,
         setLoading: jest.fn(),
         setError: jest.fn(),
         reset: jest.fn(),

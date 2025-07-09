@@ -6,10 +6,7 @@ export interface ValidationResult {
   errors: string[]
 }
 
-export function validateRequired(
-  value: string | undefined | null,
-  fieldName: string
-): ValidationResult {
+export function validateRequired(value: string | undefined, fieldName: string): ValidationResult {
   if (!value || value.trim() === "") {
     return {
       isValid: false,

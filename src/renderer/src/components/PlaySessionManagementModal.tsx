@@ -62,10 +62,10 @@ export default function PlaySessionManagementModal({
   const [processes, setProcesses] = useState<PlaySessionType[]>([])
   const [chapters, setChapters] = useState<Chapter[]>([])
   const [loading, setLoading] = useState(false)
-  const [selectedProcessId, setSelectedProcessId] = useState<string | null>(null)
+  const [selectedProcessId, setSelectedProcessId] = useState<string | undefined>(undefined)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-  const [editingProcess, setEditingProcess] = useState<PlaySessionType | null>(null)
+  const [editingProcess, setEditingProcess] = useState<PlaySessionType | undefined>(undefined)
   const [editFormData, setEditFormData] = useState<EditFormData>({
     sessionName: "",
     chapterId: null
@@ -120,7 +120,7 @@ export default function PlaySessionManagementModal({
     setEditingProcess(process)
     setEditFormData({
       sessionName: process.sessionName ?? "未設定",
-      chapterId: process.chapterId || null
+      chapterId: process.chapterId
     })
     setIsEditModalOpen(true)
   }, [])
@@ -130,7 +130,7 @@ export default function PlaySessionManagementModal({
    */
   const closeEditModal = useCallback(() => {
     setIsEditModalOpen(false)
-    setEditingProcess(null)
+    setEditingProcess(undefined)
     setEditFormData({
       sessionName: "",
       chapterId: null
@@ -196,7 +196,7 @@ export default function PlaySessionManagementModal({
       showToast("セッションの削除に失敗しました", "error")
     } finally {
       setIsDeleteModalOpen(false)
-      setSelectedProcessId(null)
+      setSelectedProcessId(undefined)
     }
   }, [selectedProcessId, fetchProcesses, onProcessUpdated, showToast])
 
@@ -213,7 +213,7 @@ export default function PlaySessionManagementModal({
    */
   const closeDeleteModal = useCallback(() => {
     setIsDeleteModalOpen(false)
-    setSelectedProcessId(null)
+    setSelectedProcessId(undefined)
   }, [])
 
   /**

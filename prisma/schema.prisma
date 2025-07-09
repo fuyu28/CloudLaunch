@@ -31,6 +31,7 @@ model Game {
   playStatus     PlayStatus    @default(unplayed)
   totalPlayTime  Int           @default(0)
   lastPlayed     DateTime?
+  clearedAt      DateTime?
   currentChapter String?
   sessions       PlaySession[]
   uploads        Upload[]

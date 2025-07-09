@@ -1,15 +1,18 @@
+import { PlayStatus } from "@prisma/client"
+
 export type GameType = {
   id: string
   title: string
   publisher: string
-  saveFolderPath: string | null
+  saveFolderPath?: string // undefined - オプショナル設定
   exePath: string
-  imagePath: string | null
+  imagePath?: string // undefined - オプショナル設定
   createdAt: Date
-  playStatus: "unplayed" | "playing" | "played"
+  playStatus: PlayStatus
   totalPlayTime: number
-  lastPlayed: Date | null
-  currentChapter: string | null
+  lastPlayed: Date | null // null - 明確な「未プレイ」状態
+  clearedAt: Date | null // null - 明確な「未クリア」状態
+  currentChapter: string | null // null - 明確な「未選択」状態
 }
 
 export type InputGameData = {
@@ -18,7 +21,7 @@ export type InputGameData = {
   imagePath?: string
   exePath: string
   saveFolderPath?: string
-  playStatus: "unplayed" | "playing" | "played"
+  playStatus: PlayStatus
 }
 
 /**
@@ -39,14 +42,15 @@ export type MonitoringGameStatus = {
 
 export type PlaySessionType = {
   id: string
-  sessionName: string | null
+  sessionName?: string // undefined - オプショナル情報
   playedAt: Date
   duration: number
   gameId: string
-  chapterId: string | null
-  chapter: {
+  chapterId: string | null // null - 明確な「未所属」状態
+  chapter?: {
+    // undefined - オプショナル情報
     name: string
     id: string
     order: number
-  } | null
+  }
 }

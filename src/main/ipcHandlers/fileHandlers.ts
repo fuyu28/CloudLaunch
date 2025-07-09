@@ -37,17 +37,17 @@ export function registerFileDialogHandlers(): void {
    * - ゲームアイコンの選択（画像ファイルフィルター）
    *
    * @param filters ファイル種別フィルター配列（nameとextensionsを指定）
-   * @returns ApiResult<string | null> 選択結果（選択時はファイルパス、キャンセル時はnull）
+   * @returns ApiResult<string | undefined> 選択結果（選択時はファイルパス、キャンセル時はundefined）
    */
   ipcMain.handle(
     "select-file",
-    async (_event, filters: Electron.FileFilter[]): Promise<ApiResult<string | null>> => {
+    async (_event, filters: Electron.FileFilter[]): Promise<ApiResult<string | undefined>> => {
       try {
         const { canceled, filePaths } = await dialog.showOpenDialog({
           properties: ["openFile"],
           filters
         })
-        return { success: true, data: canceled ? null : filePaths[0] }
+        return { success: true, data: canceled ? undefined : filePaths[0] }
       } catch (e: unknown) {
         logger.error("ファイル選択エラー:", e)
         const message = e instanceof Error ? e.message : MESSAGES.IPC_ERROR.UNKNOWN
@@ -65,14 +65,14 @@ export function registerFileDialogHandlers(): void {
    * - ゲームのセーブデータフォルダの選択
    * - アップロード・ダウンロード先フォルダの選択
    *
-   * @returns ApiResult<string | null> 選択結果（選択時はフォルダパス、キャンセル時はnull）
+   * @returns ApiResult<string | undefined> 選択結果（選択時はフォルダパス、キャンセル時はundefined）
    */
-  ipcMain.handle("select-folder", async (): Promise<ApiResult<string | null>> => {
+  ipcMain.handle("select-folder", async (): Promise<ApiResult<string | undefined>> => {
     try {
       const { canceled, filePaths } = await dialog.showOpenDialog({
         properties: ["openDirectory"]
       })
-      return { success: true, data: canceled ? null : filePaths[0] }
+      return { success: true, data: canceled ? undefined : filePaths[0] }
     } catch (e: unknown) {
       logger.error("フォルダ選択エラー:", e)
       const message = e instanceof Error ? e.message : MESSAGES.IPC_ERROR.UNKNOWN

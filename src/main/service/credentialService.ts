@@ -8,6 +8,7 @@
  * セキュリティ考慮事項：
  * - 秘密鍵はOSのキーチェーンに保存され、平文でディスクに書き込まれません
  * - アクセスキーIDなどの機密性の低い情報のみelectron-storeに保存
+ * - エラーメッセージから機密情報を除去（詳細はログのみに記録）
  * - 認証情報取得時の詳細なエラーハンドリング（権限エラー、キーチェーン不存在など）
  */
 
@@ -90,11 +91,11 @@ export async function getCredential(): Promise<ApiResult<Creds>> {
   } catch (err) {
     logger.error(MESSAGES.CREDENTIAL_SERVICE.GET_FAILED, err)
 
-    // keytarのエラーに関する詳細なメッセージを提供
+    // keytarのエラーに関する詳細なメッセージを提供（機密情報を含まないように制限）
     let errorMessage: string = MESSAGES.CREDENTIAL_SERVICE.GET_FAILED
 
     if (err instanceof Error) {
-      // keytarの一般的なエラーパターンをチェック
+      // keytarの一般的なエラーパターンをチェック（機密情報を露出しないように制限）
       if (err.message.includes("The specified item could not be found")) {
         errorMessage = MESSAGES.CREDENTIAL_SERVICE.GET_FAILED
       } else if (err.message.includes("Access denied")) {
@@ -102,10 +103,14 @@ export async function getCredential(): Promise<ApiResult<Creds>> {
       } else if (err.message.includes("The keychain does not exist")) {
         errorMessage = MESSAGES.CREDENTIAL_SERVICE.KEYCHAIN_NOT_FOUND
       } else {
-        errorMessage = MESSAGES.CREDENTIAL_SERVICE.GET_ERROR(err.message)
+        // 詳細なエラーメッセージは機密情報を含む可能性があるため、ログにのみ記録
+        logger.error("認証情報取得の詳細エラー:", err.message)
+        errorMessage = MESSAGES.CREDENTIAL_SERVICE.GET_FAILED
       }
-    } else if (typeof err === "string") {
-      errorMessage = MESSAGES.CREDENTIAL_SERVICE.GET_ERROR(String(err))
+    } else {
+      // 非Error型のエラーも機密情報を含む可能性があるため、詳細は記録しない
+      logger.error("認証情報取得の非Error型エラー:", typeof err)
+      errorMessage = MESSAGES.CREDENTIAL_SERVICE.GET_FAILED
     }
 
     return {

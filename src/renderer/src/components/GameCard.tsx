@@ -30,19 +30,12 @@ export default function GameCard({
     >
       <Link to={`/games/${id}`}>
         <div className="group relative h-40 w-full bg-gray-100">
-          {imagePath && (
-            <DynamicImage
-              src={imagePath}
-              alt={title}
-              className="h-full w-full object-cover"
-              loading="lazy"
-              onError={(e) => {
-                const img = e.currentTarget as HTMLImageElement
-                img.onerror = null
-                img.style.opacity = "0"
-              }}
-            />
-          )}
+          <DynamicImage
+            src={imagePath || ""}
+            alt={title}
+            className="h-full w-full object-cover"
+            loading="lazy"
+          />
           <div
             className="
             absolute inset-0

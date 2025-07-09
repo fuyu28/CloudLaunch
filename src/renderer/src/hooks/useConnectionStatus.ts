@@ -25,7 +25,7 @@ export interface ConnectionStatusResult {
   /** 接続状態 */
   status: AsyncStatus
   /** エラーメッセージ */
-  message: string | null
+  message: string | undefined
   /** 接続確認関数 */
   check: () => Promise<void>
 }
@@ -40,7 +40,7 @@ export interface ConnectionStatusResult {
 export function useConnectionStatus(): ConnectionStatusResult {
   const validateCreds = useValidateCreds()
   const [status, setStatus] = useState<AsyncStatus>("loading")
-  const [message, setMessage] = useState<string | null>(null)
+  const [message, setMessage] = useState<string | undefined>(undefined)
 
   /**
    * 接続状態を確認する関数
@@ -52,7 +52,7 @@ export function useConnectionStatus(): ConnectionStatusResult {
     const ok = await validateCreds()
     if (ok) {
       setStatus("success")
-      setMessage(null)
+      setMessage(undefined)
     } else {
       setStatus("error")
       setMessage("クレデンシャルが有効ではありません")

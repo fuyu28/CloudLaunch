@@ -1,78 +1,76 @@
-import React, { useEffect, useState, ImgHTMLAttributes } from "react"
-import toast from "react-hot-toast"
-import { ApiResult } from "src/types/result"
+/**
+ * @fileoverview 動的画像読み込みコンポーネント
+ *
+ * このコンポーネントは、ローカル画像とWeb画像の読み込みを統一的に処理し、
+ * 画像が存在しない場合にNoImage画像を表示します。
+ *
+ * 主な機能：
+ * - ローカル画像ファイルの読み込み（file://パス、絶対パス対応）
+ * - Web画像の読み込み（HTTP/HTTPSパス対応）
+ * - 画像未設定時のNoImageフォールバック（トーストなし）
+ * - 画像読み込み失敗時のNoImageフォールバック（トーストあり）
+ * - ローディング状態の表示
+ *
+ * 技術的特徴：
+ * - useImageLoaderフックを使用した分離されたロジック
+ * - メモ化による不要な再レンダリング防止
+ * - React Suspenseライクなローディング表示
+ */
+
+import React, { memo, ImgHTMLAttributes } from "react"
+import { useImageLoader } from "@renderer/hooks/useImageLoader"
 
 // ① ImgHTMLAttributes で <img> の全属性を継承
 type DynamicImgProps = Omit<ImgHTMLAttributes<HTMLImageElement>, "src"> & {
-  src: string // 普通のURL or ローカルファイルパス
+  src: string // 普通のURL or ローカルファイルパス（空文字列の場合はNoImage）
 }
 
-export default function DynamicImage({
+/**
+ * 動的画像読み込みコンポーネント
+ *
+ * @param props - 画像要素のプロパティ
+ * @returns 画像要素またはローディング要素
+ */
+const DynamicImage = memo(function DynamicImage({
   src: originalSrc,
   ...imgProps
-}: DynamicImgProps): React.JSX.Element | null {
-  const [dataSrc, setDataSrc] = useState<string | null>(null)
+}: DynamicImgProps): React.JSX.Element {
+  const { imageSrc, isLoading } = useImageLoader(originalSrc)
 
-  useEffect(() => {
-    let mounted = true
-
-    const loadImage = async (): Promise<void> => {
-      // file:// か絶対パスならローカル読み込み
-      const isLocal =
-        originalSrc.startsWith("file://") ||
-        /^[A-Za-z]:\\/.test(originalSrc) ||
-        originalSrc.startsWith("/")
-      try {
-        let dataUrl: string | null = null
-        let errorMessage: string | null = null
-
-        if (isLocal) {
-          const path = originalSrc.replace(/^file:\/\//, "")
-          const result = (await window.api.loadImage.loadImageFromLocal(path)) as ApiResult<string>
-          if (result.success) {
-            dataUrl = result.data ?? null
-          } else {
-            errorMessage = result.message
-          }
-        } else {
-          const result = (await window.api.loadImage.loadImageFromWeb(
-            originalSrc
-          )) as ApiResult<string>
-          if (result.success) {
-            dataUrl = result.data ?? null
-          } else {
-            errorMessage = result.message
-          }
-        }
-
-        if (mounted) {
-          setDataSrc(dataUrl)
-          if (!dataUrl && errorMessage) {
-            console.warn("画像読み込み失敗:", originalSrc, errorMessage)
-            toast.error(`画像読み込み失敗: ${errorMessage}`)
-          }
-        }
-      } catch (error) {
-        if (mounted) {
-          console.error("Error loading image:", error)
-          setDataSrc(null)
-        }
-      }
-    }
-
-    loadImage()
-    return () => {
-      mounted = false
-    }
-  }, [originalSrc])
-
-  if (dataSrc === null) {
+  // ローディング中の表示
+  if (isLoading && !imageSrc) {
     return (
-      <div style={{ display: "inline-block", textAlign: "center" }}>
-        <span>Loading...</span>
-        <img alt={imgProps.alt || "Image loading"} style={{ visibility: "hidden" }} />
+      <div
+        className="flex items-center justify-center bg-gray-100 text-gray-400"
+        style={{
+          width: imgProps.width || "100%",
+          height: imgProps.height || "200px",
+          ...imgProps.style
+        }}
+      >
+        <span className="text-sm">Loading...</span>
       </div>
     )
   }
-  return <img src={dataSrc} {...imgProps} />
-}
+
+  // 画像またはNoImageを表示
+  if (imageSrc) {
+    return <img src={imageSrc} {...imgProps} />
+  }
+
+  // フォールバック（通常は発生しない）
+  return (
+    <div
+      className="flex items-center justify-center bg-gray-100 text-gray-400"
+      style={{
+        width: imgProps.width || "100%",
+        height: imgProps.height || "200px",
+        ...imgProps.style
+      }}
+    >
+      <span className="text-sm">No Image</span>
+    </div>
+  )
+})
+
+export default DynamicImage

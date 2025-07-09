@@ -15,7 +15,7 @@
  * ```
  */
 
-import { useMemo } from "react"
+import { useMemo, useState, useCallback } from "react"
 import type { InputGameData } from "../../../types/game"
 
 /**
@@ -35,7 +35,7 @@ export interface ValidationErrors {
 export interface GameFormValidationResult {
   /** 送信可能かどうか */
   canSubmit: boolean
-  /** バリデーションエラー */
+  /** バリデーションエラー（タッチされたフィールドのみ表示） */
   errors: ValidationErrors
   /** 特定フィールドのバリデーション実行 */
   validateField: (fieldName: keyof InputGameData) => string | undefined
@@ -43,12 +43,18 @@ export interface GameFormValidationResult {
   hasRequiredFields: boolean
   /** 各フィールドの検証状態 */
   fieldValidation: {
-    title: { isValid: boolean; message?: string }
-    publisher: { isValid: boolean; message?: string }
-    exePath: { isValid: boolean; message?: string }
-    imagePath: { isValid: boolean; message?: string }
-    saveFolderPath: { isValid: boolean; message?: string }
+    title: { isValid: boolean; message?: string; shouldShowError: boolean }
+    publisher: { isValid: boolean; message?: string; shouldShowError: boolean }
+    exePath: { isValid: boolean; message?: string; shouldShowError: boolean }
+    imagePath: { isValid: boolean; message?: string; shouldShowError: boolean }
+    saveFolderPath: { isValid: boolean; message?: string; shouldShowError: boolean }
   }
+  /** フィールドがタッチされたことを記録 */
+  markFieldAsTouched: (fieldName: keyof InputGameData) => void
+  /** すべてのフィールドをタッチ済みとして設定（送信時に使用） */
+  markAllFieldsAsTouched: () => void
+  /** タッチされたフィールドをリセット（モーダル開閉時に使用） */
+  resetTouchedFields: () => void
 }
 
 /**
@@ -60,6 +66,23 @@ export interface GameFormValidationResult {
  * @returns バリデーション結果とヘルパー関数
  */
 export function useGameFormValidation(gameData: InputGameData): GameFormValidationResult {
+  // タッチされたフィールドを記録する状態
+  const [touchedFields, setTouchedFields] = useState<Set<keyof InputGameData>>(new Set())
+
+  // フィールドをタッチ済みとして記録
+  const markFieldAsTouched = useCallback((fieldName: keyof InputGameData) => {
+    setTouchedFields((prev) => new Set([...prev, fieldName]))
+  }, [])
+
+  // すべてのフィールドをタッチ済みとして設定
+  const markAllFieldsAsTouched = useCallback(() => {
+    setTouchedFields(new Set(["title", "publisher", "exePath", "imagePath", "saveFolderPath"]))
+  }, [])
+
+  // タッチされたフィールドをリセット
+  const resetTouchedFields = useCallback(() => {
+    setTouchedFields(new Set())
+  }, [])
   // 個別フィールドのバリデーション
   const validateTitle = (title: string): string | undefined => {
     if (!title.trim()) {
@@ -132,35 +155,49 @@ export function useGameFormValidation(gameData: InputGameData): GameFormValidati
     return {
       title: {
         isValid: !validateTitle(gameData.title),
-        message: validateTitle(gameData.title)
+        message: validateTitle(gameData.title),
+        shouldShowError: touchedFields.has("title") && !!validateTitle(gameData.title)
       },
       publisher: {
         isValid: !validatePublisher(gameData.publisher),
-        message: validatePublisher(gameData.publisher)
+        message: validatePublisher(gameData.publisher),
+        shouldShowError: touchedFields.has("publisher") && !!validatePublisher(gameData.publisher)
       },
       exePath: {
         isValid: !validateExePath(gameData.exePath),
-        message: validateExePath(gameData.exePath)
+        message: validateExePath(gameData.exePath),
+        shouldShowError: touchedFields.has("exePath") && !!validateExePath(gameData.exePath)
       },
       imagePath: {
         isValid: !validateImagePath(gameData.imagePath),
-        message: validateImagePath(gameData.imagePath)
+        message: validateImagePath(gameData.imagePath),
+        shouldShowError: touchedFields.has("imagePath") && !!validateImagePath(gameData.imagePath)
       },
       saveFolderPath: {
         isValid: !validateSaveFolderPath(gameData.saveFolderPath),
-        message: validateSaveFolderPath(gameData.saveFolderPath)
+        message: validateSaveFolderPath(gameData.saveFolderPath),
+        shouldShowError:
+          touchedFields.has("saveFolderPath") && !!validateSaveFolderPath(gameData.saveFolderPath)
       }
     }
-  }, [gameData])
+  }, [gameData, touchedFields])
 
-  // エラーオブジェクトの生成
+  // エラーオブジェクトの生成（タッチされたフィールドのみ）
   const errors = useMemo((): ValidationErrors => {
     return {
-      title: fieldValidation.title.message,
-      publisher: fieldValidation.publisher.message,
-      exePath: fieldValidation.exePath.message,
-      imagePath: fieldValidation.imagePath.message,
-      saveFolderPath: fieldValidation.saveFolderPath.message
+      title: fieldValidation.title.shouldShowError ? fieldValidation.title.message : undefined,
+      publisher: fieldValidation.publisher.shouldShowError
+        ? fieldValidation.publisher.message
+        : undefined,
+      exePath: fieldValidation.exePath.shouldShowError
+        ? fieldValidation.exePath.message
+        : undefined,
+      imagePath: fieldValidation.imagePath.shouldShowError
+        ? fieldValidation.imagePath.message
+        : undefined,
+      saveFolderPath: fieldValidation.saveFolderPath.shouldShowError
+        ? fieldValidation.saveFolderPath.message
+        : undefined
     }
   }, [fieldValidation])
 
@@ -187,7 +224,10 @@ export function useGameFormValidation(gameData: InputGameData): GameFormValidati
     errors,
     validateField,
     hasRequiredFields,
-    fieldValidation
+    fieldValidation,
+    markFieldAsTouched,
+    markAllFieldsAsTouched,
+    resetTouchedFields
   }
 }
 

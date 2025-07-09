@@ -7,21 +7,31 @@
  * 主な処理フロー：
  * 1. 認証情報の検証とR2クライアントの作成
  * 2. ローカルフォルダの再帰的ファイルスキャン
- * 3. 各ファイルの読み込みとクラウドへのアップロード
- * 4. 相対パス構造の保持（ローカルの階層構造をクラウドでも維持）
+ * 3. パストラバーサル攻撃対策による安全性検証
+ * 4. ファイルサイズに応じた最適化処理（ストリーミング vs メモリ読み込み）
+ * 5. 5件ずつの並列バッチ処理でクラウドへアップロード
+ * 6. 相対パス構造の保持（ローカルの階層構造をクラウドでも維持）
+ *
+ * 技術的特徴：
+ * - 10MB以上のファイルはストリーミング処理（メモリ効率化）
+ * - 5件ずつの並列バッチ処理によるアップロード効率化
+ * - パストラバーサル攻撃対策（../パスの検証）
+ * - 進捗表示とエラー時の詳細ログ
  *
  * エラーハンドリング：
  * - AWS SDK固有エラーの詳細分析
  * - ネットワーク・権限・ファイルアクセスエラーの適切な処理
  */
 
-import { readdir, readFile } from "fs/promises"
+import { readdir, readFile, stat } from "fs/promises"
+import { createReadStream, ReadStream } from "fs"
 import { join, relative } from "path"
 import { ipcMain } from "electron"
 import { PutObjectCommand } from "@aws-sdk/client-s3"
 import { ApiResult } from "../../types/result"
 import { withFileOperationErrorHandling } from "../utils/ipcErrorHandler"
 import { validateCredentialsForR2 } from "../utils/credentialValidator"
+import { logger } from "../utils/logger"
 
 /**
  * ディレクトリを再帰的にスキャンしてすべてのファイルパスを取得
@@ -82,18 +92,75 @@ export function registerUploadSaveDataFolderHandlers(): void {
         // ファイルパスの取得
         const filePaths = await getFilePathsRecursive(localPath)
 
-        // 各ファイルのアップロード
-        for (const filePath of filePaths) {
-          const fileBody = await readFile(filePath)
-          const relativePath = relative(localPath, filePath)
-          const r2Key = createS3KeyFromFilePath(remotePath, relativePath)
+        // 各ファイルのアップロード（並列処理で効率化）
+        const batchSize = 5 // 同時アップロード数を制限（ネットワーク負荷を考慮）
+        const validFilePaths: string[] = []
 
-          const cmd = new PutObjectCommand({
-            Bucket: credentials.bucketName,
-            Key: r2Key,
-            Body: fileBody
-          })
-          await r2Client.send(cmd)
+        // まず有効なファイルパスをフィルタリング
+        for (const filePath of filePaths) {
+          const relativePath = relative(localPath, filePath)
+
+          // パストラバーサル攻撃対策: 相対パスが上位ディレクトリを参照していないかチェック
+          if (relativePath.startsWith("../") || relativePath.includes("/../")) {
+            logger.warn(`パストラバーサル攻撃の可能性があるパスをスキップ: ${filePath}`)
+            continue
+          }
+
+          // ファイルパスがlocalPath内にあることを確認
+          if (!filePath.startsWith(localPath)) {
+            logger.warn(`不正なファイルパスをスキップ: ${filePath}`)
+            continue
+          }
+
+          validFilePaths.push(filePath)
+        }
+
+        // バッチ処理でアップロード
+        for (let i = 0; i < validFilePaths.length; i += batchSize) {
+          const batch = validFilePaths.slice(i, i + batchSize)
+          await Promise.all(
+            batch.map(async (filePath) => {
+              try {
+                const relativePath = relative(localPath, filePath)
+                const r2Key = createS3KeyFromFilePath(remotePath, relativePath)
+
+                // ファイルサイズを取得してストリーミングの必要性を判断
+                const fileStats = await stat(filePath)
+                const fileSizeInMB = fileStats.size / (1024 * 1024)
+                const STREAM_THRESHOLD_MB = 10 // 10MB以上はストリーミング処理
+
+                let fileBody: Buffer | ReadStream
+
+                if (fileSizeInMB > STREAM_THRESHOLD_MB) {
+                  // 大容量ファイルはストリーミング処理
+                  fileBody = createReadStream(filePath)
+                  logger.debug(
+                    `大容量ファイルをストリーミングでアップロード: ${relativePath} (${fileSizeInMB.toFixed(1)}MB)`
+                  )
+                } else {
+                  // 小容量ファイルは従来通りメモリ読み込み
+                  fileBody = await readFile(filePath)
+                  logger.debug(
+                    `小容量ファイルをメモリ読み込みでアップロード: ${relativePath} (${fileSizeInMB.toFixed(1)}MB)`
+                  )
+                }
+
+                const cmd = new PutObjectCommand({
+                  Bucket: credentials.bucketName,
+                  Key: r2Key,
+                  Body: fileBody
+                })
+                await r2Client.send(cmd)
+                logger.debug(`アップロード完了: ${relativePath}`)
+              } catch (error) {
+                logger.error(`ファイルアップロードに失敗: ${filePath}`, error)
+                throw error
+              }
+            })
+          )
+          logger.info(
+            `アップロード進捗: ${Math.min(i + batchSize, validFilePaths.length)}/${validFilePaths.length}`
+          )
         }
 
         return { success: true }

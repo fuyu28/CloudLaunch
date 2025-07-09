@@ -45,11 +45,11 @@ describe("validationUtils", () => {
       expect(result.message).toBe("フィールドは必須項目です")
     })
 
-    it("null/undefinedの場合は無効", () => {
-      const resultNull = validateRequired(null, "フィールド")
+    it("undefined/undefinedの場合は無効", () => {
+      const resultundefined = validateRequired(undefined, "フィールド")
       const resultUndefined = validateRequired(undefined, "フィールド")
 
-      expect(resultNull.isValid).toBe(false)
+      expect(resultundefined.isValid).toBe(false)
       expect(resultUndefined.isValid).toBe(false)
     })
   })

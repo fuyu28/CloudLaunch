@@ -14,13 +14,24 @@
 
 import { ipcMain } from "electron"
 import { prisma } from "../db"
-import { Prisma } from "@prisma/client"
+import { PlayStatus, Prisma } from "@prisma/client"
 import type { FilterOption, SortOption } from "../../types/menu"
 import type { InputGameData, GameType, PlaySessionType } from "../../types/game"
 import { ApiResult } from "../../types/result"
 import { logger } from "../utils/logger"
 import { MESSAGES } from "../../constants"
 import { ensureDefaultChapter } from "./chapterHandlers"
+import { transformGame, transformGames, transformPlaySessions } from "../utils/dataTransform"
+
+type GameUpdateData = {
+  title: string
+  publisher: string
+  saveFolderPath: string | null
+  exePath: string
+  imagePath: string | null
+  playStatus: PlayStatus
+  clearedAt?: Date | null
+}
 
 const filterMap: Record<FilterOption, Prisma.GameWhereInput> = {
   all: {},
@@ -62,7 +73,7 @@ export function registerDatabaseHandlers(): void {
           where: { AND: [searchCondition, filterCondition] },
           orderBy
         })
-        return games
+        return transformGames(games)
       } catch (error) {
         logger.error("ゲーム一覧取得エラー:", error)
         return []
@@ -70,14 +81,15 @@ export function registerDatabaseHandlers(): void {
     }
   )
 
-  ipcMain.handle("get-game-by-id", async (_event, id: string): Promise<GameType | null> => {
+  ipcMain.handle("get-game-by-id", async (_event, id: string): Promise<GameType | undefined> => {
     try {
-      return prisma.game.findFirst({
+      const game = await prisma.game.findFirst({
         where: { id }
       })
+      return game ? transformGame(game) : undefined
     } catch (error) {
       logger.error("ゲーム詳細取得エラー:", error)
-      return null
+      return undefined
     }
   })
 
@@ -98,7 +110,7 @@ export function registerDatabaseHandlers(): void {
           },
           orderBy: { playedAt: "desc" }
         })
-        return { success: true, data: sessions }
+        return { success: true, data: transformPlaySessions(sessions) }
       } catch (error) {
         logger.error("プレイセッション取得エラー:", error)
         return { success: false, message: "プレイセッションの取得に失敗しました" }
@@ -106,62 +118,88 @@ export function registerDatabaseHandlers(): void {
     }
   )
 
-  ipcMain.handle("create-game", async (_event, game: InputGameData): Promise<ApiResult> => {
-    try {
-      await prisma.$transaction(async (tx) => {
-        // ゲームを作成
-        const newGame = await tx.game.create({
-          data: {
-            title: game.title,
-            publisher: game.publisher,
-            saveFolderPath: game.saveFolderPath ?? null,
-            exePath: game.exePath,
-            imagePath: game.imagePath ?? null
-          }
-        })
+  ipcMain.handle(
+    "create-game",
+    async (_event, game: InputGameData): Promise<ApiResult<GameType>> => {
+      try {
+        const createdGame = await prisma.$transaction(async (tx) => {
+          // ゲームを作成
+          const newGame = await tx.game.create({
+            data: {
+              title: game.title,
+              publisher: game.publisher,
+              saveFolderPath: game.saveFolderPath || null,
+              exePath: game.exePath,
+              imagePath: game.imagePath || null
+            }
+          })
 
-        // デフォルト章を作成
-        const defaultChapter = await tx.chapter.create({
-          data: {
-            name: "デフォルト",
-            gameId: newGame.id,
-            order: 1
-          }
-        })
+          // デフォルト章を作成
+          const defaultChapter = await tx.chapter.create({
+            data: {
+              name: "デフォルト",
+              gameId: newGame.id,
+              order: 1
+            }
+          })
 
-        // ゲームのcurrentChapterを設定
-        await tx.game.update({
-          where: { id: newGame.id },
-          data: { currentChapter: defaultChapter.id }
+          // ゲームのcurrentChapterを設定
+          const updatedGame = await tx.game.update({
+            where: { id: newGame.id },
+            data: { currentChapter: defaultChapter.id }
+          })
+
+          return updatedGame
         })
-      })
-      return { success: true }
-    } catch (error) {
-      logger.error("ゲーム作成エラー:", error)
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-        return { success: false, message: MESSAGES.GAME.ALREADY_EXISTS(game.title) }
+        return { success: true, data: transformGame(createdGame) }
+      } catch (error) {
+        logger.error("ゲーム作成エラー:", error)
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+          return { success: false, message: MESSAGES.GAME.ALREADY_EXISTS(game.title) }
+        }
+        return { success: false, message: MESSAGES.GAME.ADD_FAILED }
       }
-      return { success: false, message: MESSAGES.GAME.ADD_FAILED }
     }
-  })
+  )
 
   ipcMain.handle(
     "update-game",
-    async (_event, id: string, game: InputGameData): Promise<ApiResult> => {
+    async (_event, id: string, game: InputGameData): Promise<ApiResult<GameType>> => {
       try {
-        await prisma.game.update({
-          where: {
-            id
-          },
-          data: {
-            title: game.title,
-            publisher: game.publisher,
-            saveFolderPath: game.saveFolderPath,
-            exePath: game.exePath,
-            imagePath: game.imagePath
-          }
+        // 現在のゲームデータを取得してplayStatusの変更を確認
+        const currentGame = await prisma.game.findUnique({
+          where: { id }
         })
-        return { success: true }
+
+        if (!currentGame) {
+          return { success: false, message: "ゲームが見つかりません" }
+        }
+
+        // 基本的な更新データを設定
+        const updateData: GameUpdateData = {
+          title: game.title,
+          publisher: game.publisher,
+          saveFolderPath: game.saveFolderPath || null,
+          exePath: game.exePath,
+          imagePath: game.imagePath || null,
+          playStatus: game.playStatus
+        }
+
+        // playStatusが"played"に変更された場合、clearedAtを現在時刻に設定
+        if (game.playStatus === "played" && currentGame.playStatus !== "played") {
+          updateData.clearedAt = new Date()
+        }
+        // playStatusが"played"以外に変更された場合、clearedAtをnullに設定
+        else if (game.playStatus !== "played" && currentGame.playStatus === "played") {
+          updateData.clearedAt = null
+        }
+
+        const updatedGame = await prisma.game.update({
+          where: { id },
+          data: updateData
+        })
+
+        return { success: true, data: transformGame(updatedGame) }
       } catch (error) {
         logger.error("ゲーム更新エラー:", error)
         if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
@@ -221,7 +259,7 @@ export function registerDatabaseHandlers(): void {
               duration,
               gameId,
               chapterId: currentChapterId,
-              sessionName: sessionName || undefined
+              sessionName: sessionName || null
             }
           })
 

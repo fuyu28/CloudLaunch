@@ -69,7 +69,7 @@ describe("databaseHandlers", () => {
         publisher: "テスト出版社1",
         playStatus: "unplayed",
         totalPlayTime: 0,
-        lastPlayed: null
+        lastPlayed: undefined
       },
       {
         id: "game2",

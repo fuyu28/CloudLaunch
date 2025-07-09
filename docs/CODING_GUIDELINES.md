@@ -133,6 +133,79 @@ type ApiResult<T = void> =
 function handleResponse(response: any) { ... }
 ```
 
+### null vs undefined の使い分け
+
+プロジェクトで一貫した null/undefined の使い分けを行います：
+
+#### 基本原則
+
+- **null**: 明確な空の状態を表現（意図的に空、選択されていない、値が存在しない）
+- **undefined**: オプショナルな状態を表現（設定されていない、初期化されていない、パラメータが省略された）
+
+#### 具体的な使用例
+
+```typescript
+// Good: 適切な使い分け
+interface GameType {
+  id: string
+  title: string
+  lastPlayed: Date | null // null - 明確な「未プレイ」状態
+  currentChapter: string | null // null - 明確な「未選択」状態
+  imagePath?: string // undefined - オプショナル設定
+  saveFolderPath?: string // undefined - オプショナル設定
+}
+
+interface PlaySessionType {
+  id: string
+  sessionName?: string // undefined - オプショナル情報
+  chapterId: string | null // null - 明確な「未所属」状態
+  chapter?: {
+    // undefined - オプショナル情報
+    name: string
+    id: string
+  }
+}
+
+// Bad: 使い分けが不適切
+interface BadExample {
+  lastPlayed: Date | undefined // 明確な状態なのでnullが適切
+  imagePath: string | null // オプショナルなのでundefinedが適切
+}
+```
+
+#### データ変換層での処理
+
+Prismaのnullとフロントエンドのundefinedを適切に変換：
+
+```typescript
+// データ変換関数の例
+export function transformGame(game: Game): GameType {
+  return {
+    ...game,
+    // オプショナル設定のみundefinedに変換
+    imagePath: nullToUndefined(game.imagePath),
+    saveFolderPath: nullToUndefined(game.saveFolderPath),
+    // 明確な状態はnullのまま維持
+    lastPlayed: game.lastPlayed,
+    currentChapter: game.currentChapter
+  }
+}
+```
+
+#### API設計での考慮事項
+
+```typescript
+// 適切なAPI設計
+interface DatabaseAPI {
+  updateSessionChapter(sessionId: string, chapterId: string | null): Promise<ApiResult<void>>
+  createSession(duration: number, gameId: string, sessionName?: string): Promise<ApiResult<void>>
+}
+
+// フィールドの説明
+// chapterId: string | null     - 章の「未選択」状態を表現
+// sessionName?: string         - セッション名は省略可能（オプショナル）
+```
+
 ### 定数・メッセージの管理
 
 - ハードコーディングされた文字列・数値は `src/constants/` の定数を使用
@@ -355,6 +428,7 @@ export function registerHandlers(): void {
 - [ ] **責務分離**: コンポーネントが50行以下で単一責任を守っている
 - [ ] **カスタムフック**: 複雑なロジックが専用フックに分離されている
 - [ ] **エラーハンドリング**: 統一されたエラーハンドラーとメッセージ定数を使用している
+- [ ] **null/undefined使い分け**: 意味論的に適切なnull/undefinedの使い分けが行われている
 
 ### 品質保証チェック
 

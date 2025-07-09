@@ -11,6 +11,7 @@ import { useLoadingState } from "../hooks/useLoadingState"
 import { useGameActions } from "../hooks/useGameActions"
 import { CONFIG, MESSAGES } from "../../../constants"
 import type { SortOption, FilterOption } from "src/types/menu"
+import type { GameType } from "src/types/game"
 
 export default function Home(): React.ReactElement {
   const [searchWord, setSearchWord] = useAtom(searchWordAtom)
@@ -48,14 +49,15 @@ export default function Home(): React.ReactElement {
       )
 
       if (!cancelled && games) {
-        setVisibleGames(games)
+        setVisibleGames(games as GameType[])
       }
     }
 
     fetchGames()
     return () => {
       cancelled = true
-    } // eslint-disable-next-line react-hooks/exhaustive-deps
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearchWord, filter, sort])
 
   const handleAddGame = createGameAndRefreshList
@@ -137,7 +139,7 @@ export default function Home(): React.ReactElement {
                 id={game.id}
                 title={game.title}
                 publisher={game.publisher}
-                imagePath={game.imagePath ?? ""}
+                imagePath={game.imagePath || ""}
                 exePath={game.exePath}
                 onLaunchGame={handleLaunchGame}
               />

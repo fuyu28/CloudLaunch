@@ -33,7 +33,7 @@ export interface ValidationErrors {
  * @returns 検証結果
  */
 export function validateRequired(
-  value: string | null | undefined,
+  value: string | undefined | undefined,
   fieldName: string
 ): ValidationResult {
   const isValid = typeof value === "string" && value.trim().length > 0
