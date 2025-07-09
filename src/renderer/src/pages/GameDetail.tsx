@@ -21,6 +21,7 @@ import ChapterDisplayCard from "@renderer/components/ChapterDisplayCard"
 import ChapterSettingsModal from "@renderer/components/ChapterSettingsModal"
 import ChapterAddModal from "@renderer/components/ChapterAddModal"
 import PlaySessionManagementModal from "@renderer/components/PlaySessionManagementModal"
+import PlayStatusSelector from "@renderer/components/PlayStatusSelector"
 import { useToastHandler } from "@renderer/hooks/useToastHandler"
 
 export default function GameDetail(): React.JSX.Element {
@@ -38,6 +39,7 @@ export default function GameDetail(): React.JSX.Element {
   const [isChapterSettingsModalOpen, setIsChapterSettingsModalOpen] = useState(false)
   const [isChapterAddModalOpen, setIsChapterAddModalOpen] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
   const { showToast } = useToastHandler()
   const { formatSmart, formatDate } = useTimeFormat()
 
@@ -160,6 +162,7 @@ export default function GameDetail(): React.JSX.Element {
     try {
       // ゲームデータを再取得
       const updatedGame = await window.api.database.getGameById(game.id)
+
       if (updatedGame) {
         // ローカルの状態を更新（APIから返されたデータは既にtransformされている）
         const transformedGame = updatedGame as GameType
@@ -194,6 +197,42 @@ export default function GameDetail(): React.JSX.Element {
         }
       } catch {
         showToast("プレイセッションの追加に失敗しました", "error")
+      }
+    },
+    [game, showToast, refreshGameData]
+  )
+
+  // プレイステータス変更のハンドラー
+  const handleStatusChange = useCallback(
+    async (newStatus: "unplayed" | "playing" | "played"): Promise<void> => {
+      if (!game) return
+
+      setIsUpdatingStatus(true)
+      try {
+        // 現在のゲームデータを使用してupdateGameを呼び出し
+        const updateData = {
+          title: game.title,
+          publisher: game.publisher,
+          imagePath: game.imagePath,
+          exePath: game.exePath,
+          saveFolderPath: game.saveFolderPath,
+          playStatus: newStatus
+        }
+
+        const result = await window.api.database.updateGame(game.id, updateData)
+
+        if (result.success) {
+          showToast("プレイステータスを更新しました", "success")
+          // 全データを再取得
+          await refreshGameData()
+        } else {
+          showToast(result.message || "プレイステータスの更新に失敗しました", "error")
+        }
+      } catch (error) {
+        console.error("プレイステータスの更新エラー:", error)
+        showToast("プレイステータスの更新に失敗しました", "error")
+      } finally {
+        setIsUpdatingStatus(false)
       }
     },
     [game, showToast, refreshGameData]
@@ -243,6 +282,15 @@ export default function GameDetail(): React.JSX.Element {
               <div>
                 <h1 className="text-3xl font-bold mb-2">{game.title}</h1>
                 <p className="text-lg text-base-content/70 mb-4">{game.publisher}</p>
+
+                {/* プレイステータス */}
+                <div className="mb-4">
+                  <PlayStatusSelector
+                    currentStatus={game.playStatus}
+                    onStatusChange={handleStatusChange}
+                    disabled={isUpdatingStatus}
+                  />
+                </div>
 
                 {/* メタ情報 */}
                 <div className="flex flex-wrap text-sm text-base-content/60 gap-4 mb-6">

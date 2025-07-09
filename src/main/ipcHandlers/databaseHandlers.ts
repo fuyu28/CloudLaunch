@@ -165,7 +165,8 @@ export function registerDatabaseHandlers(): void {
             publisher: game.publisher,
             saveFolderPath: game.saveFolderPath || null,
             exePath: game.exePath,
-            imagePath: game.imagePath || null
+            imagePath: game.imagePath || null,
+            playStatus: game.playStatus
           }
         })
         return { success: true, data: transformGame(updatedGame) }
