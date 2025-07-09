@@ -39,7 +39,10 @@ export const DAISYUI_THEMES = [
   "winter",
   "dim",
   "nord",
-  "sunset"
+  "sunset",
+  "caramellatte",
+  "abyss",
+  "silk"
 ] as const
 
 /**
