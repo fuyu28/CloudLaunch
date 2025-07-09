@@ -14,7 +14,7 @@
 
 import { ipcMain } from "electron"
 import { prisma } from "../db"
-import { Prisma } from "@prisma/client"
+import { PlayStatus, Prisma } from "@prisma/client"
 import type { FilterOption, SortOption } from "../../types/menu"
 import type { InputGameData, GameType, PlaySessionType } from "../../types/game"
 import { ApiResult } from "../../types/result"
@@ -22,6 +22,16 @@ import { logger } from "../utils/logger"
 import { MESSAGES } from "../../constants"
 import { ensureDefaultChapter } from "./chapterHandlers"
 import { transformGame, transformGames, transformPlaySessions } from "../utils/dataTransform"
+
+type GameUpdateData = {
+  title: string
+  publisher: string
+  saveFolderPath: string | null
+  exePath: string
+  imagePath: string | null
+  playStatus: PlayStatus
+  clearedAt?: Date | null
+}
 
 const filterMap: Record<FilterOption, Prisma.GameWhereInput> = {
   all: {},
@@ -156,19 +166,39 @@ export function registerDatabaseHandlers(): void {
     "update-game",
     async (_event, id: string, game: InputGameData): Promise<ApiResult<GameType>> => {
       try {
-        const updatedGame = await prisma.game.update({
-          where: {
-            id
-          },
-          data: {
-            title: game.title,
-            publisher: game.publisher,
-            saveFolderPath: game.saveFolderPath || null,
-            exePath: game.exePath,
-            imagePath: game.imagePath || null,
-            playStatus: game.playStatus
-          }
+        // 現在のゲームデータを取得してplayStatusの変更を確認
+        const currentGame = await prisma.game.findUnique({
+          where: { id }
         })
+
+        if (!currentGame) {
+          return { success: false, message: "ゲームが見つかりません" }
+        }
+
+        // 基本的な更新データを設定
+        const updateData: GameUpdateData = {
+          title: game.title,
+          publisher: game.publisher,
+          saveFolderPath: game.saveFolderPath || null,
+          exePath: game.exePath,
+          imagePath: game.imagePath || null,
+          playStatus: game.playStatus
+        }
+
+        // playStatusが"played"に変更された場合、clearedAtを現在時刻に設定
+        if (game.playStatus === "played" && currentGame.playStatus !== "played") {
+          updateData.clearedAt = new Date()
+        }
+        // playStatusが"played"以外に変更された場合、clearedAtをnullに設定
+        else if (game.playStatus !== "played" && currentGame.playStatus === "played") {
+          updateData.clearedAt = null
+        }
+
+        const updatedGame = await prisma.game.update({
+          where: { id },
+          data: updateData
+        })
+
         return { success: true, data: transformGame(updatedGame) }
       } catch (error) {
         logger.error("ゲーム更新エラー:", error)

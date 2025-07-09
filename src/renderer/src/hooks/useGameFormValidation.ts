@@ -15,7 +15,7 @@
  * ```
  */
 
-import { useMemo, useState, useCallback, useEffect } from "react"
+import { useMemo, useState, useCallback } from "react"
 import type { InputGameData } from "../../../types/game"
 
 /**

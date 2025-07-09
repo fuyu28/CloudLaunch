@@ -296,6 +296,9 @@ export default function GameDetail(): React.JSX.Element {
                 <div className="flex flex-wrap text-sm text-base-content/60 gap-4 mb-6">
                   <span>最終プレイ: {game.lastPlayed ? formatDate(game.lastPlayed) : "なし"}</span>
                   <span>総プレイ時間: {formatSmart(game.totalPlayTime ?? 0)}</span>
+                  {game.playStatus === "played" && game.clearedAt && (
+                    <span>クリア日時: {formatDate(game.clearedAt)}</span>
+                  )}
                 </div>
               </div>
 

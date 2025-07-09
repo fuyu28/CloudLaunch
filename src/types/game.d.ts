@@ -1,3 +1,5 @@
+import { PlayStatus } from "@prisma/client"
+
 export type GameType = {
   id: string
   title: string
@@ -6,9 +8,10 @@ export type GameType = {
   exePath: string
   imagePath?: string // undefined - オプショナル設定
   createdAt: Date
-  playStatus: "unplayed" | "playing" | "played"
+  playStatus: PlayStatus
   totalPlayTime: number
   lastPlayed: Date | null // null - 明確な「未プレイ」状態
+  clearedAt: Date | null // null - 明確な「未クリア」状態
   currentChapter: string | null // null - 明確な「未選択」状態
 }
 
@@ -18,7 +21,7 @@ export type InputGameData = {
   imagePath?: string
   exePath: string
   saveFolderPath?: string
-  playStatus: "unplayed" | "playing" | "played"
+  playStatus: PlayStatus
 }
 
 /**

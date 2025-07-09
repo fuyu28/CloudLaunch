@@ -76,7 +76,7 @@ export default function GameFormModal({
       validation.resetTouchedFields()
     }
     prevIsOpenRef.current = isOpen
-  }, [isOpen])
+  }, [isOpen, validation])
 
   const browseImage = useCallback(async () => {
     await selectFile([{ name: "Image", extensions: ["png", "jpg", "jpeg", "gif"] }], (filePath) => {
