@@ -9,12 +9,13 @@
  * - リアルタイムでの変更反映
  *
  * 使用技術：
- * - useTheme カスタムフック
+ * - Jotai atoms（テーマ状態管理）
  * - DaisyUI コンポーネント
  */
 
 import React from "react"
-import { useTheme } from "../hooks/useTheme"
+import { useAtom } from "jotai"
+import { themeAtom, changeThemeAtom, isChangingThemeAtom } from "../state/settings"
 import { DAISYUI_THEMES } from "../constants/themes"
 
 /**
@@ -25,7 +26,9 @@ import { DAISYUI_THEMES } from "../constants/themes"
  * @returns 一般設定コンポーネント要素
  */
 export default function GeneralSettings(): React.JSX.Element {
-  const { currentTheme, isSaving, handleThemeChange } = useTheme()
+  const [currentTheme] = useAtom(themeAtom)
+  const [isChangingTheme] = useAtom(isChangingThemeAtom)
+  const [, changeTheme] = useAtom(changeThemeAtom)
 
   return (
     <div className="card bg-base-100 shadow-md rounded-lg p-6">
@@ -49,8 +52,8 @@ export default function GeneralSettings(): React.JSX.Element {
               <select
                 className="select select-bordered flex-none w-auto inline-block scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-transparent"
                 value={currentTheme}
-                onChange={(e) => handleThemeChange(e.target.value as typeof currentTheme)}
-                disabled={isSaving}
+                onChange={(e) => changeTheme(e.target.value as typeof currentTheme)}
+                disabled={isChangingTheme}
               >
                 {DAISYUI_THEMES.map((theme) => (
                   <option key={theme} value={theme}>
@@ -58,7 +61,7 @@ export default function GeneralSettings(): React.JSX.Element {
                   </option>
                 ))}
               </select>
-              {isSaving && <button className="btn btn-square btn-ghost loading" disabled />}
+              {isChangingTheme && <button className="btn btn-square btn-ghost loading" disabled />}
             </div>
           </div>
         </div>

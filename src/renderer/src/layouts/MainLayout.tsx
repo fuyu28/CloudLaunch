@@ -1,20 +1,28 @@
-import React, { useRef } from "react"
+import React, { useRef, useEffect } from "react"
 import { Outlet, NavLink, useLocation } from "react-router-dom"
 import { FiMenu } from "react-icons/fi"
 import { IoIosHome, IoIosSettings } from "react-icons/io"
 import { VscChromeClose, VscChromeMaximize, VscChromeMinimize } from "react-icons/vsc"
 import { Toaster } from "react-hot-toast"
+import { useAtom } from "jotai"
+import { themeAtom } from "@renderer/state/settings"
 import PlayStatusBar from "@renderer/components/PlayStatusBar"
 
 export default function MainLayout(): React.JSX.Element {
   const location = useLocation()
   const drawerRef = useRef<HTMLInputElement>(null)
+  const [currentTheme] = useAtom(themeAtom)
   const isHome = location.pathname === "/"
   const isSettings = location.pathname === "/settings"
 
   const closeDrawer = (): void => {
     if (drawerRef.current) drawerRef.current.checked = false
   }
+
+  // テーマ初期化：アプリケーション起動時にHTMLのdata-theme属性を設定
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", currentTheme)
+  }, [currentTheme])
 
   return (
     <div className="drawer drawer-mobile min-h-screen bg-base-200">
