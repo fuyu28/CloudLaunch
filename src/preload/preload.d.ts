@@ -79,6 +79,7 @@ export interface WindowAPI {
   minimize(): Promise<void>
   toggleMaximize(): Promise<void>
   close(): Promise<void>
+  openFolder(folderPath: string): Promise<{ success: boolean; message?: string }>
 }
 
 export interface MonitoringGameStatus {
@@ -130,6 +131,36 @@ export interface SettingsAPI {
   getAutoTracking(): Promise<ApiResult<boolean>>
 }
 
+export interface MemoType {
+  id: string
+  title: string
+  content: string
+  gameId: string
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface CreateMemoData {
+  title: string
+  content: string
+  gameId: string
+}
+
+export interface UpdateMemoData {
+  title: string
+  content: string
+}
+
+export interface MemoAPI {
+  getMemosByGameId(gameId: string): Promise<ApiResult<MemoType[]>>
+  getMemoById(memoId: string): Promise<ApiResult<MemoType | null>>
+  createMemo(memoData: CreateMemoData): Promise<ApiResult<MemoType>>
+  updateMemo(memoId: string, updateData: UpdateMemoData): Promise<ApiResult<MemoType>>
+  deleteMemo(memoId: string): Promise<ApiResult<boolean>>
+  getMemoFilePath(memoId: string): Promise<ApiResult<string>>
+  getGameMemoDir(gameId: string): Promise<ApiResult<string>>
+}
+
 export interface API {
   file: FileAPI
   window: WindowAPI
@@ -145,4 +176,5 @@ export interface API {
   processMonitor: ProcessMonitorAPI
   chapter: ChapterAPI
   settings: SettingsAPI
+  memo: MemoAPI
 }

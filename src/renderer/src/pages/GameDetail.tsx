@@ -22,6 +22,7 @@ import ChapterSettingsModal from "@renderer/components/ChapterSettingsModal"
 import ChapterAddModal from "@renderer/components/ChapterAddModal"
 import PlaySessionManagementModal from "@renderer/components/PlaySessionManagementModal"
 import PlayStatusSelector from "@renderer/components/PlayStatusSelector"
+import MemoCard from "@renderer/components/MemoCard"
 import { useToastHandler } from "@renderer/hooks/useToastHandler"
 import { useOfflineMode } from "@renderer/hooks/useOfflineMode"
 
@@ -347,7 +348,7 @@ export default function GameDetail(): React.JSX.Element {
           onProcessManagement={() => setIsProcessModalOpen(true)}
         />
 
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           {/* 章表示・管理カード */}
           <ChapterDisplayCard
             key={`chapter-display-${refreshKey}`}
@@ -370,6 +371,9 @@ export default function GameDetail(): React.JSX.Element {
             onUpload={handleUploadSaveData}
             onDownload={handleDownloadSaveData}
           />
+
+          {/* メモ管理カード */}
+          <MemoCard gameId={game.id} />
         </div>
       </div>
 

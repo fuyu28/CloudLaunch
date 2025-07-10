@@ -9,6 +9,7 @@ import { registerSaveDataFolderListHandler } from "./ipcHandlers/saveDataFolderL
 import { registerUploadSaveDataFolderHandlers } from "./ipcHandlers/uploadSaveDataFolderHandlers"
 import { registerChapterHandlers } from "./ipcHandlers/chapterHandlers"
 import { registerSettingsHandlers } from "./ipcHandlers/settingsHandlers"
+import { registerMemoHandlers } from "./ipcHandlers/memoHandlers"
 
 export function registerAllHandlers(): void {
   registerCredentialHandlers()
@@ -22,4 +23,5 @@ export function registerAllHandlers(): void {
   registerUploadSaveDataFolderHandlers()
   registerChapterHandlers()
   registerSettingsHandlers()
+  registerMemoHandlers()
 }

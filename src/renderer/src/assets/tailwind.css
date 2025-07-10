@@ -6,3 +6,26 @@
   exclude: rootscrollgutter;
 }
 @plugin 'tailwind-scrollbar';
+
+/* Memo Editor Styles */
+.memo-textarea {
+  scrollbar-width: thin;
+  scrollbar-color: oklch(var(--bc) / 0.2) transparent;
+}
+
+.memo-textarea::-webkit-scrollbar {
+  width: 8px;
+}
+
+.memo-textarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.memo-textarea::-webkit-scrollbar-thumb {
+  background-color: oklch(var(--bc) / 0.2);
+  border-radius: 4px;
+}
+
+.memo-textarea::-webkit-scrollbar-thumb:hover {
+  background-color: oklch(var(--bc) / 0.3);
+}

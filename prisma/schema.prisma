@@ -36,6 +36,7 @@ model Game {
   sessions       PlaySession[]
   uploads        Upload[]
   chapters       Chapter[]
+  memos          Memo[]
 }
 
 model PlaySession {
@@ -72,4 +73,14 @@ model Chapter {
 
   @@unique([gameId, order])
   @@unique([gameId, name])
+}
+
+model Memo {
+  id        String   @id @default(uuid())
+  title     String
+  content   String
+  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  gameId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

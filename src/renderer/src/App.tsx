@@ -3,6 +3,9 @@ import { Routes, Route } from "react-router-dom"
 import Home from "./pages/Home"
 import GameDetail from "./pages/GameDetail"
 import Settings from "./pages/Settings"
+import MemoList from "./pages/MemoList"
+import MemoEditor from "./pages/MemoEditor"
+import MemoView from "./pages/MemoView"
 import MainLayout from "./layouts/MainLayout"
 
 export default function App(): React.JSX.Element {
@@ -10,8 +13,14 @@ export default function App(): React.JSX.Element {
     <Routes>
       <Route path="/" element={<MainLayout />}>
         <Route index element={<Home />} />
-        <Route path="/games/:id" element={<GameDetail />} />
+        <Route path="/game/:id" element={<GameDetail />} />
         <Route path="/settings" element={<Settings />} />
+
+        {/* メモ関連ルート */}
+        <Route path="/memo/list/:gameId" element={<MemoList />} />
+        <Route path="/memo/new/:gameId" element={<MemoEditor />} />
+        <Route path="/memo/edit/:memoId" element={<MemoEditor />} />
+        <Route path="/memo/view/:memoId" element={<MemoView />} />
       </Route>
     </Routes>
   )
