@@ -6,6 +6,7 @@ import Settings from "./pages/Settings"
 import MemoList from "./pages/MemoList"
 import MemoEditor from "./pages/MemoEditor"
 import MemoView from "./pages/MemoView"
+import MemoCreate from "./pages/MemoCreate"
 import MainLayout from "./layouts/MainLayout"
 
 export default function App(): React.JSX.Element {
@@ -17,6 +18,8 @@ export default function App(): React.JSX.Element {
         <Route path="/settings" element={<Settings />} />
 
         {/* メモ関連ルート */}
+        <Route path="/memo" element={<MemoList />} />
+        <Route path="/memo/create" element={<MemoCreate />} />
         <Route path="/memo/list/:gameId" element={<MemoList />} />
         <Route path="/memo/new/:gameId" element={<MemoEditor />} />
         <Route path="/memo/edit/:memoId" element={<MemoEditor />} />

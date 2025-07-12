@@ -6,7 +6,7 @@
  */
 
 import React, { useEffect, useState, useCallback } from "react"
-import { useParams, useNavigate, Link } from "react-router-dom"
+import { useParams, useNavigate, useSearchParams, Link } from "react-router-dom"
 import ReactMarkdown from "react-markdown"
 import { FaArrowLeft, FaEdit, FaTrash, FaExternalLinkAlt } from "react-icons/fa"
 import { useToastHandler } from "@renderer/hooks/useToastHandler"
@@ -15,6 +15,7 @@ import { MemoType } from "src/preload/preload"
 
 export default function MemoView(): React.JSX.Element {
   const { memoId } = useParams<{ memoId: string }>()
+  const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const { showToast } = useToastHandler()
   const { formatDateWithTime } = useTimeFormat()
@@ -77,12 +78,20 @@ export default function MemoView(): React.JSX.Element {
 
   // 戻るボタン処理
   const handleBack = useCallback(() => {
-    if (memo) {
+    const fromParam = searchParams.get("from")
+    const gameIdParam = searchParams.get("gameId")
+
+    if (fromParam === "game" && gameIdParam) {
+      // MemoCardから来た場合は、ゲーム詳細ページに戻る
+      navigate(`/game/${gameIdParam}`)
+    } else if (memo) {
+      // その他の場合は、メモリストに戻る
       navigate(`/memo/list/${memo.gameId}`)
     } else {
+      // フォールバック: ブラウザの戻る
       navigate(-1)
     }
-  }, [navigate, memo])
+  }, [navigate, memo, searchParams])
 
   // メモファイルを開く処理
   const handleOpenMemoFile = useCallback(async () => {
@@ -146,7 +155,7 @@ export default function MemoView(): React.JSX.Element {
             <FaExternalLinkAlt />
             ファイルを開く
           </button>
-          <Link to={`/memo/edit/${memo.id}`} className="btn btn-outline">
+          <Link to={`/memo/edit/${memo.id}?${searchParams.toString()}`} className="btn btn-outline">
             <FaEdit />
             編集
           </Link>
@@ -186,10 +195,12 @@ export default function MemoView(): React.JSX.Element {
                   <p className="mb-4 text-base-content leading-relaxed">{children}</p>
                 ),
                 ul: ({ children }) => (
-                  <ul className="list-disc list-inside mb-4 text-base-content">{children}</ul>
+                  <ul className="list-disc list-outside mb-4 text-base-content ml-6">{children}</ul>
                 ),
                 ol: ({ children }) => (
-                  <ol className="list-decimal list-inside mb-4 text-base-content">{children}</ol>
+                  <ol className="list-decimal list-outside mb-4 text-base-content ml-6">
+                    {children}
+                  </ol>
                 ),
                 li: ({ children }) => <li className="mb-1">{children}</li>,
                 blockquote: ({ children }) => (

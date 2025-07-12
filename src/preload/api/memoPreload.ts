@@ -14,6 +14,7 @@ type MemoType = {
   title: string
   content: string
   gameId: string
+  gameTitle?: string
   createdAt: Date
   updatedAt: Date
 }
@@ -92,5 +93,21 @@ export const memoApi = {
    */
   getGameMemoDir: async (gameId: string): Promise<ApiResult<string>> => {
     return await ipcRenderer.invoke("memo:getGameMemoDir", gameId)
+  },
+
+  /**
+   * すべてのメモ一覧を取得します
+   * @returns メモ一覧
+   */
+  getAllMemos: async (): Promise<ApiResult<MemoType[]>> => {
+    return await ipcRenderer.invoke("memo:getAllMemos")
+  },
+
+  /**
+   * メモルートディレクトリパスを取得します
+   * @returns ディレクトリパス
+   */
+  getMemoRootDir: async (): Promise<ApiResult<string>> => {
+    return await ipcRenderer.invoke("memo:getMemoRootDir")
   }
 }

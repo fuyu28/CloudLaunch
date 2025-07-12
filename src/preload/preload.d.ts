@@ -136,6 +136,7 @@ export interface MemoType {
   title: string
   content: string
   gameId: string
+  gameTitle?: string
   createdAt: Date
   updatedAt: Date
 }
@@ -159,6 +160,8 @@ export interface MemoAPI {
   deleteMemo(memoId: string): Promise<ApiResult<boolean>>
   getMemoFilePath(memoId: string): Promise<ApiResult<string>>
   getGameMemoDir(gameId: string): Promise<ApiResult<string>>
+  getAllMemos(): Promise<ApiResult<MemoType[]>>
+  getMemoRootDir(): Promise<ApiResult<string>>
 }
 
 export interface API {

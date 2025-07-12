@@ -21,6 +21,7 @@ type MemoType = {
   title: string
   content: string
   gameId: string
+  gameTitle?: string
   createdAt: Date
   updatedAt: Date
 }
@@ -238,6 +239,54 @@ export function registerMemoHandlers(): void {
       return { success: true, data: dirPath }
     } catch (error) {
       logger.error("ゲームメモディレクトリパス取得エラー:", error)
+      return { success: false, message: "ディレクトリパスの取得に失敗しました" }
+    }
+  })
+
+  /**
+   * すべてのメモ一覧を取得します（ゲーム名付き）
+   * @returns メモ一覧
+   */
+  ipcMain.handle("memo:getAllMemos", async (): Promise<ApiResult<MemoType[]>> => {
+    try {
+      const memos = await prisma.memo.findMany({
+        include: {
+          game: {
+            select: {
+              title: true
+            }
+          }
+        },
+        orderBy: { updatedAt: "desc" }
+      })
+
+      const memosWithGameTitle = memos.map((memo) => ({
+        id: memo.id,
+        title: memo.title,
+        content: memo.content,
+        gameId: memo.gameId,
+        gameTitle: memo.game.title,
+        createdAt: memo.createdAt,
+        updatedAt: memo.updatedAt
+      }))
+
+      return { success: true, data: memosWithGameTitle }
+    } catch (error) {
+      logger.error("全メモ一覧取得エラー:", error)
+      return { success: false, message: "メモ一覧の取得に失敗しました" }
+    }
+  })
+
+  /**
+   * メモルートディレクトリパスを取得します
+   * @returns ディレクトリパス
+   */
+  ipcMain.handle("memo:getMemoRootDir", async (): Promise<ApiResult<string>> => {
+    try {
+      const dirPath = memoFileManager.getBaseDir()
+      return { success: true, data: dirPath }
+    } catch (error) {
+      logger.error("メモルートディレクトリパス取得エラー:", error)
       return { success: false, message: "ディレクトリパスの取得に失敗しました" }
     }
   })

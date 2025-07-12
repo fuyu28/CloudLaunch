@@ -2,6 +2,7 @@ import React, { useRef, useEffect } from "react"
 import { Outlet, NavLink, useLocation } from "react-router-dom"
 import { FiMenu } from "react-icons/fi"
 import { IoIosHome, IoIosSettings } from "react-icons/io"
+import { FaEdit } from "react-icons/fa"
 import { VscChromeClose, VscChromeMaximize, VscChromeMinimize } from "react-icons/vsc"
 import { Toaster } from "react-hot-toast"
 import { useAtom } from "jotai"
@@ -14,6 +15,7 @@ export default function MainLayout(): React.JSX.Element {
   const [currentTheme] = useAtom(themeAtom)
   const isHome = location.pathname === "/"
   const isSettings = location.pathname === "/settings"
+  const isMemo = location.pathname === "/memo" || location.pathname.startsWith("/memo/")
 
   const closeDrawer = (): void => {
     if (drawerRef.current) drawerRef.current.checked = false
@@ -59,6 +61,20 @@ export default function MainLayout(): React.JSX.Element {
                 >
                   <IoIosHome className="mr-2 text-lg" />
                   <span className="flex-1">ホーム</span>
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/memo"
+                  className={({ isActive }) =>
+                    `flex items-center w-full p-3 rounded-md ${
+                      isActive ? "bg-primary text-primary-content font-medium" : "hover:bg-base-300"
+                    }`
+                  }
+                  onClick={closeDrawer}
+                >
+                  <FaEdit className="mr-2 text-lg" />
+                  <span className="flex-1">メモ</span>
                 </NavLink>
               </li>
             </ul>
@@ -113,7 +129,7 @@ export default function MainLayout(): React.JSX.Element {
 
           {/* 中央タイトルもドラッグ可能 */}
           <h1 className="flex-1 text-center text-lg font-medium leading-none">
-            {isHome ? "ホーム" : isSettings ? "設定" : ""}
+            {isHome ? "ホーム" : isSettings ? "設定" : isMemo ? "メモ" : ""}
           </h1>
 
           {/* ウィンドウ操作ボタン群 */}

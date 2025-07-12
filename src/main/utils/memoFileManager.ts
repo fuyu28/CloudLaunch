@@ -224,6 +224,14 @@ ${content}
   getBaseDirPath(): string {
     return this.baseDir
   }
+
+  /**
+   * ベースディレクトリを取得
+   * @returns ベースディレクトリパス
+   */
+  getBaseDir(): string {
+    return this.baseDir
+  }
 }
 
 // シングルトンインスタンス
