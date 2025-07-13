@@ -18,7 +18,7 @@
  * - ローディング状態の表示
  */
 
-import React, { useState, useEffect, useCallback } from "react"
+import React, { useState, useEffect, useCallback, useRef } from "react"
 import {
   FiFolder,
   FiTrash2,
@@ -30,7 +30,8 @@ import {
   FiChevronDown,
   FiFolderPlus,
   FiHome,
-  FiArrowLeft
+  FiArrowLeft,
+  FiDatabase
 } from "react-icons/fi"
 import { toast } from "react-hot-toast"
 import { BaseModal } from "@renderer/components/BaseModal"
@@ -464,6 +465,9 @@ export default function Cloud(): React.JSX.Element {
   // カードビューでの現在のパス管理
   const [currentPath, setCurrentPath] = useState<string[]>([])
   const [currentDirectoryNodes, setCurrentDirectoryNodes] = useState<CloudDirectoryNode[]>([])
+  // カードビューナビゲーションキャッシュ
+  const navigationCacheRef = useRef<Map<string, CloudDirectoryNode[]>>(new Map())
+  const [cacheSize, setCacheSize] = useState(0)
   const [deleteConfirm, setDeleteConfirm] = useState<CloudDataItem | CloudDirectoryNode | null>(
     null
   )
@@ -478,9 +482,12 @@ export default function Cloud(): React.JSX.Element {
   })
 
   /**
-   * 指定したパスの子ディレクトリ・ファイルを取得
+   * 指定したパスの子ディレクトリ・ファイルを取得（キャッシュ無し・直接計算）
    */
-  const getNodesByPath = (tree: CloudDirectoryNode[], path: string[]): CloudDirectoryNode[] => {
+  const getNodesByPathDirect = (
+    tree: CloudDirectoryNode[],
+    path: string[]
+  ): CloudDirectoryNode[] => {
     if (path.length === 0) {
       return tree
     }
@@ -494,6 +501,38 @@ export default function Cloud(): React.JSX.Element {
       currentNodes = targetNode.children
     }
     return currentNodes
+  }
+
+  /**
+   * 指定したパスの子ディレクトリ・ファイルを取得（キャッシュ対応）
+   */
+  const getNodesByPath = (tree: CloudDirectoryNode[], path: string[]): CloudDirectoryNode[] => {
+    // キャッシュキーを生成
+    const cacheKey = path.join("/") || "root"
+
+    // キャッシュから取得を試行
+    const cachedNodes = navigationCacheRef.current.get(cacheKey)
+    if (cachedNodes) {
+      return cachedNodes
+    }
+
+    // キャッシュにない場合は直接計算
+    const resultNodes = getNodesByPathDirect(tree, path)
+
+    // 結果をキャッシュに保存
+    navigationCacheRef.current.set(cacheKey, resultNodes)
+    setCacheSize(navigationCacheRef.current.size)
+
+    return resultNodes
+  }
+
+  /**
+   * ナビゲーションキャッシュをクリア
+   */
+  const clearNavigationCache = (): void => {
+    navigationCacheRef.current.clear()
+    setCacheSize(0)
+    toast.success("ナビゲーションキャッシュをクリアしました")
   }
 
   /**
@@ -515,8 +554,12 @@ export default function Cloud(): React.JSX.Element {
       const treeResult = await window.api.cloudData.getDirectoryTree()
       if (treeResult.success && treeResult.data) {
         setDirectoryTree(treeResult.data)
-        // 現在のパスに基づいてカードビューの表示を更新
-        setCurrentDirectoryNodes(getNodesByPath(treeResult.data, currentPath))
+        // データが更新された場合はキャッシュをクリア
+        navigationCacheRef.current.clear()
+        setCacheSize(0)
+        // データ取得時は常にルートレベルに戻る
+        setCurrentPath([])
+        setCurrentDirectoryNodes([])
       } else {
         console.warn("ディレクトリツリーの取得に失敗しました")
         setDirectoryTree([])
@@ -531,7 +574,7 @@ export default function Cloud(): React.JSX.Element {
     } finally {
       setLoading(false)
     }
-  }, [currentPath])
+  }, [])
 
   /**
    * ツリーノードの展開・折りたたみ
@@ -547,21 +590,44 @@ export default function Cloud(): React.JSX.Element {
   }
 
   /**
-   * カードビューでディレクトリに移動
+   * カードビューでディレクトリに移動（キャッシュ対応）
    */
   const handleNavigateToDirectory = (directoryName: string): void => {
     const newPath = [...currentPath, directoryName]
     setCurrentPath(newPath)
-    setCurrentDirectoryNodes(getNodesByPath(directoryTree, newPath))
+
+    // ディレクトリツリーが存在する場合のみナビゲーション
+    if (directoryTree.length > 0) {
+      const nodes = getNodesByPath(directoryTree, newPath)
+      setCurrentDirectoryNodes(nodes)
+    }
   }
 
   /**
-   * カードビューで親ディレクトリに戻る
+   * カードビューで親ディレクトリに戻る（キャッシュ対応）
    */
   const handleNavigateBack = (): void => {
     const newPath = currentPath.slice(0, -1)
     setCurrentPath(newPath)
-    setCurrentDirectoryNodes(getNodesByPath(directoryTree, newPath))
+
+    // ディレクトリツリーが存在する場合のみナビゲーション
+    if (directoryTree.length > 0) {
+      const nodes = getNodesByPath(directoryTree, newPath)
+      setCurrentDirectoryNodes(nodes)
+    }
+  }
+
+  /**
+   * 指定パスに直接移動（キャッシュ対応）
+   */
+  const handleNavigateToPath = (newPath: string[]): void => {
+    setCurrentPath(newPath)
+
+    // ディレクトリツリーが存在する場合のみナビゲーション
+    if (directoryTree.length > 0) {
+      const nodes = getNodesByPath(directoryTree, newPath)
+      setCurrentDirectoryNodes(nodes)
+    }
   }
 
   /**
@@ -628,6 +694,9 @@ export default function Cloud(): React.JSX.Element {
         }
       }
 
+      // 削除後はキャッシュをクリアして最新データを取得
+      navigationCacheRef.current.clear()
+      setCacheSize(0)
       fetchCloudData() // 一覧を再取得
     } catch (error) {
       console.error("削除エラー:", error)
@@ -698,6 +767,25 @@ export default function Cloud(): React.JSX.Element {
             </button>
           </div>
 
+          {/* キャッシュ関連（カードビューの場合のみ表示） */}
+          {viewMode === "cards" && (
+            <div className="flex items-center gap-2">
+              <div className="badge badge-outline badge-sm">
+                <FiDatabase className="mr-1 text-xs" />
+                キャッシュ: {cacheSize}
+              </div>
+              {cacheSize > 0 && (
+                <button
+                  onClick={clearNavigationCache}
+                  className="btn btn-sm btn-ghost tooltip"
+                  data-tip="ナビゲーションキャッシュをクリア"
+                >
+                  <FiDatabase className="text-sm" />
+                </button>
+              )}
+            </div>
+          )}
+
           {/* 全削除ボタン */}
           {(cloudData.length > 0 || directoryTree.length > 0) && (
             <button
@@ -739,10 +827,7 @@ export default function Cloud(): React.JSX.Element {
           {currentPath.length > 0 && (
             <div className="flex items-center gap-2 mb-4 p-3 bg-base-200 rounded-lg">
               <button
-                onClick={() => {
-                  setCurrentPath([])
-                  setCurrentDirectoryNodes(directoryTree)
-                }}
+                onClick={() => handleNavigateToPath([])}
                 className="btn btn-sm btn-ghost"
                 title="ルートに戻る"
               >
@@ -754,8 +839,7 @@ export default function Cloud(): React.JSX.Element {
                   <button
                     onClick={() => {
                       const newPath = currentPath.slice(0, index + 1)
-                      setCurrentPath(newPath)
-                      setCurrentDirectoryNodes(getNodesByPath(directoryTree, newPath))
+                      handleNavigateToPath(newPath)
                     }}
                     className="btn btn-sm btn-ghost text-sm"
                   >
