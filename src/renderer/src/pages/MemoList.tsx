@@ -5,10 +5,19 @@
  * サイドメニューからアクセス可能な全メモ閲覧画面です。
  */
 
-import React, { useEffect, useState, useCallback } from "react"
+import React, { useEffect, useState, useCallback, useMemo } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { FaPlus, FaFolder, FaFilter } from "react-icons/fa"
+import {
+  FaPlus,
+  FaFolder,
+  FaFilter,
+  FaSearch,
+  FaSortAmountDown,
+  FaSortAmountUp,
+  FaSort
+} from "react-icons/fa"
 import { useToastHandler } from "@renderer/hooks/useToastHandler"
+import { useDebounce } from "@renderer/hooks/useDebounce"
 import type { MemoType } from "src/types/memo"
 import type { GameType } from "src/types/game"
 import FloatingButton from "@renderer/components/FloatingButton"
@@ -17,16 +26,24 @@ import { useMemoOperations } from "@renderer/hooks/useMemoOperations"
 import MemoCardBase from "@renderer/components/MemoCardBase"
 import ConfirmModal from "@renderer/components/ConfirmModal"
 
+type SortOption = "updatedAt" | "createdAt" | "title"
+type SortDirection = "asc" | "desc"
+
 export default function MemoList(): React.JSX.Element {
   const { showToast } = useToastHandler()
   const navigate = useNavigate()
 
   const [memos, setMemos] = useState<MemoType[]>([])
   const [games, setGames] = useState<GameType[]>([])
-  const [filteredMemos, setFilteredMemos] = useState<MemoType[]>([])
   const [selectedGameId, setSelectedGameId] = useState<string>("all")
+  const [searchQuery, setSearchQuery] = useState<string>("")
+  const [sortBy, setSortBy] = useState<SortOption>("updatedAt")
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc")
   const [isLoading, setIsLoading] = useState(true)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
+
+  // 検索クエリのデバウンス処理
+  const debouncedSearchQuery = useDebounce(searchQuery, 300)
 
   // 共通フックを使用
   const { toggleDropdown, closeDropdown, isOpen } = useDropdownMenu()
@@ -34,12 +51,54 @@ export default function MemoList(): React.JSX.Element {
     useMemoOperations({
       onDeleteSuccess: (deletedMemoId) => {
         setMemos((prev) => prev.filter((memo) => memo.id !== deletedMemoId))
-        setFilteredMemos((prev) => prev.filter((memo) => memo.id !== deletedMemoId))
         setDeleteConfirmId(null)
       },
       closeDropdown,
       openDeleteModal: setDeleteConfirmId
     })
+
+  // フィルタリング・ソート処理
+  const filteredAndSortedMemos = useMemo(() => {
+    let filtered = [...memos]
+
+    // ゲームフィルター
+    if (selectedGameId !== "all") {
+      filtered = filtered.filter((memo) => memo.gameId === selectedGameId)
+    }
+
+    // タイトル検索フィルター
+    if (debouncedSearchQuery) {
+      const query = debouncedSearchQuery.toLowerCase()
+      filtered = filtered.filter(
+        (memo) =>
+          memo.title.toLowerCase().includes(query) ||
+          memo.content.toLowerCase().includes(query) ||
+          memo.gameTitle?.toLowerCase().includes(query)
+      )
+    }
+
+    // ソート処理
+    filtered.sort((a, b) => {
+      let comparison = 0
+
+      switch (sortBy) {
+        case "title":
+          comparison = a.title.localeCompare(b.title, "ja")
+          break
+        case "createdAt":
+          comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          break
+        case "updatedAt":
+        default:
+          comparison = new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime()
+          break
+      }
+
+      return sortDirection === "asc" ? comparison : -comparison
+    })
+
+    return filtered
+  }, [memos, selectedGameId, debouncedSearchQuery, sortBy, sortDirection])
 
   // 全メモ一覧とゲーム一覧を取得する関数
   const fetchData = useCallback(async () => {
@@ -49,7 +108,6 @@ export default function MemoList(): React.JSX.Element {
       const memoResult = await window.api.memo.getAllMemos()
       if (memoResult.success && memoResult.data) {
         setMemos(memoResult.data)
-        setFilteredMemos(memoResult.data)
       } else {
         showToast("メモの取得に失敗しました", "error")
       }
@@ -77,14 +135,15 @@ export default function MemoList(): React.JSX.Element {
     fetchData()
   }, [fetchData])
 
-  // ゲームフィルター適用
-  useEffect(() => {
-    if (selectedGameId === "all") {
-      setFilteredMemos(memos)
-    } else {
-      setFilteredMemos(memos.filter((memo) => memo.gameId === selectedGameId))
-    }
-  }, [memos, selectedGameId])
+  // ソート方向を切り替える関数
+  const toggleSortDirection = useCallback(() => {
+    setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"))
+  }, [])
+
+  // 検索をクリアする関数
+  const clearSearch = useCallback(() => {
+    setSearchQuery("")
+  }, [])
 
   // メモフォルダを開く処理
   const handleOpenMemoFolder = useCallback(async () => {
@@ -126,45 +185,114 @@ export default function MemoList(): React.JSX.Element {
         </div>
       </div>
 
-      {/* フィルター */}
+      {/* 検索・フィルター・ソート */}
       <div className="mb-6">
-        <div className="flex items-center gap-3">
-          <FaFilter className="text-base-content/60" />
-          <select
-            value={selectedGameId}
-            onChange={(e) => setSelectedGameId(e.target.value)}
-            className="select select-bordered w-auto min-w-48"
-          >
-            <option value="all">すべてのゲーム</option>
-            {games.map((game) => (
-              <option key={game.id} value={game.id}>
-                {game.title}
-              </option>
-            ))}
-          </select>
-          <span className="text-sm text-base-content/60">{filteredMemos.length}件のメモ</span>
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* 検索バー */}
+          <div className="flex items-center gap-2 flex-1 min-w-40 max-w-80">
+            <FaSearch className="text-base-content/60" />
+            <div className="relative flex-1">
+              <input
+                type="text"
+                placeholder="検索..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="input input-bordered input-sm w-full pr-8"
+              />
+              {searchQuery && (
+                <button
+                  onClick={clearSearch}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 text-base-content/60 hover:text-base-content text-sm"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* ゲームフィルター */}
+          <div className="flex items-center gap-2">
+            <FaFilter className="text-base-content/60" />
+            <select
+              value={selectedGameId}
+              onChange={(e) => setSelectedGameId(e.target.value)}
+              className="select select-bordered select-sm min-w-40"
+            >
+              <option value="all">すべてのゲーム</option>
+              {games.map((game) => (
+                <option key={game.id} value={game.id}>
+                  {game.title}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* ソート設定 */}
+          <div className="flex items-center gap-2">
+            <FaSort className="text-base-content/60" />
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortOption)}
+              className="select select-bordered select-sm"
+            >
+              <option value="updatedAt">更新日時</option>
+              <option value="createdAt">作成日時</option>
+              <option value="title">タイトル</option>
+            </select>
+            <button
+              onClick={toggleSortDirection}
+              className="btn btn-ghost btn-sm"
+              title={sortDirection === "asc" ? "昇順" : "降順"}
+            >
+              {sortDirection === "asc" ? <FaSortAmountUp /> : <FaSortAmountDown />}
+            </button>
+          </div>
+
+          {/* メモ件数 */}
+          <span className="text-sm text-base-content/60 ml-auto">
+            {filteredAndSortedMemos.length}件
+          </span>
         </div>
       </div>
 
       {/* メモ一覧 */}
-      {filteredMemos.length === 0 ? (
+      {filteredAndSortedMemos.length === 0 ? (
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body text-center">
-            <h2 className="card-title justify-center text-base-content/70">メモがありません</h2>
-            <p className="text-base-content/60">
-              新しいメモを作成して、ゲームに関する情報を記録しましょう
-            </p>
-            <div className="card-actions justify-center mt-4">
-              <Link to="/memo/create" className="btn btn-primary">
-                <FaPlus />
-                最初のメモを作成
-              </Link>
-            </div>
+            {memos.length === 0 ? (
+              <>
+                <h2 className="card-title justify-center text-base-content/70">メモがありません</h2>
+                <p className="text-base-content/60">
+                  新しいメモを作成して、ゲームに関する情報を記録しましょう
+                </p>
+                <div className="card-actions justify-center mt-4">
+                  <Link to="/memo/create" className="btn btn-primary">
+                    <FaPlus />
+                    最初のメモを作成
+                  </Link>
+                </div>
+              </>
+            ) : (
+              <>
+                <h2 className="card-title justify-center text-base-content/70">
+                  条件に一致するメモがありません
+                </h2>
+                <p className="text-base-content/60">検索条件やフィルターを変更してみてください</p>
+                <div className="card-actions justify-center mt-4">
+                  <button onClick={clearSearch} className="btn btn-outline">
+                    検索をクリア
+                  </button>
+                  <button onClick={() => setSelectedGameId("all")} className="btn btn-outline">
+                    すべてのゲーム
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
-          {filteredMemos.map((memo) => (
+          {filteredAndSortedMemos.map((memo) => (
             <MemoCardBase
               key={memo.id}
               memo={memo}
