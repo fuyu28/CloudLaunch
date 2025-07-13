@@ -25,16 +25,24 @@ export default function MemoCard({ gameId }: MemoCardProps): React.JSX.Element {
 
   // 共通フックを使用
   const { toggleDropdown, closeDropdown, isOpen } = useDropdownMenu()
-  const { handleDeleteMemo, handleEditMemo, handleViewMemo, handleDeleteConfirm } =
-    useMemoOperations({
-      gameId,
-      onDeleteSuccess: () => {
-        fetchMemos() // メモ削除後に一覧を再取得
-        setDeleteConfirmId(null)
-      },
-      closeDropdown,
-      openDeleteModal: setDeleteConfirmId
-    })
+  const {
+    handleDeleteMemo,
+    handleEditMemo,
+    handleViewMemo,
+    handleDeleteConfirm,
+    handleSyncFromCloud
+  } = useMemoOperations({
+    gameId,
+    onDeleteSuccess: () => {
+      fetchMemos() // メモ削除後に一覧を再取得
+      setDeleteConfirmId(null)
+    },
+    closeDropdown,
+    openDeleteModal: setDeleteConfirmId,
+    onSyncSuccess: () => {
+      fetchMemos() // 同期後にメモ一覧を再取得
+    }
+  })
 
   // メモ一覧を取得
   const fetchMemos = useCallback(async () => {
@@ -82,6 +90,7 @@ export default function MemoCard({ gameId }: MemoCardProps): React.JSX.Element {
                 onDropdownToggle={toggleDropdown}
                 onEdit={handleEditMemo}
                 onDelete={handleDeleteConfirm}
+                onSyncFromCloud={handleSyncFromCloud}
                 showGameTitle={false}
               />
             ))}

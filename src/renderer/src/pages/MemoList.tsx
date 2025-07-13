@@ -14,7 +14,8 @@ import {
   FaSearch,
   FaSortAmountDown,
   FaSortAmountUp,
-  FaSort
+  FaSort,
+  FaSync
 } from "react-icons/fa"
 import { useToastHandler } from "@renderer/hooks/useToastHandler"
 import { useDebounce } from "@renderer/hooks/useDebounce"
@@ -47,15 +48,23 @@ export default function MemoList(): React.JSX.Element {
 
   // 共通フックを使用
   const { toggleDropdown, closeDropdown, isOpen } = useDropdownMenu()
-  const { handleDeleteMemo, handleEditMemo, handleViewMemo, handleDeleteConfirm } =
-    useMemoOperations({
-      onDeleteSuccess: (deletedMemoId) => {
-        setMemos((prev) => prev.filter((memo) => memo.id !== deletedMemoId))
-        setDeleteConfirmId(null)
-      },
-      closeDropdown,
-      openDeleteModal: setDeleteConfirmId
-    })
+  const {
+    handleDeleteMemo,
+    handleEditMemo,
+    handleViewMemo,
+    handleDeleteConfirm,
+    handleSyncFromCloud
+  } = useMemoOperations({
+    onDeleteSuccess: (deletedMemoId) => {
+      setMemos((prev) => prev.filter((memo) => memo.id !== deletedMemoId))
+      setDeleteConfirmId(null)
+    },
+    closeDropdown,
+    openDeleteModal: setDeleteConfirmId,
+    onSyncSuccess: () => {
+      fetchData() // 同期後にメモ一覧を再取得
+    }
+  })
 
   // フィルタリング・ソート処理
   const filteredAndSortedMemos = useMemo(() => {
@@ -178,6 +187,10 @@ export default function MemoList(): React.JSX.Element {
         </div>
 
         <div className="flex gap-2">
+          <button onClick={(e) => handleSyncFromCloud(e)} className="btn btn-success btn-outline">
+            <FaSync />
+            同期
+          </button>
           <button onClick={handleOpenMemoFolder} className="btn btn-outline">
             <FaFolder />
             フォルダを開く
@@ -301,6 +314,7 @@ export default function MemoList(): React.JSX.Element {
               onDropdownToggle={toggleDropdown}
               onEdit={handleEditMemo}
               onDelete={handleDeleteConfirm}
+              onSyncFromCloud={handleSyncFromCloud}
               className="card bg-base-100 shadow-xl p-6"
               contentMaxLength={100}
               dropdownPosition="absolute top-0 right-0"

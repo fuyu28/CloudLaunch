@@ -70,3 +70,47 @@ export interface MemoDirectoryInfo {
   /** メモファイル数 */
   fileCount: number
 }
+
+/**
+ * クラウドメモ情報型
+ */
+export interface CloudMemoInfo {
+  /** S3キー */
+  key: string
+  /** ファイル名 */
+  fileName: string
+  /** ゲームタイトル */
+  gameTitle: string
+  /** メモタイトル（ファイル名から抽出） */
+  memoTitle: string
+  /** メモID（ファイル名から抽出） */
+  memoId: string
+  /** 最終更新日時 */
+  lastModified: Date
+  /** ファイルサイズ */
+  size: number
+}
+
+/**
+ * メモ同期結果型
+ */
+export interface MemoSyncResult {
+  /** 同期が成功したかどうか */
+  success: boolean
+  /** アップロードされたメモ数 */
+  uploaded: number
+  /** ローカルで上書きされたメモ数（クラウド→ローカル） */
+  localOverwritten: number
+  /** クラウドで上書きされたメモ数（ローカル→クラウド） */
+  cloudOverwritten: number
+  /** 作成されたメモ数（ダウンロード） */
+  created: number
+  /** 更新されたメモ数（ダウンロード） */
+  updated: number
+  /** スキップされたメモ数 */
+  skipped: number
+  /** エラーメッセージ（失敗時） */
+  error?: string
+  /** 詳細メッセージ */
+  details: string[]
+}

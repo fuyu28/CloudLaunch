@@ -6,7 +6,7 @@
  */
 
 import React from "react"
-import { FaEdit, FaTrash, FaEllipsisV } from "react-icons/fa"
+import { FaEdit, FaTrash, FaEllipsisV, FaSync } from "react-icons/fa"
 
 interface MemoDropdownMenuProps {
   /** メモID */
@@ -19,6 +19,8 @@ interface MemoDropdownMenuProps {
   onEdit: (memoId: string, event: React.MouseEvent) => void
   /** 削除ボタンクリック処理 */
   onDelete: (memoId: string, event: React.MouseEvent) => void
+  /** 同期ボタンクリック処理（オプション、メモ一覧ページのみ） */
+  onSyncFromCloud?: (event: React.MouseEvent) => void
   /** 絶対位置のスタイルクラス（オプション） */
   className?: string
 }
@@ -35,6 +37,7 @@ export default function MemoDropdownMenu({
   onToggle,
   onEdit,
   onDelete,
+  onSyncFromCloud,
   className = "absolute top-2 right-2"
 }: MemoDropdownMenuProps): React.JSX.Element {
   return (
@@ -64,6 +67,17 @@ export default function MemoDropdownMenu({
             編集
           </button>
         </li>
+        {onSyncFromCloud && (
+          <li>
+            <button
+              onClick={(e) => onSyncFromCloud(e)}
+              className="flex items-center gap-2 text-xs text-success"
+            >
+              <FaSync />
+              同期
+            </button>
+          </li>
+        )}
         <li>
           <button
             onClick={(e) => onDelete(memoId, e)}

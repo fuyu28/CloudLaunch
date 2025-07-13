@@ -24,6 +24,8 @@ interface MemoCardBaseProps {
   onEdit: (memoId: string, event: React.MouseEvent) => void
   /** 削除ボタンクリック処理 */
   onDelete: (memoId: string, event: React.MouseEvent) => void
+  /** 同期ボタンクリック処理（オプション、メモ一覧ページのみ） */
+  onSyncFromCloud?: (event: React.MouseEvent) => void
   /** カードのスタイルクラス（オプション） */
   className?: string
   /** タイトルの最大文字数（オプション、デフォルト: 制限なし） */
@@ -49,6 +51,7 @@ export default function MemoCardBase({
   onDropdownToggle,
   onEdit,
   onDelete,
+  onSyncFromCloud,
   className = "border border-base-300 rounded-lg p-3",
   titleMaxLength,
   contentMaxLength = 80,
@@ -97,6 +100,7 @@ export default function MemoCardBase({
         onToggle={onDropdownToggle}
         onEdit={onEdit}
         onDelete={onDelete}
+        onSyncFromCloud={onSyncFromCloud}
         className={dropdownPosition}
       />
     </div>

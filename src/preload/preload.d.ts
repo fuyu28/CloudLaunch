@@ -132,7 +132,13 @@ export interface SettingsAPI {
 }
 
 // メモ型は src/types/memo.d.ts で定義されており、そちらを使用
-import type { MemoType, CreateMemoData, UpdateMemoData } from "../types/memo"
+import type {
+  MemoType,
+  CreateMemoData,
+  UpdateMemoData,
+  CloudMemoInfo,
+  MemoSyncResult
+} from "../types/memo"
 
 export interface MemoAPI {
   getMemosByGameId(gameId: string): Promise<ApiResult<MemoType[]>>
@@ -144,6 +150,10 @@ export interface MemoAPI {
   getGameMemoDir(gameId: string): Promise<ApiResult<string>>
   getAllMemos(): Promise<ApiResult<MemoType[]>>
   getMemoRootDir(): Promise<ApiResult<string>>
+  uploadMemoToCloud(memoId: string): Promise<ApiResult<boolean>>
+  downloadMemoFromCloud(gameTitle: string, memoFileName: string): Promise<ApiResult<string>>
+  getCloudMemos(): Promise<ApiResult<CloudMemoInfo[]>>
+  syncMemosFromCloud(gameId?: string): Promise<ApiResult<MemoSyncResult>>
 }
 
 export interface API {
