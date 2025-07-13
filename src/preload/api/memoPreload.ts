@@ -8,27 +8,7 @@
 
 import { ipcRenderer } from "electron"
 import type { ApiResult } from "../../types/result"
-
-type MemoType = {
-  id: string
-  title: string
-  content: string
-  gameId: string
-  gameTitle?: string
-  createdAt: Date
-  updatedAt: Date
-}
-
-type CreateMemoData = {
-  title: string
-  content: string
-  gameId: string
-}
-
-type UpdateMemoData = {
-  title: string
-  content: string
-}
+import type { MemoType, CreateMemoData, UpdateMemoData } from "../../types/memo"
 
 export const memoApi = {
   /**

@@ -6,19 +6,21 @@
  */
 
 import React, { useEffect, useState, useCallback } from "react"
-import { useParams, useNavigate, useSearchParams, Link } from "react-router-dom"
+import { useParams, Link, useNavigate } from "react-router-dom"
+import { useMemoNavigation } from "@renderer/hooks/useMemoNavigation"
 import ReactMarkdown from "react-markdown"
 import { FaArrowLeft, FaEdit, FaTrash, FaExternalLinkAlt } from "react-icons/fa"
 import { useToastHandler } from "@renderer/hooks/useToastHandler"
 import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
-import { MemoType } from "src/preload/preload"
+import type { MemoType } from "src/types/memo"
+import ConfirmModal from "@renderer/components/ConfirmModal"
 
 export default function MemoView(): React.JSX.Element {
   const { memoId } = useParams<{ memoId: string }>()
-  const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const { showToast } = useToastHandler()
   const { formatDateWithTime } = useTimeFormat()
+  const { handleBack, searchParams } = useMemoNavigation()
 
   const [memo, setMemo] = useState<MemoType | null>(null)
   const [gameTitle, setGameTitle] = useState("")
@@ -75,23 +77,6 @@ export default function MemoView(): React.JSX.Element {
     }
     setShowDeleteModal(false)
   }, [memo, showToast, navigate])
-
-  // 戻るボタン処理
-  const handleBack = useCallback(() => {
-    const fromParam = searchParams.get("from")
-    const gameIdParam = searchParams.get("gameId")
-
-    if (fromParam === "game" && gameIdParam) {
-      // MemoCardから来た場合は、ゲーム詳細ページに戻る
-      navigate(`/game/${gameIdParam}`)
-    } else if (memo) {
-      // その他の場合は、メモリストに戻る
-      navigate(`/memo/list/${memo.gameId}`)
-    } else {
-      // フォールバック: ブラウザの戻る
-      navigate(-1)
-    }
-  }, [navigate, memo, searchParams])
 
   // メモファイルを開く処理
   const handleOpenMemoFile = useCallback(async () => {
@@ -243,22 +228,15 @@ export default function MemoView(): React.JSX.Element {
       </div>
 
       {/* 削除確認モーダル */}
-      {showDeleteModal && (
-        <div className="modal modal-open">
-          <div className="modal-box">
-            <h3 className="font-bold text-lg">メモの削除</h3>
-            <p className="py-4">「{memo.title}」を削除しますか？この操作は取り消せません。</p>
-            <div className="modal-action">
-              <button onClick={() => setShowDeleteModal(false)} className="btn btn-ghost">
-                キャンセル
-              </button>
-              <button onClick={handleDeleteMemo} className="btn btn-error">
-                削除する
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmModal
+        id="delete-memo-modal"
+        isOpen={showDeleteModal}
+        message={`「${memo.title}」を削除しますか？この操作は取り消せません。`}
+        cancelText="キャンセル"
+        confirmText="削除する"
+        onConfirm={handleDeleteMemo}
+        onCancel={() => setShowDeleteModal(false)}
+      />
     </div>
   )
 }

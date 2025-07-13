@@ -131,26 +131,8 @@ export interface SettingsAPI {
   getAutoTracking(): Promise<ApiResult<boolean>>
 }
 
-export interface MemoType {
-  id: string
-  title: string
-  content: string
-  gameId: string
-  gameTitle?: string
-  createdAt: Date
-  updatedAt: Date
-}
-
-export interface CreateMemoData {
-  title: string
-  content: string
-  gameId: string
-}
-
-export interface UpdateMemoData {
-  title: string
-  content: string
-}
+// メモ型は src/types/memo.d.ts で定義されており、そちらを使用
+import type { MemoType, CreateMemoData, UpdateMemoData } from "../types/memo"
 
 export interface MemoAPI {
   getMemosByGameId(gameId: string): Promise<ApiResult<MemoType[]>>

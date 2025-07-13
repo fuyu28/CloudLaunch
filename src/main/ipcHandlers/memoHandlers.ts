@@ -13,29 +13,9 @@
 import { ipcMain } from "electron"
 import { prisma } from "../db"
 import type { ApiResult } from "../../types/result"
+import type { MemoType, CreateMemoData, UpdateMemoData } from "../../types/memo"
 import { logger } from "../utils/logger"
 import { memoFileManager } from "../utils/memoFileManager"
-
-type MemoType = {
-  id: string
-  title: string
-  content: string
-  gameId: string
-  gameTitle?: string
-  createdAt: Date
-  updatedAt: Date
-}
-
-type CreateMemoData = {
-  title: string
-  content: string
-  gameId: string
-}
-
-type UpdateMemoData = {
-  title: string
-  content: string
-}
 
 export function registerMemoHandlers(): void {
   // メモファイルマネージャーの初期化
@@ -108,10 +88,14 @@ export function registerMemoHandlers(): void {
         })
 
         // メモファイルを作成
-        try {
-          await memoFileManager.createMemoFile(memo.gameId, memo.id, memo.title, memo.content)
-        } catch (fileError) {
-          logger.warn("メモファイル作成エラー (データベース作成は成功):", fileError)
+        const fileResult = await memoFileManager.createMemoFile(
+          memo.gameId,
+          memo.id,
+          memo.title,
+          memo.content
+        )
+        if (!fileResult.success) {
+          logger.warn("メモファイル作成エラー (データベース作成は成功):", fileResult.error)
         }
 
         logger.info(`メモを作成しました: ${memo.title}`)
@@ -148,16 +132,15 @@ export function registerMemoHandlers(): void {
         })
 
         // メモファイルを更新
-        try {
-          await memoFileManager.updateMemoFile(
-            memo.gameId,
-            memo.id,
-            oldMemo.title,
-            memo.title,
-            memo.content
-          )
-        } catch (fileError) {
-          logger.warn("メモファイル更新エラー (データベース更新は成功):", fileError)
+        const fileResult = await memoFileManager.updateMemoFile(
+          memo.gameId,
+          memo.id,
+          oldMemo.title,
+          memo.title,
+          memo.content
+        )
+        if (!fileResult.success) {
+          logger.warn("メモファイル更新エラー (データベース更新は成功):", fileResult.error)
         }
 
         logger.info(`メモを更新しました: ${memo.title}`)
@@ -190,10 +173,9 @@ export function registerMemoHandlers(): void {
       })
 
       // メモファイルを削除
-      try {
-        await memoFileManager.deleteMemoFile(memo.gameId, memo.id, memo.title)
-      } catch (fileError) {
-        logger.warn("メモファイル削除エラー (データベース削除は成功):", fileError)
+      const fileResult = await memoFileManager.deleteMemoFile(memo.gameId, memo.id, memo.title)
+      if (!fileResult.success) {
+        logger.warn("メモファイル削除エラー (データベース削除は成功):", fileResult.error)
       }
 
       logger.info(`メモを削除しました: ${memoId}`)

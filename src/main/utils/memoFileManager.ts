@@ -12,6 +12,7 @@ import fs from "fs/promises"
 import path from "path"
 import { app } from "electron"
 import { logger } from "./logger"
+import type { MemoFileOperationResult, MemoDirectoryInfo } from "../../types/memo"
 
 /**
  * メモファイル管理クラス
@@ -77,14 +78,14 @@ export class MemoFileManager {
    * @param memoId メモID
    * @param title メモタイトル
    * @param content メモ内容
-   * @returns 作成されたファイルパス
+   * @returns ファイル操作結果
    */
   async createMemoFile(
     gameId: string,
     memoId: string,
     title: string,
     content: string
-  ): Promise<string> {
+  ): Promise<MemoFileOperationResult> {
     try {
       // ゲームディレクトリを作成
       const gameDir = this.getGameMemoDir(gameId)
@@ -98,10 +99,10 @@ export class MemoFileManager {
       await fs.writeFile(filePath, fileContent, "utf-8")
 
       logger.info(`メモファイルを作成しました: ${filePath}`)
-      return filePath
+      return { success: true, filePath }
     } catch (error) {
       logger.error("メモファイル作成エラー:", error)
-      throw new Error("メモファイルの作成に失敗しました")
+      return { success: false, error: "メモファイルの作成に失敗しました" }
     }
   }
 
@@ -112,7 +113,7 @@ export class MemoFileManager {
    * @param oldTitle 旧タイトル
    * @param newTitle 新タイトル
    * @param content メモ内容
-   * @returns 更新されたファイルパス
+   * @returns ファイル操作結果
    */
   async updateMemoFile(
     gameId: string,
@@ -120,7 +121,7 @@ export class MemoFileManager {
     oldTitle: string,
     newTitle: string,
     content: string
-  ): Promise<string> {
+  ): Promise<MemoFileOperationResult> {
     try {
       const oldFilePath = this.getMemoFilePath(gameId, memoId, oldTitle)
       const newFilePath = this.getMemoFilePath(gameId, memoId, newTitle)
@@ -141,10 +142,10 @@ export class MemoFileManager {
       }
 
       logger.info(`メモファイルを更新しました: ${newFilePath}`)
-      return newFilePath
+      return { success: true, filePath: newFilePath }
     } catch (error) {
       logger.error("メモファイル更新エラー:", error)
-      throw new Error("メモファイルの更新に失敗しました")
+      return { success: false, error: "メモファイルの更新に失敗しました" }
     }
   }
 
@@ -153,15 +154,21 @@ export class MemoFileManager {
    * @param gameId ゲームID
    * @param memoId メモID
    * @param title メモタイトル
+   * @returns ファイル操作結果
    */
-  async deleteMemoFile(gameId: string, memoId: string, title: string): Promise<void> {
+  async deleteMemoFile(
+    gameId: string,
+    memoId: string,
+    title: string
+  ): Promise<MemoFileOperationResult> {
     try {
       const filePath = this.getMemoFilePath(gameId, memoId, title)
       await fs.unlink(filePath)
       logger.info(`メモファイルを削除しました: ${filePath}`)
+      return { success: true, filePath }
     } catch (error) {
       logger.error("メモファイル削除エラー:", error)
-      throw new Error("メモファイルの削除に失敗しました")
+      return { success: false, error: "メモファイルの削除に失敗しました" }
     }
   }
 
@@ -218,19 +225,35 @@ ${content}
   }
 
   /**
-   * ベースディレクトリパスを取得
-   * @returns ベースディレクトリパス
-   */
-  getBaseDirPath(): string {
-    return this.baseDir
-  }
-
-  /**
    * ベースディレクトリを取得
    * @returns ベースディレクトリパス
    */
   getBaseDir(): string {
     return this.baseDir
+  }
+
+  /**
+   * ゲームのメモディレクトリ情報を取得
+   * @param gameId ゲームID
+   * @returns メモディレクトリ情報
+   */
+  async getGameMemoDirectoryInfo(gameId: string): Promise<MemoDirectoryInfo> {
+    const gameDir = this.getGameMemoDir(gameId)
+    let fileCount = 0
+
+    try {
+      const files = await fs.readdir(gameDir)
+      fileCount = files.filter((file) => file.endsWith(".md")).length
+    } catch {
+      // ディレクトリが存在しない場合は0件
+      logger.debug(`ゲームメモディレクトリが存在しません: ${gameDir}`)
+    }
+
+    return {
+      baseDir: this.baseDir,
+      gameDir,
+      fileCount
+    }
   }
 }
 
