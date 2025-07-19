@@ -33,7 +33,8 @@ import {
   FiArrowLeft
 } from "react-icons/fi"
 import { toast } from "react-hot-toast"
-import { BaseModal } from "@renderer/components/BaseModal"
+import ConfirmModal from "@renderer/components/ConfirmModal"
+import type { ConfirmDetails, WarningItem } from "@renderer/components/ConfirmModal"
 /**
  * クラウドデータアイテムの型定義
  */
@@ -919,62 +920,28 @@ export default function Cloud(): React.JSX.Element {
       )}
 
       {/* 削除確認ダイアログ */}
-      <BaseModal
+      <ConfirmModal
         id="delete-cloud-data-modal"
         isOpen={!!deleteConfirm}
-        onClose={() => setDeleteConfirm(null)}
+        onCancel={() => setDeleteConfirm(null)}
+        onConfirm={() => deleteConfirm && handleDelete(deleteConfirm)}
         title="クラウドデータの削除"
-        size="lg"
-        showCloseButton={false}
-        footer={
-          <div className="justify-end space-x-2">
-            <button className="btn btn-outline" onClick={() => setDeleteConfirm(null)}>
-              キャンセル
-            </button>
-            <button
-              className="btn btn-error"
-              onClick={() => deleteConfirm && handleDelete(deleteConfirm)}
-            >
-              削除
-            </button>
-          </div>
-        }
-      >
-        <div className="mb-4 flex items-center gap-3">
-          <FiAlertTriangle className="text-error text-4xl flex-shrink-0" />
-          <div>
-            <p className="mb-2">
-              <strong>{deleteConfirm?.name}</strong>{" "}
-              {"path" in (deleteConfirm || {})
-                ? (deleteConfirm as CloudDirectoryNode).isDirectory
-                  ? "以下のディレクトリ・ファイルを"
-                  : "ファイルを"
-                : "のクラウドデータを"}
-              完全に削除しますか？
-            </p>
-            {"path" in (deleteConfirm || {}) && (
-              <p className="text-sm text-base-content/70">
-                パス:{" "}
-                <code className="bg-base-200 px-1 rounded text-xs">
-                  {(deleteConfirm as CloudDirectoryNode)?.path}
-                </code>
-                {!(deleteConfirm as CloudDirectoryNode).isDirectory && (
-                  <span className="ml-2 text-orange-600">(ファイル)</span>
-                )}
-              </p>
-            )}
-          </div>
-        </div>
-        <div className="bg-error/10 border border-error/20 rounded-lg p-3 text-sm">
-          <div className="flex items-start gap-2">
-            <FiAlertTriangle className="text-error mt-0.5 flex-shrink-0" />
-            <div>
-              <div className="font-medium text-error mb-1">注意事項</div>
-              <ul className="text-error/80 space-y-1 text-xs">
-                <li>• 削除されたデータは復元できません</li>
-                <li>
-                  •{" "}
-                  {"fileCount" in (deleteConfirm || {})
+        message={`${deleteConfirm?.name}${"path" in (deleteConfirm || {}) ? ((deleteConfirm as CloudDirectoryNode).isDirectory ? "以下のディレクトリ・ファイルを" : "ファイルを") : "のクラウドデータを"}完全に削除しますか？`}
+        confirmText="削除"
+        cancelText="キャンセル"
+        confirmVariant="error"
+        details={
+          {
+            icon: <FiAlertTriangle className="text-error" />,
+            subText:
+              "path" in (deleteConfirm || {})
+                ? `パス: ${(deleteConfirm as CloudDirectoryNode)?.path}${!(deleteConfirm as CloudDirectoryNode)?.isDirectory ? " (ファイル)" : ""}`
+                : undefined,
+            warnings: [
+              { text: "削除されたデータは復元できません" },
+              {
+                text:
+                  "fileCount" in (deleteConfirm || {})
                     ? `${(deleteConfirm as CloudDataItem)?.fileCount} 個のファイルが削除されます`
                     : deleteConfirm &&
                         "path" in deleteConfirm &&
@@ -984,27 +951,20 @@ export default function Cloud(): React.JSX.Element {
                           "path" in deleteConfirm &&
                           !(deleteConfirm as CloudDirectoryNode).isDirectory
                         ? "1 個のファイルが削除されます"
-                        : `${
-                            deleteConfirm && "path" in deleteConfirm
-                              ? countFilesRecursively(deleteConfirm as CloudDirectoryNode)
-                              : 0
-                          } 個のファイルが削除されます`}
-                </li>
-                <li>
-                  • 総容量:{" "}
-                  {deleteConfirm &&
-                    formatFileSize(
-                      "totalSize" in deleteConfirm ? deleteConfirm.totalSize : deleteConfirm.size
-                    )}
-                </li>
-                {"path" in (deleteConfirm || {}) && (
-                  <li>• サブディレクトリも含めて完全に削除されます</li>
-                )}
-              </ul>
-            </div>
-          </div>
-        </div>
-      </BaseModal>
+                        : `${deleteConfirm && "path" in deleteConfirm ? countFilesRecursively(deleteConfirm as CloudDirectoryNode) : 0} 個のファイルが削除されます`,
+                highlight: true
+              },
+              {
+                text: `総容量: ${deleteConfirm ? formatFileSize("totalSize" in deleteConfirm ? deleteConfirm.totalSize : deleteConfirm.size) : "0 B"}`
+              },
+              ...("path" in (deleteConfirm || {}) &&
+              (deleteConfirm as CloudDirectoryNode)?.isDirectory
+                ? [{ text: "サブディレクトリも含めて完全に削除されます" }]
+                : [])
+            ] as WarningItem[]
+          } as ConfirmDetails
+        }
+      />
 
       {/* ファイル詳細モーダル */}
       <FileDetailsModal
