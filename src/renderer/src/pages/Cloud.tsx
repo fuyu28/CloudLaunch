@@ -528,7 +528,6 @@ export default function Cloud(): React.JSX.Element {
    */
   const clearNavigationCache = (): void => {
     navigationCacheRef.current.clear()
-    toast.success("ナビゲーションキャッシュをクリアしました")
   }
 
   /**
