@@ -7,6 +7,7 @@
 
 import { useState, useCallback } from "react"
 import { FaPlus, FaTimes } from "react-icons/fa"
+import { handleApiError, handleUnexpectedError } from "../utils/errorHandler"
 
 interface ChapterAddModalProps {
   /** モーダルの表示状態 */
@@ -59,10 +60,10 @@ export default function ChapterAddModal({
         onChapterAdded?.()
         onClose()
       } else {
-        console.error("章の追加に失敗:", result.message)
+        handleApiError(result, "章の追加に失敗しました")
       }
     } catch (error) {
-      console.error("章の追加に失敗:", error)
+      handleUnexpectedError(error, "章の追加")
     } finally {
       setIsSubmitting(false)
     }

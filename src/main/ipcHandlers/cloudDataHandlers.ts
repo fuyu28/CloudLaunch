@@ -349,8 +349,7 @@ export function registerCloudDataHandlers(): void {
 
         // DeleteObjectsCommandは最大1000件まで一度に削除可能
         const batchSize = 1000
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const deletePromises: Promise<any>[] = []
+        const deletePromises: Promise<unknown>[] = []
 
         for (let i = 0; i < objectsToDelete.length; i += batchSize) {
           const batch = objectsToDelete.slice(i, i + batchSize)

@@ -9,6 +9,7 @@ import { ipcMain } from "electron"
 import { prisma } from "../db"
 import { ApiResult } from "../../types/result"
 import { Chapter, ChapterStats, ChapterCreateInput, ChapterUpdateInput } from "../../types/chapter"
+import { logger } from "../utils/logger"
 
 /**
  * ゲームの章一覧を取得
@@ -29,7 +30,7 @@ export const getChapters = async (gameId: string): Promise<ApiResult<Chapter[]>>
 
     return { success: true, data: chapters }
   } catch (error) {
-    console.error("章一覧取得エラー:", error)
+    logger.error("章一覧取得エラー:", error)
     return { success: false, message: "章一覧の取得に失敗しました" }
   }
 }
@@ -68,7 +69,7 @@ export const createChapter = async (input: ChapterCreateInput): Promise<ApiResul
 
     return { success: true, data: chapter }
   } catch (error) {
-    console.error("章作成エラー:", error)
+    logger.error("章作成エラー:", error)
     if (error instanceof Error && error.message.includes("Unique constraint")) {
       return { success: false, message: "同じ名前の章が既に存在します" }
     }
@@ -118,7 +119,7 @@ export const updateChapter = async (
 
     return { success: true, data: chapter }
   } catch (error) {
-    console.error("章更新エラー:", error)
+    logger.error("章更新エラー:", error)
     if (error instanceof Error && error.message.includes("Unique constraint")) {
       return { success: false, message: "同じ名前の章が既に存在します" }
     }
@@ -152,7 +153,7 @@ export const deleteChapter = async (chapterId: string): Promise<ApiResult<void>>
 
     return { success: true, data: undefined }
   } catch (error) {
-    console.error("章削除エラー:", error)
+    logger.error("章削除エラー:", error)
     return { success: false, message: "章の削除に失敗しました" }
   }
 }
@@ -192,7 +193,7 @@ export const updateChapterOrders = async (
 
     return { success: true, data: undefined }
   } catch (error) {
-    console.error("章順序更新エラー:", error)
+    logger.error("章順序更新エラー:", error)
     return { success: false, message: "章順序の更新に失敗しました" }
   }
 }
@@ -231,7 +232,7 @@ export const ensureDefaultChapter = async (gameId: string): Promise<ApiResult<Ch
 
     return { success: true, data: defaultChapter }
   } catch (error) {
-    console.error("デフォルト章の作成に失敗:", error)
+    logger.error("デフォルト章の作成に失敗:", error)
     return { success: false, message: "デフォルト章の作成に失敗しました" }
   }
 }
@@ -273,7 +274,7 @@ export const setCurrentChapter = async (
 
     return { success: true, data: undefined }
   } catch (error) {
-    console.error("現在の章の変更に失敗:", error)
+    logger.error("現在の章の変更に失敗:", error)
     return { success: false, message: "現在の章の変更に失敗しました" }
   }
 }
@@ -320,7 +321,7 @@ export const getChapterStats = async (gameId: string): Promise<ApiResult<Chapter
 
     return { success: true, data: chapterStats }
   } catch (error) {
-    console.error("章別統計取得エラー:", error)
+    logger.error("章別統計取得エラー:", error)
     return { success: false, message: "章別統計の取得に失敗しました" }
   }
 }
