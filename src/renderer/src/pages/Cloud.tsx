@@ -18,357 +18,34 @@
  * - ローディング状態の表示
  */
 
-import React, { useState, useEffect, useCallback, useRef } from "react"
+import React, { useState, useEffect } from "react"
 import {
-  FiFolder,
   FiTrash2,
   FiRefreshCw,
   FiAlertTriangle,
   FiFile,
   FiCloud,
   FiChevronRight,
-  FiChevronDown,
+  FiFolder,
   FiFolderPlus,
   FiHome,
   FiArrowLeft
 } from "react-icons/fi"
-import { toast } from "react-hot-toast"
 import ConfirmModal from "@renderer/components/ConfirmModal"
 import type { ConfirmDetails, WarningItem } from "@renderer/components/ConfirmModal"
-/**
- * クラウドデータアイテムの型定義
- */
-interface CloudDataItem {
-  name: string
-  totalSize: number
-  fileCount: number
-  lastModified: Date
-  remotePath: string
-}
-
-/**
- * クラウドファイル詳細情報の型定義
- */
-interface CloudFileDetail {
-  name: string
-  size: number
-  lastModified: Date
-  key: string
-  relativePath: string
-}
-
-/**
- * ディレクトリツリーノードの型定義
- */
-interface CloudDirectoryNode {
-  name: string
-  path: string
-  isDirectory: boolean
-  size: number
-  lastModified: Date
-  children?: CloudDirectoryNode[]
-  objectKey?: string
-}
-
-/**
- * ファイルサイズを人間が読みやすい形式に変換
- * @param bytes バイト数
- * @returns 読みやすい形式の文字列
- */
-function formatFileSize(bytes: number): string {
-  if (bytes === 0) return "0 B"
-  const k = 1024
-  const sizes = ["B", "KB", "MB", "GB", "TB"]
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]
-}
-
-/**
- * 日時を読みやすい形式に変換
- * @param date 日時
- * @returns 読みやすい形式の文字列
- */
-function formatDate(date: Date): string {
-  return new Intl.DateTimeFormat("ja-JP", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit"
-  }).format(new Date(date))
-}
-
-/**
- * ディレクトリノードから再帰的にファイル数を計算
- * @param node ディレクトリノード
- * @returns ファイル数
- */
-function countFilesRecursively(node: CloudDirectoryNode): number {
-  if (!node.isDirectory) {
-    return 1
-  }
-
-  let fileCount = 0
-  if (node.children) {
-    node.children.forEach((child) => {
-      fileCount += countFilesRecursively(child)
-    })
-  }
-  return fileCount
-}
-
-/**
- * ツリーノードコンポーネントのプロパティ
- */
-interface TreeNodeProps {
-  node: CloudDirectoryNode
-  level: number
-  expandedNodes: Set<string>
-  onToggleExpand: (path: string) => void
-  onDelete: (node: CloudDirectoryNode) => void
-  onSelect: (node: CloudDirectoryNode) => void
-}
-
-/**
- * ツリーノードコンポーネント
- */
-function TreeNode({
-  node,
-  level,
-  expandedNodes,
-  onToggleExpand,
-  onDelete,
-  onSelect
-}: TreeNodeProps): React.JSX.Element {
-  const isExpanded = expandedNodes.has(node.path)
-  const hasChildren = node.children && node.children.length > 0
-
-  return (
-    <>
-      <div
-        className={`flex items-center gap-2 px-3 py-2 hover:bg-base-200 cursor-pointer rounded-md ${
-          level > 0 ? "ml-" + level * 4 : ""
-        }`}
-        style={{ paddingLeft: `${level * 1.5 + 0.75}rem` }}
-      >
-        {/* 展開/折りたたみボタン */}
-        <button
-          onClick={() => node.isDirectory && hasChildren && onToggleExpand(node.path)}
-          className={`w-4 h-4 flex items-center justify-center ${
-            !node.isDirectory || !hasChildren ? "invisible" : ""
-          }`}
-        >
-          {hasChildren &&
-            (isExpanded ? (
-              <FiChevronDown className="text-xs" />
-            ) : (
-              <FiChevronRight className="text-xs" />
-            ))}
-        </button>
-
-        {/* アイコン */}
-        <div className="flex-shrink-0">
-          {node.isDirectory ? (
-            <FiFolder className="text-primary" />
-          ) : (
-            <FiFile className="text-base-content/60" />
-          )}
-        </div>
-
-        {/* ファイル/フォルダ名 */}
-        <div
-          className="flex-1 min-w-0 flex items-center justify-between group"
-          onClick={() => onSelect(node)}
-        >
-          <div className="flex-1 min-w-0">
-            <div className="truncate font-medium text-sm" title={node.name}>
-              {node.name}
-            </div>
-            <div className="text-xs text-base-content/60">
-              {formatFileSize(node.size)} • {formatDate(node.lastModified)}
-              {node.isDirectory && (
-                <span className="ml-2">({countFilesRecursively(node)} ファイル)</span>
-              )}
-            </div>
-          </div>
-
-          {/* 削除ボタン（ディレクトリとファイル両方に表示） */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              onDelete(node)
-            }}
-            className="btn btn-sm btn-ghost btn-error opacity-0 group-hover:opacity-100 transition-opacity ml-2"
-            title={node.isDirectory ? `${node.name} 以下を削除` : `${node.name} ファイルを削除`}
-          >
-            <FiTrash2 className="text-xs" />
-          </button>
-        </div>
-      </div>
-
-      {/* 子ノード */}
-      {isExpanded && hasChildren && (
-        <div>
-          {node.children!.map((child, index) => (
-            <TreeNode
-              key={`${child.path}-${index}`}
-              node={child}
-              level={level + 1}
-              expandedNodes={expandedNodes}
-              onToggleExpand={onToggleExpand}
-              onDelete={onDelete}
-              onSelect={onSelect}
-            />
-          ))}
-        </div>
-      )}
-    </>
-  )
-}
-
-/**
- * クラウドデータアイテムコンポーネント
- */
-interface CloudDataCardProps {
-  item: CloudDataItem
-  onDelete: (item: CloudDataItem) => void
-  onViewDetails: (item: CloudDataItem) => void
-  onNavigate?: (directoryName: string) => void
-}
-
-function CloudDataCard({
-  item,
-  onDelete,
-  onViewDetails,
-  onNavigate
-}: CloudDataCardProps): React.JSX.Element {
-  const handleClick = (): void => {
-    if (onNavigate) {
-      onNavigate(item.name)
-    }
-  }
-
-  return (
-    <div
-      className={`bg-base-100 rounded-lg shadow-md hover:shadow-lg transition-shadow p-4 border border-base-300 ${
-        onNavigate ? "cursor-pointer" : ""
-      }`}
-      onClick={handleClick}
-    >
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center gap-3 flex-1 min-w-0">
-          <FiFolder className="text-2xl text-primary flex-shrink-0" />
-          <div className="flex-1 min-w-0">
-            <h3 className="font-medium text-base-content truncate" title={item.name}>
-              {item.name}
-            </h3>
-            <div className="text-sm text-base-content/70 space-y-1">
-              <div className="flex items-center gap-2">
-                <FiFile className="text-xs" />
-                <span>{item.fileCount} ファイル</span>
-              </div>
-              <div>{formatFileSize(item.totalSize)}</div>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex gap-2 flex-shrink-0">
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              onViewDetails(item)
-            }}
-            className="btn btn-sm btn-ghost tooltip"
-            data-tip="詳細表示"
-          >
-            <FiFile className="text-base" />
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              onDelete(item)
-            }}
-            className="btn btn-sm btn-error btn-ghost tooltip"
-            data-tip="削除"
-          >
-            <FiTrash2 className="text-base" />
-          </button>
-        </div>
-      </div>
-
-      <div className="text-xs text-base-content/60">最終更新: {formatDate(item.lastModified)}</div>
-    </div>
-  )
-}
-
-/**
- * ディレクトリノードカードコンポーネント
- */
-interface DirectoryNodeCardProps {
-  node: CloudDirectoryNode
-  onNavigate?: (directoryName: string) => void
-  onDelete: (node: CloudDirectoryNode) => void
-}
-
-function DirectoryNodeCard({
-  node,
-  onNavigate,
-  onDelete
-}: DirectoryNodeCardProps): React.JSX.Element {
-  const handleClick = (): void => {
-    if (node.isDirectory && onNavigate) {
-      onNavigate(node.name)
-    }
-  }
-
-  return (
-    <div
-      className={`bg-base-100 rounded-lg shadow-md hover:shadow-lg transition-shadow p-4 border border-base-300 ${
-        node.isDirectory && onNavigate ? "cursor-pointer" : ""
-      }`}
-      onClick={handleClick}
-    >
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center gap-3 flex-1 min-w-0">
-          {node.isDirectory ? (
-            <FiFolder className="text-2xl text-primary flex-shrink-0" />
-          ) : (
-            <FiFile className="text-2xl text-base-content/60 flex-shrink-0" />
-          )}
-          <div className="flex-1 min-w-0">
-            <h3 className="font-medium text-base-content truncate" title={node.name}>
-              {node.name}
-            </h3>
-            <div className="text-sm text-base-content/70 space-y-1">
-              {node.isDirectory && (
-                <div className="flex items-center gap-2">
-                  <FiFile className="text-xs" />
-                  <span>{countFilesRecursively(node)} ファイル</span>
-                </div>
-              )}
-              <div>{formatFileSize(node.size)}</div>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex gap-2 flex-shrink-0">
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              onDelete(node)
-            }}
-            className="btn btn-sm btn-error btn-ghost tooltip"
-            data-tip={node.isDirectory ? "ディレクトリ削除" : "ファイル削除"}
-          >
-            <FiTrash2 className="text-base" />
-          </button>
-        </div>
-      </div>
-
-      <div className="text-xs text-base-content/60">最終更新: {formatDate(node.lastModified)}</div>
-    </div>
-  )
-}
+import {
+  useCloudData,
+  type CloudDataItem,
+  type CloudFileDetail
+} from "@renderer/hooks/useCloudData"
+import {
+  formatFileSize,
+  formatDate,
+  countFilesRecursively,
+  type CloudDirectoryNode
+} from "../../../utils/cloudUtils"
+import { CloudItemCard, DirectoryNodeCard } from "@renderer/components/CloudItemCard"
+import CloudTreeNode from "@renderer/components/CloudTreeNode"
 
 /**
  * ファイル詳細表示コンポーネント
@@ -458,15 +135,7 @@ function FileDetailsModal({
  */
 export default function Cloud(): React.JSX.Element {
   const [viewMode, setViewMode] = useState<"cards" | "tree">("cards")
-  const [cloudData, setCloudData] = useState<CloudDataItem[]>([])
-  const [directoryTree, setDirectoryTree] = useState<CloudDirectoryNode[]>([])
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set())
-  const [loading, setLoading] = useState(true)
-  // カードビューでの現在のパス管理
-  const [currentPath, setCurrentPath] = useState<string[]>([])
-  const [currentDirectoryNodes, setCurrentDirectoryNodes] = useState<CloudDirectoryNode[]>([])
-  // カードビューナビゲーションキャッシュ
-  const navigationCacheRef = useRef<Map<string, CloudDirectoryNode[]>>(new Map())
   const [deleteConfirm, setDeleteConfirm] = useState<CloudDataItem | CloudDirectoryNode | null>(
     null
   )
@@ -480,97 +149,19 @@ export default function Cloud(): React.JSX.Element {
     loading: false
   })
 
-  /**
-   * 指定したパスの子ディレクトリ・ファイルを取得（キャッシュ無し・直接計算）
-   */
-  const getNodesByPathDirect = (
-    tree: CloudDirectoryNode[],
-    path: string[]
-  ): CloudDirectoryNode[] => {
-    if (path.length === 0) {
-      return tree
-    }
-
-    let currentNodes = tree
-    for (const pathSegment of path) {
-      const targetNode = currentNodes.find((node) => node.name === pathSegment && node.isDirectory)
-      if (!targetNode || !targetNode.children) {
-        return []
-      }
-      currentNodes = targetNode.children
-    }
-    return currentNodes
-  }
-
-  /**
-   * 指定したパスの子ディレクトリ・ファイルを取得（キャッシュ対応）
-   */
-  const getNodesByPath = (tree: CloudDirectoryNode[], path: string[]): CloudDirectoryNode[] => {
-    // キャッシュキーを生成
-    const cacheKey = path.join("/") || "root"
-
-    // キャッシュから取得を試行
-    const cachedNodes = navigationCacheRef.current.get(cacheKey)
-    if (cachedNodes) {
-      return cachedNodes
-    }
-
-    // キャッシュにない場合は直接計算
-    const resultNodes = getNodesByPathDirect(tree, path)
-
-    // 結果をキャッシュに保存
-    navigationCacheRef.current.set(cacheKey, resultNodes)
-
-    return resultNodes
-  }
-
-  /**
-   * ナビゲーションキャッシュをクリア
-   */
-  const clearNavigationCache = (): void => {
-    navigationCacheRef.current.clear()
-  }
-
-  /**
-   * クラウドデータ一覧を取得
-   */
-  const fetchCloudData = useCallback(async (): Promise<void> => {
-    setLoading(true)
-    try {
-      // カードビュー用のデータを取得
-      const cardResult = await window.api.cloudData.listCloudData()
-      if (cardResult.success && cardResult.data) {
-        clearNavigationCache()
-        setCloudData(cardResult.data)
-      } else {
-        toast.error("クラウドデータの取得に失敗しました")
-        setCloudData([])
-      }
-
-      // ツリービュー用のデータを取得
-      const treeResult = await window.api.cloudData.getDirectoryTree()
-      if (treeResult.success && treeResult.data) {
-        setDirectoryTree(treeResult.data)
-        // データが更新された場合はキャッシュをクリア
-        navigationCacheRef.current.clear()
-        // データ取得時は常にルートレベルに戻る
-        setCurrentPath([])
-        setCurrentDirectoryNodes([])
-      } else {
-        console.warn("ディレクトリツリーの取得に失敗しました")
-        setDirectoryTree([])
-        setCurrentDirectoryNodes([])
-      }
-    } catch (error) {
-      console.error("クラウドデータ取得エラー:", error)
-      toast.error("クラウドデータの取得に失敗しました")
-      setCloudData([])
-      setDirectoryTree([])
-      setCurrentDirectoryNodes([])
-    } finally {
-      setLoading(false)
-    }
-  }, [])
+  // useCloudDataフックを使用してクラウドデータ管理機能を取得
+  const {
+    cloudData,
+    directoryTree,
+    loading,
+    currentPath,
+    currentDirectoryNodes,
+    fetchCloudData,
+    navigateToDirectory,
+    navigateBack,
+    navigateToPath,
+    deleteCloudData
+  } = useCloudData()
 
   /**
    * ツリーノードの展開・折りたたみ
@@ -583,47 +174,6 @@ export default function Cloud(): React.JSX.Element {
       newExpanded.add(path)
     }
     setExpandedNodes(newExpanded)
-  }
-
-  /**
-   * カードビューでディレクトリに移動（キャッシュ対応）
-   */
-  const handleNavigateToDirectory = (directoryName: string): void => {
-    const newPath = [...currentPath, directoryName]
-    setCurrentPath(newPath)
-
-    // ディレクトリツリーが存在する場合のみナビゲーション
-    if (directoryTree.length > 0) {
-      const nodes = getNodesByPath(directoryTree, newPath)
-      setCurrentDirectoryNodes(nodes)
-    }
-  }
-
-  /**
-   * カードビューで親ディレクトリに戻る（キャッシュ対応）
-   */
-  const handleNavigateBack = (): void => {
-    const newPath = currentPath.slice(0, -1)
-    setCurrentPath(newPath)
-
-    // ディレクトリツリーが存在する場合のみナビゲーション
-    if (directoryTree.length > 0) {
-      const nodes = getNodesByPath(directoryTree, newPath)
-      setCurrentDirectoryNodes(nodes)
-    }
-  }
-
-  /**
-   * 指定パスに直接移動（キャッシュ対応）
-   */
-  const handleNavigateToPath = (newPath: string[]): void => {
-    setCurrentPath(newPath)
-
-    // ディレクトリツリーが存在する場合のみナビゲーション
-    if (directoryTree.length > 0) {
-      const nodes = getNodesByPath(directoryTree, newPath)
-      setCurrentDirectoryNodes(nodes)
-    }
   }
 
   /**
@@ -651,51 +201,7 @@ export default function Cloud(): React.JSX.Element {
    */
   const handleDelete = async (item: CloudDataItem | CloudDirectoryNode): Promise<void> => {
     try {
-      // 全削除の場合
-      if ("path" in item && item.path === "*") {
-        // 全てのルートレベルディレクトリを削除
-        const deletePromises = cloudData.map(async (cloudItem) => {
-          return window.api.cloudData.deleteCloudData(cloudItem.remotePath)
-        })
-
-        const results = await Promise.all(deletePromises)
-        const failedCount = results.filter((result) => !result.success).length
-
-        if (failedCount === 0) {
-          toast.success("全てのクラウドデータを削除しました")
-        } else if (failedCount < results.length) {
-          toast.success(`一部のデータを削除しました（失敗: ${failedCount}件）`)
-        } else {
-          toast.error("削除に失敗しました")
-        }
-      } else {
-        // 個別削除の場合
-        if ("path" in item && !item.isDirectory && item.objectKey) {
-          // ファイルの個別削除
-          const result = await window.api.cloudData.deleteFile(item.objectKey)
-          if (result.success) {
-            toast.success(`${item.name} ファイルを削除しました`)
-          } else {
-            toast.error("ファイルの削除に失敗しました")
-          }
-        } else {
-          // ディレクトリの削除
-          const deletePath = "remotePath" in item ? item.remotePath : item.path
-          const result = await window.api.cloudData.deleteCloudData(deletePath)
-          if (result.success) {
-            toast.success(`${item.name} を削除しました`)
-          } else {
-            toast.error("削除に失敗しました")
-          }
-        }
-      }
-
-      // 削除後はキャッシュをクリアして最新データを取得
-      navigationCacheRef.current.clear()
-      fetchCloudData() // 一覧を再取得
-    } catch (error) {
-      console.error("削除エラー:", error)
-      toast.error("削除に失敗しました")
+      await deleteCloudData(item)
     } finally {
       setDeleteConfirm(null)
     }
@@ -716,12 +222,16 @@ export default function Cloud(): React.JSX.Element {
           loading: false
         }))
       } else {
-        toast.error("ファイル詳細の取得に失敗しました")
+        import("react-hot-toast").then(({ toast }) => {
+          toast.error("ファイル詳細の取得に失敗しました")
+        })
         setDetailsModal((prev) => ({ ...prev, loading: false }))
       }
     } catch (error) {
       console.error("ファイル詳細取得エラー:", error)
-      toast.error("ファイル詳細の取得に失敗しました")
+      import("react-hot-toast").then(({ toast }) => {
+        toast.error("ファイル詳細の取得に失敗しました")
+      })
       setDetailsModal((prev) => ({ ...prev, loading: false }))
     }
   }
@@ -803,7 +313,7 @@ export default function Cloud(): React.JSX.Element {
           {currentPath.length > 0 && (
             <div className="flex items-center gap-2 mb-4 p-3 bg-base-200 rounded-lg">
               <button
-                onClick={() => handleNavigateToPath([])}
+                onClick={() => navigateToPath([])}
                 className="btn btn-sm btn-ghost"
                 title="ルートに戻る"
               >
@@ -815,7 +325,7 @@ export default function Cloud(): React.JSX.Element {
                   <button
                     onClick={() => {
                       const newPath = currentPath.slice(0, index + 1)
-                      handleNavigateToPath(newPath)
+                      navigateToPath(newPath)
                     }}
                     className="btn btn-sm btn-ghost text-sm"
                   >
@@ -828,7 +338,7 @@ export default function Cloud(): React.JSX.Element {
               ))}
               <div className="ml-auto">
                 <button
-                  onClick={handleNavigateBack}
+                  onClick={navigateBack}
                   className="btn btn-sm btn-ghost"
                   title="一つ上のディレクトリに戻る"
                 >
@@ -855,12 +365,12 @@ export default function Cloud(): React.JSX.Element {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {cloudData.map((item, index) => (
-                  <CloudDataCard
+                  <CloudItemCard
                     key={index}
                     item={item}
                     onDelete={setDeleteConfirm}
                     onViewDetails={handleViewDetails}
-                    onNavigate={handleNavigateToDirectory}
+                    onNavigate={navigateToDirectory}
                   />
                 ))}
               </div>
@@ -880,7 +390,7 @@ export default function Cloud(): React.JSX.Element {
                 <DirectoryNodeCard
                   key={`${node.path}-${index}`}
                   node={node}
-                  onNavigate={node.isDirectory ? handleNavigateToDirectory : undefined}
+                  onNavigate={node.isDirectory ? navigateToDirectory : undefined}
                   onDelete={handleDeleteNode}
                 />
               ))}
@@ -904,7 +414,7 @@ export default function Cloud(): React.JSX.Element {
             <div className="space-y-1">
               {directoryTree.map((node, index) => (
                 <div key={`${node.path}-${index}`} className="group">
-                  <TreeNode
+                  <CloudTreeNode
                     node={node}
                     level={0}
                     expandedNodes={expandedNodes}
