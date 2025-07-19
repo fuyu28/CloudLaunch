@@ -30,8 +30,7 @@ import {
   FiChevronDown,
   FiFolderPlus,
   FiHome,
-  FiArrowLeft,
-  FiDatabase
+  FiArrowLeft
 } from "react-icons/fi"
 import { toast } from "react-hot-toast"
 import { BaseModal } from "@renderer/components/BaseModal"
@@ -467,7 +466,6 @@ export default function Cloud(): React.JSX.Element {
   const [currentDirectoryNodes, setCurrentDirectoryNodes] = useState<CloudDirectoryNode[]>([])
   // カードビューナビゲーションキャッシュ
   const navigationCacheRef = useRef<Map<string, CloudDirectoryNode[]>>(new Map())
-  const [cacheSize, setCacheSize] = useState(0)
   const [deleteConfirm, setDeleteConfirm] = useState<CloudDataItem | CloudDirectoryNode | null>(
     null
   )
@@ -521,7 +519,6 @@ export default function Cloud(): React.JSX.Element {
 
     // 結果をキャッシュに保存
     navigationCacheRef.current.set(cacheKey, resultNodes)
-    setCacheSize(navigationCacheRef.current.size)
 
     return resultNodes
   }
@@ -531,7 +528,6 @@ export default function Cloud(): React.JSX.Element {
    */
   const clearNavigationCache = (): void => {
     navigationCacheRef.current.clear()
-    setCacheSize(0)
     toast.success("ナビゲーションキャッシュをクリアしました")
   }
 
@@ -544,6 +540,7 @@ export default function Cloud(): React.JSX.Element {
       // カードビュー用のデータを取得
       const cardResult = await window.api.cloudData.listCloudData()
       if (cardResult.success && cardResult.data) {
+        clearNavigationCache()
         setCloudData(cardResult.data)
       } else {
         toast.error("クラウドデータの取得に失敗しました")
@@ -556,7 +553,6 @@ export default function Cloud(): React.JSX.Element {
         setDirectoryTree(treeResult.data)
         // データが更新された場合はキャッシュをクリア
         navigationCacheRef.current.clear()
-        setCacheSize(0)
         // データ取得時は常にルートレベルに戻る
         setCurrentPath([])
         setCurrentDirectoryNodes([])
@@ -696,7 +692,6 @@ export default function Cloud(): React.JSX.Element {
 
       // 削除後はキャッシュをクリアして最新データを取得
       navigationCacheRef.current.clear()
-      setCacheSize(0)
       fetchCloudData() // 一覧を再取得
     } catch (error) {
       console.error("削除エラー:", error)
@@ -766,25 +761,6 @@ export default function Cloud(): React.JSX.Element {
               ツリー
             </button>
           </div>
-
-          {/* キャッシュ関連（カードビューの場合のみ表示） */}
-          {viewMode === "cards" && (
-            <div className="flex items-center gap-2">
-              <div className="badge badge-outline badge-sm">
-                <FiDatabase className="mr-1 text-xs" />
-                キャッシュ: {cacheSize}
-              </div>
-              {cacheSize > 0 && (
-                <button
-                  onClick={clearNavigationCache}
-                  className="btn btn-sm btn-ghost tooltip"
-                  data-tip="ナビゲーションキャッシュをクリア"
-                >
-                  <FiDatabase className="text-sm" />
-                </button>
-              )}
-            </div>
-          )}
 
           {/* 全削除ボタン */}
           {(cloudData.length > 0 || directoryTree.length > 0) && (
