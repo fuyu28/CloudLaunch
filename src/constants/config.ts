@@ -70,7 +70,9 @@ export const CONFIG = {
     /** デフォルトリージョン */
     DEFAULT_REGION: "auto",
     /** リクエストタイムアウト (ms) */
-    REQUEST_TIMEOUT_MS: 30000
+    REQUEST_TIMEOUT_MS: 30000,
+    /** オブジェクト一覧取得の最大反復回数（無限ループ防止） */
+    MAX_LIST_ITERATIONS: 1000
   },
 
   // Steam関連

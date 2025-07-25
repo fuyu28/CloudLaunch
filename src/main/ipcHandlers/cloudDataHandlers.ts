@@ -27,6 +27,7 @@ import { ApiResult } from "../../types/result"
 import { withFileOperationErrorHandling } from "../utils/ipcErrorHandler"
 import { validateCredentialsForR2 } from "../utils/credentialValidator"
 import { logger } from "../utils/logger"
+import { CONFIG } from "../../constants/config"
 
 /**
  * クラウドデータアイテムの型定義
@@ -94,8 +95,15 @@ async function getAllObjectsWithMetadata(
 ): Promise<Array<{ key: string; size: number; lastModified: Date }>> {
   const allObjects: Array<{ key: string; size: number; lastModified: Date }> = []
   let token: string | undefined = undefined
+  let iterationCount = 0
 
   do {
+    iterationCount++
+    if (iterationCount > CONFIG.AWS.MAX_LIST_ITERATIONS) {
+      throw new Error(
+        `オブジェクト一覧取得でリミットに達しました（${CONFIG.AWS.MAX_LIST_ITERATIONS}回の反復）`
+      )
+    }
     const listResult = await r2Client.send(
       new ListObjectsV2Command({
         Bucket: bucketName,
