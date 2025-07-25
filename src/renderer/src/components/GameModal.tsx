@@ -83,6 +83,8 @@ export default function GameFormModal({
       setGameData((prev) => ({ ...prev, imagePath: filePath }))
       // ファイル選択後にリアルタイムバリデーションをトリガー
       validation.markFieldAsTouched("imagePath")
+      // ファイル存在チェックを実行
+      validation.validateFileField("imagePath")
     })
   }, [selectFile, validation])
 
@@ -91,6 +93,8 @@ export default function GameFormModal({
       setGameData((prev) => ({ ...prev, exePath: filePath }))
       // ファイル選択後にリアルタイムバリデーションをトリガー
       validation.markFieldAsTouched("exePath")
+      // ファイル存在チェックを実行
+      validation.validateFileField("exePath")
     })
   }, [selectFile, validation])
 
@@ -99,6 +103,8 @@ export default function GameFormModal({
       setGameData((prev) => ({ ...prev, saveFolderPath: folderPath }))
       // フォルダ選択後にリアルタイムバリデーションをトリガー
       validation.markFieldAsTouched("saveFolderPath")
+      // ファイル存在チェックを実行
+      validation.validateFileField("saveFolderPath")
     })
   }, [selectFolder, validation])
 
@@ -111,6 +117,8 @@ export default function GameFormModal({
 
     // リアルタイムバリデーションのためフィールドをタッチ済みとしてマーク
     validation.markFieldAsTouched(name as keyof InputGameData)
+
+    // ファイル存在チェックはuseGameFormValidationZodのuseEffectで自動実行される
   }
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
@@ -119,13 +127,15 @@ export default function GameFormModal({
     // 送信前にすべてのフィールドをタッチ済みにしてエラーを表示
     validation.markAllFieldsAsTouched()
 
-    // バリデーションエラーがある場合は送信を停止
-    if (!validation.canSubmit) {
-      return
-    }
-
     setSubmitting(true)
     try {
+      // ファイル存在チェックを含む非同期バリデーションを実行
+      const validationResult = await validation.validateAllFieldsWithFileCheck()
+      if (!validationResult.isValid) {
+        // バリデーションエラーがある場合は送信を停止
+        return
+      }
+
       const result = await onSubmit(gameData)
       if (result.success) {
         resetForm()

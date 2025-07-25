@@ -43,15 +43,26 @@ export const gameFormSchema = gameSchema
     (data) => {
       // 画像ファイルの拡張子チェック（入力がある場合のみ）
       if (data.imagePath && data.imagePath.trim()) {
-        const imageExtensions = [".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp"]
-        if (!imageExtensions.some((ext) => data.imagePath!.toLowerCase().endsWith(ext))) {
-          return false
+        // URLの判定
+        try {
+          new URL(data.imagePath)
+          // URLの場合は拡張子チェック
+          const imageExtensions = [".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp"]
+          const url = new URL(data.imagePath)
+          const pathname = url.pathname.toLowerCase()
+          return imageExtensions.some((ext) => pathname.endsWith(ext))
+        } catch {
+          // ローカルファイルの場合は拡張子チェック
+          const imageExtensions = [".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp"]
+          if (!imageExtensions.some((ext) => data.imagePath!.toLowerCase().endsWith(ext))) {
+            return false
+          }
         }
       }
       return true
     },
     {
-      message: "画像ファイル（PNG、JPG、GIF等）を指定してください",
+      message: "画像ファイル（PNG、JPG、GIF等）または画像URLを指定してください",
       path: ["imagePath"]
     }
   )

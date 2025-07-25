@@ -11,6 +11,8 @@ export interface FileAPI {
   selectFile(filters: Electron.FileFilter[]): Promise<ApiResult<string | undefined>>
   selectFolder(): Promise<ApiResult<string | undefined>>
   validatePath(filePath: string, expectType?: string): Promise<ValidatePathResult>
+  checkFileExists(filePath: string): Promise<boolean>
+  checkDirectoryExists(dirPath: string): Promise<boolean>
 }
 
 export interface SaveDataUploadAPI {

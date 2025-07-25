@@ -16,10 +16,15 @@
  * ```
  */
 
-import { useMemo, useState, useCallback } from "react"
+import { useMemo, useState, useCallback, useEffect } from "react"
 import { gameFormSchema } from "../../../schemas/game"
 import type { InputGameData } from "../../../types/game"
 import { ZodError } from "zod"
+import {
+  validateExecutablePath,
+  validateImagePath,
+  validateSaveFolderPath
+} from "../utils/fileValidation"
 
 /**
  * バリデーションエラーの型定義
@@ -44,6 +49,11 @@ export interface GameFormValidationResult {
   validateField: (fieldName: keyof InputGameData) => string | undefined
   /** 全フィールドのバリデーション実行 */
   validateAllFields: () => { isValid: boolean; errors: Record<string, string> }
+  /** ファイル存在チェックを含む非同期バリデーション */
+  validateAllFieldsWithFileCheck: () => Promise<{
+    isValid: boolean
+    errors: Record<string, string>
+  }>
   /** 必須フィールドがすべて入力されているかチェック */
   hasRequiredFields: boolean
   /** 各フィールドの検証状態 */
@@ -57,6 +67,8 @@ export interface GameFormValidationResult {
   markAllFieldsAsTouched: () => void
   /** タッチされたフィールドをリセット（モーダル開閉時に使用） */
   resetTouchedFields: () => void
+  /** 特定フィールドのファイル存在チェックを実行 */
+  validateFileField: (fieldName: keyof InputGameData) => Promise<void>
 }
 
 /**
@@ -72,6 +84,111 @@ export function useGameFormValidationZod(gameData: InputGameData): GameFormValid
   // タッチされたフィールドを記録する状態
   const [touchedFields, setTouchedFields] = useState<Set<keyof InputGameData>>(new Set())
 
+  // ファイル存在チェックエラーの状態
+  const [fileCheckErrors, setFileCheckErrors] = useState<Record<string, string>>({})
+
+  /**
+   * 特定フィールドのファイル存在チェックを実行
+   * フィールドにアクセスがあったときにリアルタイムで実行
+   */
+  const validateFileField = useCallback(
+    async (fieldName: keyof InputGameData) => {
+      const fieldValue = gameData[fieldName] as string
+
+      if (!fieldValue || fieldValue.trim() === "") {
+        // 空の場合はエラーをクリア
+        setFileCheckErrors((prev) => {
+          const newErrors = { ...prev }
+          delete newErrors[fieldName]
+          return newErrors
+        })
+        return
+      }
+
+      let hasError = false
+      let errorMessage = ""
+
+      try {
+        switch (fieldName) {
+          case "exePath": {
+            const isValidExe = await validateExecutablePath(fieldValue)
+            if (!isValidExe) {
+              hasError = true
+              errorMessage = "実行ファイルが存在しないか、無効なファイルです"
+            }
+            break
+          }
+          case "imagePath": {
+            const isValidImage = await validateImagePath(fieldValue)
+            if (!isValidImage) {
+              try {
+                new URL(fieldValue)
+                // URLの場合はアクセスチェックなし
+              } catch {
+                // ローカルファイルの場合は存在チェック
+                hasError = true
+                errorMessage = "画像ファイルが存在しないか、無効なファイルです"
+              }
+            }
+            break
+          }
+          case "saveFolderPath": {
+            const isValidFolder = await validateSaveFolderPath(fieldValue)
+            if (!isValidFolder) {
+              hasError = true
+              errorMessage = "セーブフォルダが存在しないか、無効なフォルダです"
+            }
+            break
+          }
+        }
+
+        // エラー状態を更新
+        setFileCheckErrors((prev) => {
+          const newErrors = { ...prev }
+          if (hasError) {
+            newErrors[fieldName] = errorMessage
+          } else {
+            delete newErrors[fieldName]
+          }
+          return newErrors
+        })
+      } catch (error) {
+        console.warn(`ファイル存在チェックエラー (${fieldName}):`, error)
+      }
+    },
+    [gameData]
+  )
+
+  // gameDataの変更を監視してファイル存在チェックを自動実行
+  useEffect(() => {
+    const fileFields = ["exePath", "imagePath", "saveFolderPath"] as const
+    const timeoutIds: NodeJS.Timeout[] = []
+
+    fileFields.forEach((fieldName) => {
+      const fieldValue = gameData[fieldName] as string
+      if (fieldValue && fieldValue.trim() !== "") {
+        // デバウンスされたファイル存在チェック（500ms後に実行）
+        const timeoutId = setTimeout(() => {
+          validateFileField(fieldName)
+        }, 500)
+        timeoutIds.push(timeoutId)
+      } else {
+        // フィールドが空の場合はエラーをクリア
+        setFileCheckErrors((prev) => {
+          const newErrors = { ...prev }
+          delete newErrors[fieldName]
+          return newErrors
+        })
+      }
+    })
+
+    // クリーンアップ関数で全てのタイムアウトをクリア
+    return () => {
+      timeoutIds.forEach((timeoutId) => clearTimeout(timeoutId))
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameData.exePath, gameData.imagePath, gameData.saveFolderPath, validateFileField])
+
   // フィールドをタッチ済みとして記録
   const markFieldAsTouched = useCallback((fieldName: keyof InputGameData) => {
     setTouchedFields((prev) => new Set([...prev, fieldName]))
@@ -85,6 +202,7 @@ export function useGameFormValidationZod(gameData: InputGameData): GameFormValid
   // タッチされたフィールドをリセット
   const resetTouchedFields = useCallback(() => {
     setTouchedFields(new Set())
+    setFileCheckErrors({})
   }, [])
 
   /**
@@ -133,6 +251,66 @@ export function useGameFormValidationZod(gameData: InputGameData): GameFormValid
     }
   }, [gameData])
 
+  /**
+   * ファイル存在チェックを含む非同期バリデーション
+   * フォーム送信時の最終バリデーションで使用
+   */
+  const validateAllFieldsWithFileCheck = useCallback(async () => {
+    try {
+      // まず基本バリデーションを実行
+      gameFormSchema.parse(gameData)
+
+      const errors: Record<string, string> = {}
+
+      // 実行ファイルの存在チェック
+      if (gameData.exePath) {
+        const isValidExe = await validateExecutablePath(gameData.exePath)
+        if (!isValidExe) {
+          errors.exePath = "実行ファイルが存在しないか、無効なファイルです"
+        }
+      }
+
+      // 画像ファイルの存在チェック（URLでない場合のみ）
+      if (gameData.imagePath && gameData.imagePath.trim()) {
+        const isValidImage = await validateImagePath(gameData.imagePath)
+        if (!isValidImage) {
+          try {
+            new URL(gameData.imagePath)
+            // URLの場合はアクセスチェックなし
+          } catch {
+            // ローカルファイルの場合は存在チェック
+            errors.imagePath = "画像ファイルが存在しないか、無効なファイルです"
+          }
+        }
+      }
+
+      // セーブフォルダの存在チェック
+      if (gameData.saveFolderPath && gameData.saveFolderPath.trim()) {
+        const isValidFolder = await validateSaveFolderPath(gameData.saveFolderPath)
+        if (!isValidFolder) {
+          errors.saveFolderPath = "セーブフォルダが存在しないか、無効なフォルダです"
+        }
+      }
+
+      const hasErrors = Object.keys(errors).length > 0
+      // ファイル存在チェックエラーをstateに保存
+      setFileCheckErrors(errors)
+      return { isValid: !hasErrors, errors }
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const errorMap: Record<string, string> = {}
+        error.issues.forEach((issue) => {
+          const fieldName = issue.path[0]
+          if (fieldName && typeof fieldName === "string") {
+            errorMap[fieldName] = issue.message
+          }
+        })
+        return { isValid: false, errors: errorMap }
+      }
+      return { isValid: false, errors: { general: "バリデーションエラーが発生しました" } }
+    }
+  }, [gameData])
+
   // 各フィールドのバリデーション状態（Zodベース）
   const fieldValidation = useMemo(() => {
     const fieldNames: (keyof InputGameData)[] = [
@@ -145,7 +323,11 @@ export function useGameFormValidationZod(gameData: InputGameData): GameFormValid
 
     return fieldNames.reduce(
       (acc, fieldName) => {
-        const errorMessage = validateField(fieldName)
+        const zodErrorMessage = validateField(fieldName)
+        const fileCheckError = fileCheckErrors[fieldName]
+
+        // Zodエラーまたはファイル存在チェックエラーのいずれかを使用
+        const errorMessage = zodErrorMessage || fileCheckError
         const isValid = !errorMessage
         const shouldShowError = touchedFields.has(fieldName) && !!errorMessage
 
@@ -161,7 +343,7 @@ export function useGameFormValidationZod(gameData: InputGameData): GameFormValid
         { isValid: boolean; message?: string; shouldShowError: boolean }
       >
     )
-  }, [touchedFields, validateField])
+  }, [touchedFields, validateField, fileCheckErrors])
 
   // エラーオブジェクトの生成（タッチされたフィールドのみ）
   const errors = useMemo((): ValidationErrors => {
@@ -191,22 +373,25 @@ export function useGameFormValidationZod(gameData: InputGameData): GameFormValid
     )
   }, [fieldValidation])
 
-  // 送信可能状態の判定（Zodスキーマでの全体検証）
+  // 送信可能状態の判定（Zodスキーマでの全体検証＋ファイル存在チェック）
   const canSubmit = useMemo(() => {
     const validationResult = validateAllFields()
-    return validationResult.isValid
-  }, [validateAllFields])
+    const hasFileCheckErrors = Object.keys(fileCheckErrors).length > 0
+    return validationResult.isValid && !hasFileCheckErrors
+  }, [validateAllFields, fileCheckErrors])
 
   return {
     canSubmit,
     errors,
     validateField,
     validateAllFields,
+    validateAllFieldsWithFileCheck,
     hasRequiredFields,
     fieldValidation,
     markFieldAsTouched,
     markAllFieldsAsTouched,
-    resetTouchedFields
+    resetTouchedFields,
+    validateFileField
   }
 }
 

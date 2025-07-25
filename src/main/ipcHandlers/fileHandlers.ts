@@ -24,6 +24,7 @@ import { ValidatePathResult } from "../../types/file"
 import { ApiResult } from "../../types/result"
 import { logger } from "../utils/logger"
 import { MESSAGES } from "../../constants"
+import * as fs from "fs"
 
 export function registerFileDialogHandlers(): void {
   /**
@@ -105,4 +106,66 @@ export function registerFileDialogHandlers(): void {
       return validatePathWithType(filePath, expectType)
     }
   )
+
+  /**
+   * ファイル存在チェックAPI
+   *
+   * 指定されたパスにファイルが存在するかをチェックします。
+   *
+   * @param filePath チェックするファイルパス
+   * @returns boolean ファイルが存在する場合true
+   */
+  ipcMain.handle("check-file-exists", async (_event, filePath: string): Promise<boolean> => {
+    try {
+      if (!filePath || filePath.trim() === "") {
+        logger.warn(`空のファイルパスが渡されました`)
+        return false
+      }
+
+      // fs.existsSyncを使用してシンプルに存在確認
+      const exists = fs.existsSync(filePath)
+
+      if (!exists) {
+        return false
+      }
+
+      // 存在する場合はファイルかディレクトリかをチェック
+      const stats = fs.statSync(filePath)
+      return stats.isFile()
+    } catch (error) {
+      logger.error(`ファイル存在チェックエラー: "${filePath}"`, error)
+      return false
+    }
+  })
+
+  /**
+   * ディレクトリ存在チェックAPI
+   *
+   * 指定されたパスにディレクトリが存在するかをチェックします。
+   *
+   * @param dirPath チェックするディレクトリパス
+   * @returns boolean ディレクトリが存在する場合true
+   */
+  ipcMain.handle("check-directory-exists", async (_event, dirPath: string): Promise<boolean> => {
+    try {
+      if (!dirPath || dirPath.trim() === "") {
+        logger.warn(`空のディレクトリパスが渡されました`)
+        return false
+      }
+
+      // fs.existsSyncを使用して存在確認
+      const exists = fs.existsSync(dirPath)
+
+      if (!exists) {
+        return false
+      }
+
+      // 存在する場合はディレクトリかファイルかをチェック
+      const stats = fs.statSync(dirPath)
+      return stats.isDirectory()
+    } catch (error) {
+      logger.error(`ディレクトリ存在チェックエラー: "${dirPath}"`, error)
+      return false
+    }
+  })
 }
