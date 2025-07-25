@@ -60,14 +60,12 @@ export interface SettingsFormValidationErrors {
 /**
  * バリデーション関数の型定義
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type ValidationFunction<T = any> = (value: T) => ValidationResult
+export type ValidationFunction<T = unknown> = (value: T) => ValidationResult
 
 /**
  * 非同期バリデーション関数の型定義
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type AsyncValidationFunction<T = any> = (value: T) => Promise<ValidationResult>
+export type AsyncValidationFunction<T = unknown> = (value: T) => Promise<ValidationResult>
 
 /**
  * フィールドバリデーター型
@@ -84,8 +82,7 @@ export interface FieldValidator<T = string> {
 /**
  * フォームバリデーター型
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export interface FormValidator<T extends Record<string, any>> {
+export interface FormValidator<T extends Record<string, unknown>> {
   /** フォームデータ */
   data: T
   /** フィールドバリデーターの配列 */
