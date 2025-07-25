@@ -20,8 +20,9 @@ import type { Creds } from "../../types/creds"
 import { getCredential, setCredential } from "../service/credentialService"
 import { S3Client, ListObjectsV2Command } from "@aws-sdk/client-s3"
 import { handleAwsSdkError } from "../utils/awsSdkErrorHandler"
-
+import { credsSchema } from "../../schemas/credentials"
 import type { ApiResult } from "../../types/result"
+import { ZodError } from "zod"
 
 export function registerCredentialHandlers(): void {
   /**
@@ -35,8 +36,23 @@ export function registerCredentialHandlers(): void {
    * @returns ApiResult 保存結果（成功時はsuccess: true、失敗時はエラーメッセージ）
    */
   ipcMain.handle("upsert-credential", async (_event, creds: Creds): Promise<ApiResult> => {
-    const result = await setCredential(creds)
-    return result
+    try {
+      // Zodスキーマで入力データを検証
+      const validatedCreds = credsSchema.parse(creds)
+      const result = await setCredential(validatedCreds)
+      return result
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return {
+          success: false,
+          message: `入力データが無効です: ${error.issues.map((issue) => issue.message).join(", ")}`
+        }
+      }
+      return {
+        success: false,
+        message: "認証情報の保存中にエラーが発生しました"
+      }
+    }
   })
 
   /**
@@ -69,6 +85,23 @@ export function registerCredentialHandlers(): void {
    * @returns ApiResult 検証結果（成功時はsuccess: true、失敗時は詳細なエラーメッセージ）
    */
   ipcMain.handle("validate-credential", async (_event, creds: Creds): Promise<ApiResult> => {
+    try {
+      // Zodスキーマで入力データを検証
+      const validatedCreds = credsSchema.parse(creds)
+      creds = validatedCreds
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return {
+          success: false,
+          message: `入力データが無効です: ${error.issues.map((issue) => issue.message).join(", ")}`
+        }
+      }
+      return {
+        success: false,
+        message: "認証情報の検証中にエラーが発生しました"
+      }
+    }
+
     try {
       const r2Client = new S3Client({
         region: creds.region,

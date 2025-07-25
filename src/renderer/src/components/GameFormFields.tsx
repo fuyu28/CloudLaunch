@@ -25,7 +25,7 @@
 import React from "react"
 import { FileSelectButton } from "./FileSelectButton"
 import type { InputGameData } from "../../../types/game"
-import type { GameFormValidationResult } from "../hooks/useGameFormValidation"
+import type { GameFormValidationResult } from "../hooks/useGameFormValidationZod"
 
 /**
  * ゲームフォームフィールドコンポーネントのprops

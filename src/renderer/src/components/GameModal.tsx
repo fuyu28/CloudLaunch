@@ -17,7 +17,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react"
 import { handleApiError, handleUnexpectedError } from "../utils/errorHandler"
 import { useFileSelection } from "../hooks/useFileSelection"
-import { useGameFormValidation } from "../hooks/useGameFormValidation"
+import { useGameFormValidationZod } from "../hooks/useGameFormValidationZod"
 import { GameFormFields } from "./GameFormFields"
 import { BaseModal } from "./BaseModal"
 import type { InputGameData } from "../../../types/game"
@@ -59,7 +59,7 @@ export default function GameFormModal({
   )
   const [submitting, setSubmitting] = useState(false)
   const { isBrowsing, selectFile, selectFolder } = useFileSelection()
-  const validation = useGameFormValidation(gameData)
+  const validation = useGameFormValidationZod(gameData)
   const prevIsOpenRef = useRef(isOpen)
 
   useEffect(() => {
@@ -81,20 +81,26 @@ export default function GameFormModal({
   const browseImage = useCallback(async () => {
     await selectFile([{ name: "Image", extensions: ["png", "jpg", "jpeg", "gif"] }], (filePath) => {
       setGameData((prev) => ({ ...prev, imagePath: filePath }))
+      // ファイル選択後にリアルタイムバリデーションをトリガー
+      validation.markFieldAsTouched("imagePath")
     })
-  }, [selectFile])
+  }, [selectFile, validation])
 
   const browseExe = useCallback(async () => {
     await selectFile([{ name: "Executable", extensions: ["exe", "app"] }], (filePath) => {
       setGameData((prev) => ({ ...prev, exePath: filePath }))
+      // ファイル選択後にリアルタイムバリデーションをトリガー
+      validation.markFieldAsTouched("exePath")
     })
-  }, [selectFile])
+  }, [selectFile, validation])
 
   const browseSaveFolder = useCallback(async () => {
     await selectFolder((folderPath) => {
       setGameData((prev) => ({ ...prev, saveFolderPath: folderPath }))
+      // フォルダ選択後にリアルタイムバリデーションをトリガー
+      validation.markFieldAsTouched("saveFolderPath")
     })
-  }, [selectFolder])
+  }, [selectFolder, validation])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const { name, value } = e.target
@@ -102,6 +108,9 @@ export default function GameFormModal({
       ...prev,
       [name]: value
     }))
+
+    // リアルタイムバリデーションのためフィールドをタッチ済みとしてマーク
+    validation.markFieldAsTouched(name as keyof InputGameData)
   }
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
