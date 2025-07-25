@@ -130,6 +130,40 @@ export interface SettingsAPI {
   getAutoTracking(): Promise<ApiResult<boolean>>
 }
 
+export interface CloudDataItem {
+  name: string
+  totalSize: number
+  fileCount: number
+  lastModified: Date
+  remotePath: string
+}
+
+export interface CloudFileDetail {
+  name: string
+  size: number
+  lastModified: Date
+  key: string
+  relativePath: string
+}
+
+export interface CloudDirectoryNode {
+  name: string
+  path: string
+  isDirectory: boolean
+  size: number
+  lastModified: Date
+  children?: CloudDirectoryNode[]
+  objectKey?: string
+}
+
+export interface CloudDataAPI {
+  listCloudData(): Promise<ApiResult<CloudDataItem[]>>
+  deleteCloudData(remotePath: string): Promise<ApiResult>
+  getCloudFileDetails(remotePath: string): Promise<ApiResult<CloudFileDetail[]>>
+  getDirectoryTree(): Promise<ApiResult<CloudDirectoryNode[]>>
+  deleteFile(objectKey: string): Promise<ApiResult>
+}
+
 export interface API {
   file: FileAPI
   window: WindowAPI
@@ -138,6 +172,7 @@ export interface API {
     download: SaveDataDownloadAPI
     listFolders: SaveDataFolderAPI
   }
+  cloudData: CloudDataAPI
   credential: CredentialAPI
   database: DatabaseAPI
   loadImage: LoadImageAPI

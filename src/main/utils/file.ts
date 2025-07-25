@@ -98,8 +98,7 @@ export async function validatePathWithType(
     logger.debug(`Path ${filePath} exists and type ${actualExt} matches expected ${expectType}.`)
     return { ok: true, type: actualExt }
   } catch (error: unknown) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const err = error as any
+    const err = error as NodeJS.ErrnoException
     logger.error(`Error validating path ${filePath}:`, error)
     switch (err.code) {
       case "ENOENT":

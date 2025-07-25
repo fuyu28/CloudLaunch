@@ -89,8 +89,7 @@ export type AsyncStatus = "idle" | "loading" | "success" | "error"
 /**
  * 非同期操作の状態管理
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export interface AsyncState<T = any> {
+export interface AsyncState<T = unknown> {
   /** 現在の状態 */
   status: AsyncStatus
   /** データ */
@@ -102,8 +101,7 @@ export interface AsyncState<T = any> {
 /**
  * キーと値のペア（汎用）
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export interface KeyValuePair<K = string, V = any> {
+export interface KeyValuePair<K = string, V = unknown> {
   key: K
   value: V
 }

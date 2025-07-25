@@ -69,8 +69,12 @@ export const CONFIG = {
   AWS: {
     /** デフォルトリージョン */
     DEFAULT_REGION: "auto",
+    /** 削除バッチのサイズ（S3の制限による）*/
+    DELETE_BATCH_SIZE: 1000,
     /** リクエストタイムアウト (ms) */
-    REQUEST_TIMEOUT_MS: 30000
+    REQUEST_TIMEOUT_MS: 30000,
+    /** オブジェクト一覧取得の最大反復回数（無限ループ防止） */
+    MAX_LIST_ITERATIONS: 1000
   },
 
   // Steam関連

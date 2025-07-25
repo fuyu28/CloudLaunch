@@ -14,6 +14,7 @@ import { processMonitorAPI } from "./api/processMonitorPreload"
 import { windowAPI } from "./api/windowPreload"
 import { chapterPreload } from "./api/chapterPreload"
 import { settingsPreloadApi } from "./api/settingsPreload"
+import { cloudDataApi } from "./api/cloudDataPreload"
 
 const api = {
   window: windowAPI,
@@ -23,6 +24,7 @@ const api = {
     download: saveDataDownloadAPI,
     listFolders: saveDataFolderAPI
   },
+  cloudData: cloudDataApi,
   credential: credentialAPI,
   database: databaseAPI,
   loadImage: loadImageAPI,
