@@ -19,17 +19,12 @@
  * ```
  */
 
-import psList from "ps-list"
+import { EnumWindows } from "win32-api/util"
+import path from "path"
 import { EventEmitter } from "events"
 import Store from "electron-store"
 import { prisma } from "../db"
 import { logger } from "../utils/logger"
-import path from "path"
-import { exec } from "child_process"
-import { promisify } from "util"
-import * as iconv from "iconv-lite"
-
-const execAsync = promisify(exec)
 
 /**
  * 監視対象のゲーム情報
