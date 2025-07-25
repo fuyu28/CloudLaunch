@@ -82,7 +82,7 @@ export const gameFormWithFileCheckSchema = gameFormSchema.superRefine(async (dat
     const isValidExe = validateExecutablePathSync(data.exePath)
     if (!isValidExe) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: "実行ファイルが存在しないか、無効なファイルです",
         path: ["exePath"]
       })
@@ -94,7 +94,7 @@ export const gameFormWithFileCheckSchema = gameFormSchema.superRefine(async (dat
     const isValidImage = validateImagePathSync(data.imagePath)
     if (!isValidImage) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: "画像ファイルが存在しないか、無効なファイルです",
         path: ["imagePath"]
       })
@@ -106,7 +106,7 @@ export const gameFormWithFileCheckSchema = gameFormSchema.superRefine(async (dat
     const isValidFolder = validateSaveFolderPathSync(data.saveFolderPath)
     if (!isValidFolder) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: "セーブフォルダが存在しないか、無効なフォルダです",
         path: ["saveFolderPath"]
       })
