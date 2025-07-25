@@ -46,7 +46,8 @@ export function handleApiError<T = void>(
  */
 export function handleUnexpectedError(error: unknown, context: string, toastId?: string): void {
   // デバッグ時のみコンソールにログ出力
-  if (import.meta.env.DEV) {
+  const isDev = process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test"
+  if (isDev) {
     console.error(`予期しないエラー (${context}):`, error)
   }
 

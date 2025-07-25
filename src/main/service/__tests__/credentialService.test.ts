@@ -9,28 +9,17 @@
 
 /// <reference types="jest" />
 
-import { setCredential, getCredential } from "../credentialService"
 import type { Creds } from "../../../types/creds"
 import * as keytar from "keytar"
-import Store from "electron-store"
 import { MESSAGES } from "../../../constants"
 
 // モックの設定
 jest.mock("keytar")
-jest.mock("electron-store")
 
-const mockKeytar = keytar as jest.Mocked<typeof keytar>
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const mockStoreInstance: any = {
+// electron-storeのモックインスタンスを作成
+const mockStoreInstance = {
   set: jest.fn(),
   get: jest.fn(),
-  store: {
-    bucketName: "test-bucket",
-    region: "us-east-1",
-    endpoint: "https://test.endpoint.com",
-    accessKeyId: "test-access-key"
-  },
   delete: jest.fn(),
   clear: jest.fn(),
   has: jest.fn(),
@@ -40,12 +29,28 @@ const mockStoreInstance: any = {
   events: {}
 }
 
-const MockedStore = Store as unknown as jest.MockedClass<typeof Store>
+jest.mock("electron-store", () => {
+  return jest.fn().mockImplementation(() => mockStoreInstance)
+})
+
+const mockKeytar = keytar as jest.Mocked<typeof keytar>
+
+// credentialServiceをモック後にimport
+import { setCredential, getCredential } from "../credentialService"
 
 describe("credentialService", () => {
   beforeEach(() => {
     jest.clearAllMocks()
-    MockedStore.mockImplementation(() => mockStoreInstance)
+    // デフォルトの正常な値を設定
+    mockStoreInstance.get.mockImplementation((key: string) => {
+      const defaults = {
+        bucketName: "test-bucket",
+        region: "us-east-1",
+        endpoint: "https://test.endpoint.com",
+        accessKeyId: "test-access-key"
+      }
+      return defaults[key as keyof typeof defaults]
+    })
   })
 
   describe("setCredential", () => {
@@ -105,18 +110,6 @@ describe("credentialService", () => {
   })
 
   describe("getCredential", () => {
-    beforeEach(() => {
-      mockStoreInstance.get.mockImplementation((key: string) => {
-        const defaults = {
-          bucketName: "test-bucket",
-          region: "us-east-1",
-          endpoint: "https://test.endpoint.com",
-          accessKeyId: "test-access-key"
-        }
-        return defaults[key as keyof typeof defaults]
-      })
-    })
-
     it("認証情報を正常に取得できる", async () => {
       mockKeytar.getPassword.mockResolvedValue("test-secret-key")
 

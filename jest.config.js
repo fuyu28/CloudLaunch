@@ -17,13 +17,18 @@ module.exports = {
         tsconfig: {
           jsx: "react-jsx",
           esModuleInterop: true,
-          allowSyntheticDefaultImports: true
+          allowSyntheticDefaultImports: true,
+          types: ["jest", "@types/jest", "@testing-library/jest-dom", "node"],
+          moduleResolution: "node",
+          module: "es2020",
+          target: "es2020"
         }
       }
     ]
   },
   moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],
   setupFilesAfterEnv: ["<rootDir>/src/test/setup.ts"],
+  setupFiles: ["<rootDir>/src/test/jest.d.ts"],
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/src/$1",
     "^@main/(.*)$": "<rootDir>/src/main/$1",

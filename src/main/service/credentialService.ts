@@ -46,11 +46,7 @@ export async function setCredential(creds: Creds): Promise<ApiResult> {
     store.set("region", creds.region)
     store.set("endpoint", creds.endpoint)
     store.set("accessKeyId", creds.accessKeyId)
-  } catch (error) {
-    logger.error(MESSAGES.CREDENTIAL_SERVICE.SET_FAILED(String(error)))
-    return { success: false, message: MESSAGES.CREDENTIAL_SERVICE.SET_FAILED(String(error)) }
-  }
-  try {
+
     await keytar.setPassword(SERVICE, "secretAccessKey", creds.secretAccessKey)
     return { success: true }
   } catch (error) {
@@ -72,9 +68,17 @@ export async function getCredential(): Promise<ApiResult<Creds>> {
 
     // 必要な認証情報が不足していないかチェック
     if (!bucketName || !region || !endpoint || !accessKeyId || !secretAccessKey) {
+      // secretAccessKeyがnullの場合は完全に見つからない状態
+      if (secretAccessKey === null) {
+        return {
+          success: false,
+          message: MESSAGES.AUTH.CREDENTIAL_NOT_FOUND
+        }
+      }
+      // その他の場合は不完全な認証情報
       return {
         success: false,
-        message: MESSAGES.AUTH.CREDENTIAL_NOT_FOUND
+        message: MESSAGES.AUTH.CREDENTIAL_INVALID
       }
     }
 
@@ -97,18 +101,22 @@ export async function getCredential(): Promise<ApiResult<Creds>> {
     if (err instanceof Error) {
       // keytarの一般的なエラーパターンをチェック（機密情報を露出しないように制限）
       if (err.message.includes("The specified item could not be found")) {
-        errorMessage = MESSAGES.CREDENTIAL_SERVICE.GET_FAILED
+        errorMessage = MESSAGES.CREDENTIAL_SERVICE.KEYCHAIN_ITEM_NOT_FOUND
       } else if (err.message.includes("Access denied")) {
-        errorMessage = MESSAGES.CREDENTIAL_SERVICE.GET_FAILED
+        errorMessage = MESSAGES.CREDENTIAL_SERVICE.KEYCHAIN_ACCESS_DENIED
       } else if (err.message.includes("The keychain does not exist")) {
         errorMessage = MESSAGES.CREDENTIAL_SERVICE.KEYCHAIN_NOT_FOUND
       } else {
         // 詳細なエラーメッセージは機密情報を含む可能性があるため、ログにのみ記録
         logger.error("認証情報取得の詳細エラー:", err.message)
-        errorMessage = MESSAGES.CREDENTIAL_SERVICE.GET_FAILED
+        errorMessage = MESSAGES.CREDENTIAL_SERVICE.GET_ERROR(err.message)
       }
+    } else if (typeof err === "string") {
+      // 文字列エラーの場合は詳細なエラーメッセージを返す
+      logger.error("認証情報取得の非Error型エラー:", typeof err)
+      errorMessage = MESSAGES.CREDENTIAL_SERVICE.GET_ERROR(err)
     } else {
-      // 非Error型のエラーも機密情報を含む可能性があるため、詳細は記録しない
+      // その他の型のエラーは機密情報を含む可能性があるため、詳細は記録しない
       logger.error("認証情報取得の非Error型エラー:", typeof err)
       errorMessage = MESSAGES.CREDENTIAL_SERVICE.GET_FAILED
     }
