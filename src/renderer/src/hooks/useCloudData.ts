@@ -8,6 +8,9 @@ import { useState, useCallback, useRef } from "react"
 import { toast } from "react-hot-toast"
 import { CloudDirectoryNode, getNodesByPath } from "../../../utils/cloudUtils"
 
+// CloudDirectoryNodeを再エクスポート
+export type { CloudDirectoryNode } from "../../../utils/cloudUtils"
+
 /**
  * クラウドデータアイテムの型定義
  */
