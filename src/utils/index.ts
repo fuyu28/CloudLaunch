@@ -16,3 +16,6 @@ export * from "./validationUtils"
 
 // パス操作ユーティリティ
 export * from "./pathUtils"
+
+// ファイル検証ユーティリティ
+export * from "./fileValidationUtils"

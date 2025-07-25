@@ -1,4 +1,9 @@
 import { z } from "zod"
+import {
+  validateExecutablePathSync,
+  validateImagePathSync,
+  validateSaveFolderPathSync
+} from "../utils/fileValidationUtils"
 
 /**
  * ゲーム登録・編集用のバリデーションスキーマ
@@ -66,6 +71,48 @@ export const gameFormSchema = gameSchema
       path: ["imagePath"]
     }
   )
+
+/**
+ * ファイル存在チェックを含むゲームフォーム非同期バリデーションスキーマ
+ * フォーム送信時の最終バリデーションで使用
+ */
+export const gameFormWithFileCheckSchema = gameFormSchema.superRefine(async (data, ctx) => {
+  // 実行ファイルの存在チェック
+  if (data.exePath) {
+    const isValidExe = validateExecutablePathSync(data.exePath)
+    if (!isValidExe) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "実行ファイルが存在しないか、無効なファイルです",
+        path: ["exePath"]
+      })
+    }
+  }
+
+  // 画像ファイルの存在チェック（入力がある場合のみ）
+  if (data.imagePath && data.imagePath.trim()) {
+    const isValidImage = validateImagePathSync(data.imagePath)
+    if (!isValidImage) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "画像ファイルが存在しないか、無効なファイルです",
+        path: ["imagePath"]
+      })
+    }
+  }
+
+  // セーブフォルダの存在チェック（入力がある場合のみ）
+  if (data.saveFolderPath && data.saveFolderPath.trim()) {
+    const isValidFolder = validateSaveFolderPathSync(data.saveFolderPath)
+    if (!isValidFolder) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "セーブフォルダが存在しないか、無効なフォルダです",
+        path: ["saveFolderPath"]
+      })
+    }
+  }
+})
 
 /**
  * ゲームプロセス監視状態のスキーマ

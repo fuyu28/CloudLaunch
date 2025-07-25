@@ -1,7 +1,8 @@
 /**
- * @fileoverview ファイルパス検証ユーティリティ
+ * @fileoverview ファイルパス検証ユーティリティ（Node.js環境用）
  *
- * このファイルは、フォームで入力されたファイルパスの検証機能を提供します。
+ * このファイルは、main processで実行されるファイルパスの検証機能を提供します。
+ * Zodスキーマでの非同期バリデーションで使用されます。
  *
  * 主な機能：
  * - ローカルファイルパスの存在チェック
@@ -10,10 +11,12 @@
  *
  * 使用例：
  * ```typescript
- * const isValid = await validateFilePath('/path/to/file.exe')
- * const isValidImage = await validateImagePath('https://example.com/image.jpg')
+ * const isValid = await validateExecutablePathSync('/path/to/file.exe')
+ * const isValidImage = await validateImagePathSync('https://example.com/image.jpg')
  * ```
  */
+
+import * as fs from "fs"
 
 /**
  * URLかどうかを判定する関数
@@ -23,6 +26,11 @@
 export function isUrl(path: string): boolean {
   // まず基本的なURL形式をチェック
   if (!path.includes("://")) {
+    return false
+  }
+
+  // Windows形式のファイルパス（D:\...）はURLではない
+  if (/^[A-Za-z]:[\\/]/.test(path)) {
     return false
   }
 
@@ -36,11 +44,6 @@ export function isUrl(path: string): boolean {
     }
   }
 
-  // Windows形式のファイルパス（D:\...）はURLではない
-  if (/^[A-Za-z]:[\\/]/.test(path)) {
-    return false
-  }
-
   // その他のプロトコル（ftp、fileなど）もチェック
   try {
     const url = new URL(path)
@@ -51,11 +54,11 @@ export function isUrl(path: string): boolean {
 }
 
 /**
- * ファイルパスの存在チェック（ローカルファイルのみ）
+ * ファイルパスの存在チェック（Node.js環境用）
  * @param filePath 検証対象のファイルパス
  * @returns ファイルが存在する場合true
  */
-export async function checkFileExists(filePath: string): Promise<boolean> {
+export function checkFileExistsSync(filePath: string): boolean {
   if (!filePath || filePath.trim() === "") {
     return false
   }
@@ -66,11 +69,16 @@ export async function checkFileExists(filePath: string): Promise<boolean> {
   }
 
   try {
-    // ElectronのAPIを使ってファイル存在チェック
-    const exists = await (
-      window as { api: { file: { checkFileExists: (path: string) => Promise<boolean> } } }
-    ).api.file.checkFileExists(filePath)
-    return exists
+    // Node.jsのfs.existsSyncを使用してファイル存在チェック
+    const exists = fs.existsSync(filePath)
+
+    if (!exists) {
+      return false
+    }
+
+    // 存在する場合はファイルかディレクトリかをチェック
+    const stats = fs.statSync(filePath)
+    return stats.isFile()
   } catch (error) {
     console.error("ファイル存在チェックエラー:", error)
     return false
@@ -78,23 +86,28 @@ export async function checkFileExists(filePath: string): Promise<boolean> {
 }
 
 /**
- * ディレクトリパスの存在チェック
+ * ディレクトリパスの存在チェック（Node.js環境用）
  * @param dirPath 検証対象のディレクトリパス
  * @returns ディレクトリが存在する場合true
  */
-export async function checkDirectoryExists(dirPath: string): Promise<boolean> {
+export function checkDirectoryExistsSync(dirPath: string): boolean {
   if (!dirPath || dirPath.trim() === "") {
     return false
   }
 
   try {
-    // ElectronのAPIを使ってディレクトリ存在チェック
-    const exists = await (
-      window as { api: { file: { checkDirectoryExists: (path: string) => Promise<boolean> } } }
-    ).api.file.checkDirectoryExists(dirPath)
-    return exists
+    // Node.jsのfs.existsSyncを使用してディレクトリ存在チェック
+    const exists = fs.existsSync(dirPath)
+
+    if (!exists) {
+      return false
+    }
+
+    // 存在する場合はディレクトリかファイルかをチェック
+    const stats = fs.statSync(dirPath)
+    return stats.isDirectory()
   } catch (error) {
-    console.warn("ディレクトリ存在チェックエラー:", error)
+    console.error("ディレクトリ存在チェックエラー:", error)
     return false
   }
 }
@@ -104,7 +117,7 @@ export async function checkDirectoryExists(dirPath: string): Promise<boolean> {
  * @param imagePath 検証対象の画像パス
  * @returns 有効な画像パスの場合true
  */
-export async function validateImagePath(imagePath: string): Promise<boolean> {
+export function validateImagePathSync(imagePath: string): boolean {
   if (!imagePath || imagePath.trim() === "") {
     return true // 画像パスは任意項目
   }
@@ -112,13 +125,17 @@ export async function validateImagePath(imagePath: string): Promise<boolean> {
   // URLの場合は拡張子チェックのみ
   if (isUrl(imagePath)) {
     const imageExtensions = [".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp"]
-    const url = new URL(imagePath)
-    const pathname = url.pathname.toLowerCase()
-    return imageExtensions.some((ext) => pathname.endsWith(ext))
+    try {
+      const url = new URL(imagePath)
+      const pathname = url.pathname.toLowerCase()
+      return imageExtensions.some((ext) => pathname.endsWith(ext))
+    } catch {
+      return false
+    }
   }
 
   // ローカルファイルの場合は存在チェック
-  return await checkFileExists(imagePath)
+  return checkFileExistsSync(imagePath)
 }
 
 /**
@@ -126,7 +143,7 @@ export async function validateImagePath(imagePath: string): Promise<boolean> {
  * @param exePath 検証対象の実行ファイルパス
  * @returns 有効な実行ファイルパスの場合true
  */
-export async function validateExecutablePath(exePath: string): Promise<boolean> {
+export function validateExecutablePathSync(exePath: string): boolean {
   if (!exePath || exePath.trim() === "") {
     return false // 実行ファイルパスは必須
   }
@@ -145,7 +162,7 @@ export async function validateExecutablePath(exePath: string): Promise<boolean> 
   }
 
   // ファイル存在チェック
-  return await checkFileExists(exePath)
+  return checkFileExistsSync(exePath)
 }
 
 /**
@@ -153,7 +170,7 @@ export async function validateExecutablePath(exePath: string): Promise<boolean> 
  * @param saveFolderPath 検証対象のセーブフォルダパス
  * @returns 有効なセーブフォルダパスの場合true
  */
-export async function validateSaveFolderPath(saveFolderPath: string): Promise<boolean> {
+export function validateSaveFolderPathSync(saveFolderPath: string): boolean {
   if (!saveFolderPath || saveFolderPath.trim() === "") {
     return true // セーブフォルダパスは任意項目
   }
@@ -164,5 +181,5 @@ export async function validateSaveFolderPath(saveFolderPath: string): Promise<bo
   }
 
   // ディレクトリ存在チェック
-  return await checkDirectoryExists(saveFolderPath)
+  return checkDirectoryExistsSync(saveFolderPath)
 }
