@@ -65,7 +65,7 @@ export function useGameActions({
         async () => {
           const createResult = await window.api.database.createGame(values)
           if (!createResult.success) {
-            throw new Error(createResult.message)
+            throw new Error((createResult as { success: false; message: string }).message)
           }
 
           // ゲーム一覧を再取得

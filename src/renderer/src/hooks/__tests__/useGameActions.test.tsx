@@ -17,18 +17,19 @@ import { useLoadingState } from "../useLoadingState"
 import type { InputGameData, GameType } from "../../../../types/game"
 import type { ApiResult } from "../../../../types/result"
 import type { FilterOption, SortOption } from "../../../../types/menu"
+import type { API } from "../../../../preload/preload.d"
+
+const mockUseLoadingState = useLoadingState as jest.MockedFunction<typeof useLoadingState>
+
+// Window型拡張
+declare global {
+  interface Window {
+    api: API
+  }
+}
 
 // useLoadingState のモック
-jest.mock("../useLoadingState", () => ({
-  useLoadingState: () => ({
-    isLoading: false,
-    error: undefined,
-    setLoading: jest.fn(),
-    setError: jest.fn(),
-    reset: jest.fn(),
-    executeWithLoading: jest.fn()
-  })
-}))
+jest.mock("../useLoadingState")
 
 // Window API のモック
 const mockGameApi = {
@@ -103,7 +104,7 @@ describe("useGameActions", () => {
         }
       })
 
-      jest.mocked(useLoadingState).mockReturnValue({
+      mockUseLoadingState.mockReturnValue({
         isLoading: false,
         error: undefined,
         setLoading: jest.fn(),
@@ -135,12 +136,17 @@ describe("useGameActions", () => {
 
       mockGameApi.createGame.mockResolvedValue(mockCreateResult)
 
+      // 実際のuseLoadingStateの動作を模擬: エラーが投げられた場合はundefinedを返す
       const mockExecuteWithLoading = jest.fn().mockImplementation(async (asyncFn) => {
-        await asyncFn()
-        return mockCreateResult // エラー時にmockCreateResultを返す
+        try {
+          await asyncFn()
+          return { success: true, data: undefined }
+        } catch {
+          return undefined // エラー時はundefinedを返す（実際のuseLoadingStateと同じ動作）
+        }
       })
 
-      jest.mocked(useLoadingState).mockReturnValue({
+      mockUseLoadingState.mockReturnValue({
         isLoading: false,
         error: undefined,
         setLoading: jest.fn(),
@@ -162,7 +168,7 @@ describe("useGameActions", () => {
       expect(mockProps.onModalClose).not.toHaveBeenCalled()
       expect(actionResult.success).toBe(false)
       if (!actionResult.success) {
-        expect(actionResult.message).toBe("ゲーム作成に失敗しました")
+        expect(actionResult.message).toBe("ゲームの追加に失敗しました") // MESSAGES.GAME.ADD_FAILEDのメッセージ
       }
     })
 
@@ -179,7 +185,7 @@ describe("useGameActions", () => {
         }
       })
 
-      jest.mocked(useLoadingState).mockReturnValue({
+      mockUseLoadingState.mockReturnValue({
         isLoading: false,
         error: undefined,
         setLoading: jest.fn(),
@@ -221,7 +227,7 @@ describe("useGameActions", () => {
         return await asyncFn()
       })
 
-      jest.mocked(useLoadingState).mockReturnValue({
+      mockUseLoadingState.mockReturnValue({
         isLoading: false,
         error: undefined,
         setLoading: jest.fn(),
@@ -302,7 +308,7 @@ describe("useGameActions", () => {
         return await asyncFn()
       })
 
-      jest.mocked(useLoadingState).mockReturnValue({
+      mockUseLoadingState.mockReturnValue({
         isLoading: false,
         error: undefined,
         setLoading: jest.fn(),

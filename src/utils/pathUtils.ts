@@ -52,34 +52,31 @@ export function validatePath(
     }
   }
 
-  // パスの正規化
-  const normalizedPath = path.normalize(filePath)
-
   // 危険な文字のチェック（基本的なセキュリティ）
-  if (normalizedPath.includes("..")) {
+  if (filePath.includes("..")) {
     return {
       isValid: false,
       message: "パスに相対参照（..）を含むことはできません"
     }
   }
 
-  // プラットフォーム固有の検証
-  if (process.platform === "win32") {
-    // Windowsの場合の追加検証
-    if (!/^[a-zA-Z]:\\/.test(normalizedPath) && !/^\\\\/.test(normalizedPath)) {
-      return {
-        isValid: false,
-        message: "無効なWindowsパス形式です"
-      }
+  // 元のパス形式を判定（正規化前）
+  const isWindowsPath = /^[a-zA-Z]:\\/.test(filePath) || /^\\\\/.test(filePath)
+  const isUnixPath = filePath.startsWith("/")
+
+  if (!isWindowsPath && !isUnixPath) {
+    return {
+      isValid: false,
+      message: "絶対パスを指定してください"
     }
-  } else {
-    // Unix系の場合の追加検証
-    if (!normalizedPath.startsWith("/")) {
-      return {
-        isValid: false,
-        message: "絶対パスを指定してください"
-      }
-    }
+  }
+
+  // パスの正規化（形式判定後）
+  let normalizedPath = path.normalize(filePath)
+
+  // Unix形式のパスはWindows上でも元の形式を保持
+  if (isUnixPath) {
+    normalizedPath = filePath
   }
 
   return {
@@ -105,7 +102,7 @@ export function getFileExtension(filePath: string): string {
 export function getFileNameWithoutExtension(filePath: string): string {
   const fileName = path.basename(filePath)
   const extension = path.extname(fileName)
-  return fileName.slice(0, -extension.length)
+  return extension.length > 0 ? fileName.slice(0, -extension.length) : fileName
 }
 
 /**
@@ -120,10 +117,13 @@ export function getParentDirectory(filePath: string): string {
 /**
  * 複数のパス要素を結合
  * @param pathSegments - パス要素の配列
- * @returns 結合されたパス
+ * @returns 結合されたパス（Unix形式のスラッシュを使用）
  */
 export function joinPaths(...pathSegments: string[]): string {
-  return path.join(...pathSegments)
+  if (pathSegments.length === 0) {
+    return ""
+  }
+  return path.join(...pathSegments).replace(/\\/g, "/")
 }
 
 /**

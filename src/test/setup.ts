@@ -1,4 +1,12 @@
 import "@testing-library/jest-dom"
+import type { API } from "../preload/preload.d"
+
+// Type declarations for test environment
+declare global {
+  interface Window {
+    api: API
+  }
+}
 
 // Mock Electron APIs
 Object.assign(global.window, {
@@ -10,6 +18,88 @@ Object.assign(global.window, {
       send: jest.fn(),
       once: jest.fn(),
       removeAllListeners: jest.fn()
+    }
+  },
+  api: {
+    file: {
+      selectFile: jest.fn(),
+      selectFolder: jest.fn(),
+      validatePath: jest.fn()
+    },
+    window: {
+      minimize: jest.fn(),
+      toggleMaximize: jest.fn(),
+      close: jest.fn()
+    },
+    saveData: {
+      upload: {
+        uploadSaveDataFolder: jest.fn()
+      },
+      download: {
+        downloadSaveData: jest.fn(),
+        getCloudDataInfo: jest.fn(),
+        getCloudFileDetails: jest.fn()
+      },
+      listFolders: {
+        listRemoteSaveDataFolders: jest.fn()
+      }
+    },
+    cloudData: {
+      listCloudData: jest.fn(),
+      deleteCloudData: jest.fn(),
+      getCloudFileDetails: jest.fn(),
+      getDirectoryTree: jest.fn(),
+      deleteFile: jest.fn()
+    },
+    credential: {
+      upsertCredential: jest.fn(),
+      getCredential: jest.fn(),
+      validateCredential: jest.fn()
+    },
+    database: {
+      listGames: jest.fn(),
+      getGameById: jest.fn(),
+      createGame: jest.fn(),
+      updateGame: jest.fn(),
+      deleteGame: jest.fn(),
+      createSession: jest.fn(),
+      getPlaySessions: jest.fn(),
+      updateSessionChapter: jest.fn(),
+      updateSessionName: jest.fn(),
+      deletePlaySession: jest.fn()
+    },
+    loadImage: {
+      loadImageFromLocal: jest.fn(),
+      loadImageFromWeb: jest.fn()
+    },
+    game: {
+      launchGame: jest.fn(),
+      launchGameFromSteam: jest.fn()
+    },
+    processMonitor: {
+      startMonitoring: jest.fn(),
+      stopMonitoring: jest.fn(),
+      addGameToMonitor: jest.fn(),
+      removeGameFromMonitor: jest.fn(),
+      getMonitoringStatus: jest.fn(),
+      isMonitoring: jest.fn(),
+      getGameProcesses: jest.fn(),
+      deleteProcess: jest.fn(),
+      setLinkedProcess: jest.fn()
+    },
+    chapter: {
+      getChapters: jest.fn(),
+      createChapter: jest.fn(),
+      updateChapter: jest.fn(),
+      deleteChapter: jest.fn(),
+      updateChapterOrders: jest.fn(),
+      getChapterStats: jest.fn(),
+      ensureDefaultChapter: jest.fn(),
+      setCurrentChapter: jest.fn()
+    },
+    settings: {
+      updateAutoTracking: jest.fn(),
+      getAutoTracking: jest.fn()
     }
   }
 })
@@ -102,6 +192,17 @@ jest.mock("react-hot-toast", () => ({
   dismiss: jest.fn(),
   toast: jest.fn()
 }))
+
+// Mock import.meta for Vite compatibility
+Object.defineProperty(globalThis, "import", {
+  value: {
+    meta: {
+      env: {
+        DEV: process.env.NODE_ENV === "development"
+      }
+    }
+  }
+})
 
 // Console setup for cleaner test output
 const originalError = console.error

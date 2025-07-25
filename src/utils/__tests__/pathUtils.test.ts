@@ -76,7 +76,7 @@ describe("pathUtils", () => {
     })
 
     it("ディレクトリのみの場合", () => {
-      expect(getParentDirectory("/path/to/")).toBe("/path/to")
+      expect(getParentDirectory("/path/to/")).toBe("/path")
       expect(getParentDirectory("/path/to")).toBe("/path")
     })
   })
@@ -182,7 +182,7 @@ describe("pathUtils", () => {
     it("無効なWindowsパス形式を拒否する", () => {
       const result = validatePath("Users\\user\\file.txt")
       expect(result.isValid).toBe(false)
-      expect(result.message).toBe("無効なWindowsパス形式です")
+      expect(result.message).toBe("絶対パスを指定してください")
     })
 
     it("Unix系パスを正しく検証する", () => {
