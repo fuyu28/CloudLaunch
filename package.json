@@ -32,6 +32,7 @@
     "@electron-toolkit/preload": "^3.0.1",
     "@electron-toolkit/utils": "^4.0.0",
     "@prisma/client": "^6.10.1",
+    "csv-parse": "^6.1.0",
     "electron-store": "^10.1.0",
     "electron-updater": "^6.3.9",
     "file-type": "^21.0.0",

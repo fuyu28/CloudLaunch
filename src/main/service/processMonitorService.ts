@@ -23,6 +23,7 @@ import path from "path"
 import { EventEmitter } from "events"
 import Store from "electron-store"
 import psList from "ps-list"
+import { parse } from "csv-parse/sync"
 import { prisma } from "../db"
 import { logger } from "../utils/logger"
 import { exec } from "child_process"
@@ -106,11 +107,13 @@ export class ProcessMonitorService extends EventEmitter {
    */
   public updateAutoTracking(enabled: boolean): void {
     this.store.set("autoTracking", enabled)
-    logger.info(`自動ゲーム検出設定をリアルタイムで更新: ${enabled ? "有効" : "無効"}`)
 
-    // 注意：自動検出を無効にしても既存の監視対象はクリアしない
-    // 手動で追加されたゲームの監視は継続される
-    logger.info("既存の監視対象は継続されます。手動での監視機能は影響を受けません。")
+    // 設定変更を有効にした場合、即座にプロセスチェックを実行
+    if (enabled && this.isMonitoring()) {
+      this.checkProcesses().catch((error) => {
+        logger.error("即座プロセスチェックでエラーが発生しました:", error)
+      })
+    }
   }
 
   /**
@@ -132,14 +135,9 @@ export class ProcessMonitorService extends EventEmitter {
 
     logger.info("プロセス監視を開始します")
 
-    // 起動時の自動計測設定を確認（自動追加のみ制御）
+    // 起動時の自動ゲーム検出設定を確認
     const autoTracking = this.store.get("autoTracking", true) as boolean
-    logger.info(`起動時の自動ゲーム検出設定: ${autoTracking ? "有効" : "無効"}`)
-
-    if (!autoTracking) {
-      logger.info("自動ゲーム検出が無効です。実行中ゲームの自動追加は行われません。")
-      logger.info("手動でのゲーム登録・監視は通常通り機能します。")
-    }
+    logger.info(`自動ゲーム検出: ${autoTracking ? "有効" : "無効"}`)
 
     // 開始時に即座にプロセスチェックを実行（自動追加も含む）
     this.checkProcesses()
@@ -295,9 +293,12 @@ export class ProcessMonitorService extends EventEmitter {
       try {
         // まずネイティブコマンドを試す
         processes = await this.getProcessesNative()
-      } catch {
+      } catch (error) {
         // ネイティブコマンドが失敗した場合はps-listをフォールバックとして使用
-        logger.warn("ネイティブコマンドが失敗しました。ps-listをフォールバックとして使用します")
+        logger.warn(
+          "ネイティブコマンドが失敗しました。ps-listをフォールバックとして使用します",
+          error
+        )
         try {
           processes = await psList()
         } catch (fallbackError) {
@@ -309,23 +310,28 @@ export class ProcessMonitorService extends EventEmitter {
       // 自動追加をチェック（実行中ゲームのみ対象）
       await this.autoAddGamesFromDatabase(processes)
 
-      // 効率的なプロセス検索のためのマップを作成
-      const processNames = new Set<string>()
+      // 監視対象ゲームの効率的な検索のため、プロセス情報をマップ化
+      const processMap = new Map<string, Array<{ name?: string; pid: number; cmd?: string }>>()
 
       for (const process of processes) {
         if (process.name) {
           const normalizedName = process.name.toLowerCase().normalize("NFC")
-          processNames.add(normalizedName)
+          if (!processMap.has(normalizedName)) {
+            processMap.set(normalizedName, [])
+          }
+          processMap.get(normalizedName)!.push(process)
         }
       }
 
       for (const [gameId, game] of this.monitoredGames) {
         const normalizedGameExeName = game.exeName.toLowerCase().normalize("NFC")
 
-        // プロセス名が存在する場合のみチェック
-        const isRunning = processNames.has(normalizedGameExeName)
-          ? this.isGameProcessRunning(game.exeName, game.exePath, processes)
-          : false
+        // プロセス名に一致するプロセスがある場合のみ詳細チェック
+        const matchingProcesses = processMap.get(normalizedGameExeName) || []
+        const isRunning =
+          matchingProcesses.length > 0
+            ? this.isGameProcessRunning(game.exeName, game.exePath, matchingProcesses)
+            : false
 
         const now = new Date()
 
@@ -476,6 +482,7 @@ export class ProcessMonitorService extends EventEmitter {
         return
       }
 
+      // プロセス名をセット化（高速検索用）
       const processNames = new Set<string>()
 
       for (const process of processes) {
@@ -494,15 +501,17 @@ export class ProcessMonitorService extends EventEmitter {
         const exeName = path.basename(game.exePath)
         const normalizedExeName = exeName.toLowerCase().normalize("NFC")
 
-        // プロセス名が存在する場合のみチェック
-        const isRunning = processNames.has(normalizedExeName)
-          ? this.isGameProcessRunning(exeName, game.exePath, processes)
-          : false
+        // プロセス名が存在しない場合は早期リターン
+        if (!processNames.has(normalizedExeName)) {
+          continue
+        }
+
+        // プロセス名が一致する場合のみ詳細チェック
+        const isRunning = this.isGameProcessRunning(exeName, game.exePath, processes)
 
         // プロセスが実行中の場合、監視対象に追加
         if (isRunning) {
           this.addGameInternal(game.id, game.title, game.exePath)
-          logger.info(`自動監視対象に追加: ${game.title}`)
         }
       }
     } catch (error) {
@@ -517,44 +526,45 @@ export class ProcessMonitorService extends EventEmitter {
   private async getProcessesNative(): Promise<Array<{ name?: string; pid: number; cmd?: string }>> {
     try {
       if (process.platform === "win32") {
-        // Windows: PowerShellを使用してより詳細なプロセス情報を取得（バイナリモードで文字化け対策）
+        // Windows: Get-Processを使用してCSV形式で取得
         const { stdout } = await execAsync(
-          'powershell "Get-Process | Select-Object ProcessName, Id, Path | ConvertTo-Csv -NoTypeInformation"',
-          { encoding: "buffer" }
+          'powershell -Command "Get-Process | Select-Object ProcessName, Id, Path | ConvertTo-Csv -NoTypeInformation"',
+          { encoding: "buffer", timeout: 5000 }
         )
 
         // CP932からUTF-8に変換して文字化けを防ぐ
         const decodedOutput = iconv.decode(stdout as Buffer, "cp932")
         const lines = decodedOutput.trim().split("\n")
 
-        // ヘッダー行をスキップ
+        // ヘッダー行をスキップし、空行を除外
         const processLines = lines.slice(1).filter((line) => line.trim())
 
         const processes = processLines
           .map((line) => {
-            // CSVパースing（簡単な方法）
-            const match = line.match(/"([^"]*?)","(\d+)","([^"]*?)"/)
-            if (match) {
-              const name = match[1].trim()
-              const pid = parseInt(match[2])
-              const fullPath = match[3] ? match[3].trim() : ""
+            // CSVをパース
+            const records = parse(line, {
+              columns: false,
+              relax_quotes: true,
+              skip_empty_lines: true
+            })
+            const [name, pidStr, fullPath] = records[0]
+            const pid = parseInt(pidStr, 10)
 
-              if (!isNaN(pid) && name && fullPath) {
-                // 拡張子がない場合のみ追加（重複防止）
-                const processName = name.toLowerCase().endsWith(".exe") ? name : name + ".exe"
-                return {
-                  name: processName,
-                  pid,
-                  cmd: fullPath
-                }
-              }
+            // 基本的な検証（Pathがnullや空でもプロセス名があれば処理）
+            if (!name || isNaN(pid) || pid <= 0) {
+              return undefined
             }
-            return undefined
+
+            // 拡張子がない場合のみ追加（重複防止）
+            const processName = name.toLowerCase().endsWith(".exe") ? name : name + ".exe"
+
+            return {
+              name: processName,
+              pid,
+              cmd: fullPath || name // Pathがnullの場合はプロセス名を使用
+            }
           })
-          .filter(
-            (proc): proc is { name: string; pid: number; cmd: string } =>
-              proc !== undefined && proc.cmd !== ""
-          )
+          .filter((proc): proc is { name: string; pid: number; cmd: string } => proc !== undefined)
 
         return processes as Array<{ name?: string; pid: number; cmd?: string }>
       } else if (process.platform === "darwin") {
