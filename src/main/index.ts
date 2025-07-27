@@ -69,7 +69,7 @@ app.whenReady().then(() => {
 
   createWindow()
 
-  // 自動計測設定を確認してプロセス監視を開始
+  // 自動ゲーム検出設定を確認してプロセス監視を開始
   setTimeout(async () => {
     const autoTracking = store.get("autoTracking", true) as boolean
     if (autoTracking) {
@@ -77,7 +77,7 @@ app.whenReady().then(() => {
       await monitor.startMonitoring()
       logger.info("アプリケーション起動時にプロセス監視を自動開始しました")
     } else {
-      logger.info("自動計測が無効のため、プロセス監視を開始しませんでした")
+      logger.info("自動ゲーム検出が無効のため、プロセス監視の自動開始をスキップしました")
     }
   }, 2000) // 2秒後に開始（UIの初期化を待つ）
 
