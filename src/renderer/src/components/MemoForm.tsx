@@ -5,7 +5,7 @@
  * ゲーム選択機能、MDエディター、保存機能を提供します。
  */
 
-import React, { useEffect, useState, useCallback } from "react"
+import React, { useEffect, useState, useCallback, useMemo, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import MDEditor from "@uiw/react-md-editor"
 import { FaArrowLeft, FaSave, FaGamepad } from "react-icons/fa"
@@ -51,121 +51,191 @@ export default function MemoForm({
   const [games, setGames] = useState<GameType[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
+  const abortControllerRef = useRef<AbortController | null>(null)
 
   // データ取得
   const fetchData = useCallback(async () => {
+    // 既存のリクエストをキャンセル
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+
+    const controller = new AbortController()
+    abortControllerRef.current = controller
+
     setIsLoading(true)
     try {
+      const promises: Promise<unknown>[] = []
+
       // ゲーム選択機能が有効な場合、ゲーム一覧を取得
       if (showGameSelector) {
-        const gameResult = await window.api.database.listGames("", "all", "title")
-        if (gameResult) {
-          const sortedGames = gameResult.sort((a, b) => a.title.localeCompare(b.title))
-          setGames(sortedGames as GameType[])
+        promises.push(
+          window.api.database.listGames("", "all", "title").then((gameResult) => {
+            if (controller.signal.aborted) return
+            if (gameResult && Array.isArray(gameResult)) {
+              // 型安全性の改善：GameType[]として明示的にキャスト
+              const typedGames = gameResult as GameType[]
+              const sortedGames = typedGames.sort((a, b) => a.title.localeCompare(b.title))
+              setGames(sortedGames)
 
-          // ゲームが1つしかない場合は自動選択
-          if (sortedGames.length === 1 && !selectedGameId) {
-            setSelectedGameId(sortedGames[0].id)
-          }
-        }
-      }
-
-      // 特定のゲームが選択されている場合、ゲーム情報を取得
-      if (selectedGameId || preSelectedGameId) {
-        const gameId = selectedGameId || preSelectedGameId!
-        const gameResult = await window.api.database.getGameById(gameId)
-        if (gameResult) {
-          setGameTitle(gameResult.title)
-          if (!selectedGameId) {
-            setSelectedGameId(gameId)
-          }
-        }
+              // ゲームが1つしかない場合は自動選択
+              if (sortedGames.length === 1 && !selectedGameId) {
+                setSelectedGameId(sortedGames[0].id)
+              }
+            }
+          })
+        )
       }
 
       // 編集モードの場合、メモ情報を取得
       if (mode === "edit" && memoId) {
-        const memoResult = await window.api.memo.getMemoById(memoId)
-        if (memoResult.success && memoResult.data) {
-          setTitle(memoResult.data.title)
-          setContent(memoResult.data.content)
+        promises.push(
+          window.api.memo.getMemoById(memoId).then(async (memoResult) => {
+            if (controller.signal.aborted) return
+            if (memoResult.success && memoResult.data) {
+              setTitle(memoResult.data.title)
+              setContent(memoResult.data.content)
 
-          // メモからゲーム情報を取得（まだ取得していない場合）
-          if (!selectedGameId && !preSelectedGameId) {
-            const gameResult = await window.api.database.getGameById(memoResult.data.gameId)
+              // メモからゲーム情報を取得
+              if (!selectedGameId && !preSelectedGameId) {
+                const gameResult = await window.api.database.getGameById(memoResult.data.gameId)
+                if (!controller.signal.aborted && gameResult) {
+                  setGameTitle(gameResult.title)
+                  setSelectedGameId(memoResult.data.gameId)
+                }
+              }
+            } else {
+              if (!controller.signal.aborted) {
+                showToast("メモが見つかりません", "error")
+              }
+            }
+          })
+        )
+      }
+
+      // 特定のゲームが選択されている場合、ゲーム情報を取得
+      const targetGameId = selectedGameId || preSelectedGameId
+      if (targetGameId && mode !== "edit") {
+        promises.push(
+          window.api.database.getGameById(targetGameId).then((gameResult) => {
+            if (controller.signal.aborted) return
             if (gameResult) {
               setGameTitle(gameResult.title)
-              setSelectedGameId(memoResult.data.gameId)
+              if (!selectedGameId) {
+                setSelectedGameId(targetGameId)
+              }
             }
-          }
-        } else {
-          showToast("メモが見つかりません", "error")
-          return
-        }
+          })
+        )
       }
+
+      // 並行実行
+      await Promise.allSettled(promises)
     } catch (error) {
-      console.error("データ取得エラー:", error)
-      showToast("データの取得に失敗しました", "error")
+      if (!controller.signal.aborted) {
+        console.error("データ取得エラー:", error)
+        showToast("データの取得に失敗しました", "error")
+      }
     } finally {
-      setIsLoading(false)
+      if (!controller.signal.aborted) {
+        setIsLoading(false)
+      }
     }
-  }, [mode, memoId, selectedGameId, preSelectedGameId, showGameSelector, showToast])
+  }, [selectedGameId, showToast, mode, memoId, preSelectedGameId, showGameSelector])
 
   useEffect(() => {
     fetchData()
+
+    // クリーンアップで進行中のリクエストをキャンセル
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+    }
   }, [fetchData])
+
+  // 保存処理の最適化
+  const saveData = useMemo(
+    () => ({
+      title: title.trim(),
+      content: content || "",
+      effectiveGameId: selectedGameId || preSelectedGameId
+    }),
+    [title, content, selectedGameId, preSelectedGameId]
+  )
+
+  // 表示用データの最適化
+  const displayData = useMemo(
+    () => ({
+      effectiveGameId: selectedGameId || preSelectedGameId,
+      displayGameTitle:
+        gameTitle || games.find((g) => g.id === (selectedGameId || preSelectedGameId))?.title
+    }),
+    [selectedGameId, preSelectedGameId, gameTitle, games]
+  )
 
   // 保存処理
   const handleSave = useCallback(async () => {
-    if (!title.trim()) {
+    // バリデーション
+    if (!saveData.title) {
       showToast("タイトルを入力してください", "error")
       return
     }
 
-    const effectiveGameId = selectedGameId || preSelectedGameId
-    if (!effectiveGameId) {
+    if (!saveData.effectiveGameId) {
       showToast("ゲームを選択してください", "error")
+      return
+    }
+
+    if (saveData.title.length > 200) {
+      showToast("タイトルは200文字以内で入力してください", "error")
       return
     }
 
     setIsSaving(true)
     try {
+      let result
+
       if (mode === "create") {
         // 新規作成
         const createData: CreateMemoData = {
-          title: title.trim(),
-          content: content || "",
-          gameId: effectiveGameId
+          title: saveData.title,
+          content: saveData.content,
+          gameId: saveData.effectiveGameId
         }
 
-        const result = await window.api.memo.createMemo(createData)
+        result = await window.api.memo.createMemo(createData)
         if (result.success) {
           showToast("メモを作成しました", "success")
-          onSaveSuccess(effectiveGameId, result.data?.id)
+          onSaveSuccess(saveData.effectiveGameId, result.data?.id)
         } else {
-          showToast(result.message || "メモの作成に失敗しました", "error")
+          const errorMessage = result.message || "メモの作成に失敗しました"
+          showToast(`作成エラー: ${errorMessage}`, "error")
         }
       } else if (mode === "edit" && memoId) {
         // 編集
         const updateData: UpdateMemoData = {
-          title: title.trim(),
-          content: content || ""
+          title: saveData.title,
+          content: saveData.content
         }
 
-        const result = await window.api.memo.updateMemo(memoId, updateData)
+        result = await window.api.memo.updateMemo(memoId, updateData)
         if (result.success) {
           showToast("メモを更新しました", "success")
-          onSaveSuccess(effectiveGameId, memoId)
+          onSaveSuccess(saveData.effectiveGameId, memoId)
         } else {
-          showToast(result.message || "メモの更新に失敗しました", "error")
+          const errorMessage = result.message || "メモの更新に失敗しました"
+          showToast(`更新エラー: ${errorMessage}`, "error")
         }
       }
     } catch (error) {
       console.error("保存エラー:", error)
-      showToast("保存に失敗しました", "error")
+      const errorMessage = error instanceof Error ? error.message : "不明なエラー"
+      showToast(`保存に失敗しました: ${errorMessage}`, "error")
     } finally {
       setIsSaving(false)
     }
-  }, [mode, title, content, selectedGameId, preSelectedGameId, memoId, showToast, onSaveSuccess])
+  }, [mode, saveData, memoId, showToast, onSaveSuccess])
 
   // 戻るボタン処理
   const handleBack = useCallback(() => {
@@ -222,9 +292,6 @@ export default function MemoForm({
     )
   }
 
-  const effectiveGameId = selectedGameId || preSelectedGameId
-  const displayGameTitle = gameTitle || games.find((g) => g.id === effectiveGameId)?.title
-
   return (
     <div className="bg-base-200 px-6 py-4 min-h-screen">
       {/* ヘッダー */}
@@ -236,15 +303,17 @@ export default function MemoForm({
           </button>
           <h1 className="text-2xl font-bold">
             {pageTitle}
-            {displayGameTitle && (
-              <span className="text-lg text-base-content/70 ml-2">- {displayGameTitle}</span>
+            {displayData.displayGameTitle && (
+              <span className="text-lg text-base-content/70 ml-2">
+                - {displayData.displayGameTitle}
+              </span>
             )}
           </h1>
         </div>
 
         <button
           onClick={handleSave}
-          disabled={isSaving || !title.trim() || !effectiveGameId}
+          disabled={isSaving || !saveData.title || !displayData.effectiveGameId}
           className="btn btn-primary"
         >
           {isSaving ? (
@@ -290,7 +359,7 @@ export default function MemoForm({
               {selectedGameId && (
                 <div className="label">
                   <span className="label-text-alt text-success">
-                    選択中: {games.find((g) => g.id === selectedGameId)?.title}
+                    選択中: {displayData.displayGameTitle}
                   </span>
                 </div>
               )}
