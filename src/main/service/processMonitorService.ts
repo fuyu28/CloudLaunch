@@ -88,7 +88,7 @@ export class ProcessMonitorService extends EventEmitter {
     return ProcessMonitorService.instance
   }
 
-  private addGameInternal(gameId: string, gameTitle: string, exePath: string): void {
+  private addMonitoredGame(gameId: string, gameTitle: string, exePath: string): void {
     const exeName = path.basename(exePath)
     const game: MonitoredGame = {
       gameId,
@@ -511,7 +511,7 @@ export class ProcessMonitorService extends EventEmitter {
 
         // プロセスが実行中の場合、監視対象に追加
         if (isRunning) {
-          this.addGameInternal(game.id, game.title, game.exePath)
+          this.addMonitoredGame(game.id, game.title, game.exePath)
         }
       }
     } catch (error) {
@@ -547,6 +547,18 @@ export class ProcessMonitorService extends EventEmitter {
               relax_quotes: true,
               skip_empty_lines: true
             })
+
+            // 正しくパースされたかを検証
+            if (
+              !Array.isArray(records) ||
+              records.length === 0 ||
+              !Array.isArray(records[0]) ||
+              records[0].length < 3
+            ) {
+              logger.warn(`Invalid CSV line: ${line}`)
+              return undefined
+            }
+
             const [name, pidStr, fullPath] = records[0]
             const pid = parseInt(pidStr, 10)
 
