@@ -13,6 +13,8 @@ import { ipcMain } from "electron"
 import Store from "electron-store"
 import { ApiResult } from "../../types/result"
 import { logger } from "../utils/logger"
+import { autoTrackingSettingsSchema } from "../../schemas/settings"
+import { ZodError } from "zod"
 
 const store = new Store()
 
@@ -29,12 +31,23 @@ export function registerSettingsHandlers(): void {
    */
   ipcMain.handle("update-auto-tracking", async (_event, enabled: boolean): Promise<ApiResult> => {
     try {
+      // Zodスキーマで入力を検証
+      const validatedSettings = autoTrackingSettingsSchema.parse({ enabled })
+
       // electron-storeに設定を保存
-      store.set("autoTracking", enabled)
-      logger.info(`自動計測設定を更新しました: ${enabled ? "有効" : "無効"} (次回起動時に反映)`)
+      store.set("autoTracking", validatedSettings.enabled)
+      logger.info(
+        `自動計測設定を更新しました: ${validatedSettings.enabled ? "有効" : "無効"} (次回起動時に反映)`
+      )
 
       return { success: true }
     } catch (error) {
+      if (error instanceof ZodError) {
+        return {
+          success: false,
+          message: `入力データが無効です: ${error.issues.map((issue) => issue.message).join(", ")}`
+        }
+      }
       logger.error("自動計測設定の更新に失敗:", error)
       return {
         success: false,

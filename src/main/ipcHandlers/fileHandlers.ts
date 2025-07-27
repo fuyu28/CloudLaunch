@@ -20,11 +20,13 @@
 
 import { ipcMain, dialog } from "electron"
 import { validatePathWithType } from "../utils/file"
-import { ValidatePathResult } from "../../types/file"
+import { ValidatePathResult, PathType } from "../../types/file"
 import { ApiResult } from "../../types/result"
 import { logger } from "../utils/logger"
 import { MESSAGES } from "../../constants"
 import * as fs from "fs"
+import { fileSelectionSchema, fileExistenceSchema } from "../../schemas/file"
+import { ZodError } from "zod"
 
 export function registerFileDialogHandlers(): void {
   /**
@@ -44,12 +46,24 @@ export function registerFileDialogHandlers(): void {
     "select-file",
     async (_event, filters: Electron.FileFilter[]): Promise<ApiResult<string | undefined>> => {
       try {
+        // Zodスキーマでフィルターを検証
+        const validationData = fileSelectionSchema.parse({
+          filters: filters || [],
+          properties: ["openFile"]
+        })
+
         const { canceled, filePaths } = await dialog.showOpenDialog({
           properties: ["openFile"],
-          filters
+          filters: validationData.filters
         })
         return { success: true, data: canceled ? undefined : filePaths[0] }
       } catch (e: unknown) {
+        if (e instanceof ZodError) {
+          return {
+            success: false,
+            message: `入力データが無効です: ${e.issues.map((issue) => issue.message).join(", ")}`
+          }
+        }
         logger.error("ファイル選択エラー:", e)
         const message = e instanceof Error ? e.message : MESSAGES.IPC_ERROR.UNKNOWN
         return { success: false, message: MESSAGES.IPC_ERROR.FILE_SELECTION_FAILED(message) }
@@ -103,7 +117,25 @@ export function registerFileDialogHandlers(): void {
   ipcMain.handle(
     "validate-file",
     async (_event, filePath: string, expectType?: string): Promise<ValidatePathResult> => {
-      return validatePathWithType(filePath, expectType)
+      try {
+        // Zodスキーマでファイルパスを検証
+        const validationData = fileExistenceSchema.parse({
+          path: filePath,
+          type: "file",
+          checkAccess: true
+        })
+
+        return validatePathWithType(validationData.path, expectType)
+      } catch (error) {
+        if (error instanceof ZodError) {
+          return {
+            ok: false,
+            type: undefined,
+            errorType: PathType.UnknownError
+          }
+        }
+        return validatePathWithType(filePath, expectType)
+      }
     }
   )
 
@@ -117,22 +149,32 @@ export function registerFileDialogHandlers(): void {
    */
   ipcMain.handle("check-file-exists", async (_event, filePath: string): Promise<boolean> => {
     try {
-      if (!filePath || filePath.trim() === "") {
+      // Zodスキーマでファイルパスを検証
+      const validationData = fileExistenceSchema.parse({
+        path: filePath,
+        type: "file"
+      })
+
+      if (!validationData.path || validationData.path.trim() === "") {
         logger.warn(`空のファイルパスが渡されました`)
         return false
       }
 
       // fs.existsSyncを使用してシンプルに存在確認
-      const exists = fs.existsSync(filePath)
+      const exists = fs.existsSync(validationData.path)
 
       if (!exists) {
         return false
       }
 
       // 存在する場合はファイルかディレクトリかをチェック
-      const stats = fs.statSync(filePath)
+      const stats = fs.statSync(validationData.path)
       return stats.isFile()
     } catch (error) {
+      if (error instanceof ZodError) {
+        logger.warn(`無効なファイルパス: ${error.issues.map((issue) => issue.message).join(", ")}`)
+        return false
+      }
       logger.error(`ファイル存在チェックエラー: "${filePath}"`, error)
       return false
     }
