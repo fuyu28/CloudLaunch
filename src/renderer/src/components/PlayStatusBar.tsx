@@ -7,7 +7,6 @@
  * - 現在プレイ中のゲームの表示
  * - プレイ経過時間の表示
  * - プロセス監視の状態表示
- * - 自動計測の開始・停止
  *
  * 使用例：
  * ```tsx
@@ -16,110 +15,82 @@
  */
 
 import React, { useEffect, useState } from "react"
-import { FaPlay, FaStop, FaClock, FaGamepad } from "react-icons/fa"
+import { useAtom } from "jotai"
+import { FaClock, FaGamepad } from "react-icons/fa"
 import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
+import { autoTrackingAtom } from "@renderer/state/settings"
 import type { MonitoringGameStatus } from "../../../types/game"
 
 /**
  * プレイ状況バーコンポーネント
  *
  * アプリケーション画面下部に表示され、
- * 現在のプレイ状況と監視状態を表示します。
+ * 現在のプレイ状況を表示します。
  *
  * @returns プレイ状況バー要素
  */
 export function PlayStatusBar(): React.JSX.Element {
-  const [isMonitoring, setIsMonitoring] = useState<boolean>(false)
+  const [autoTracking] = useAtom(autoTrackingAtom)
   const [monitoringGames, setMonitoringGames] = useState<MonitoringGameStatus[]>([])
   const [, setCurrentTime] = useState<Date>(new Date())
   const { formatShort } = useTimeFormat()
 
   // 監視状況を更新
-  const updateMonitoringStatus = async (): Promise<void> => {
-    try {
-      const [status, monitoring] = await Promise.all([
-        window.api.processMonitor.getMonitoringStatus(),
-        window.api.processMonitor.isMonitoring()
-      ])
-      setMonitoringGames(status)
-      setIsMonitoring(monitoring)
+  const updateMonitoringStatus = React.useCallback(async (): Promise<void> => {
+    // 自動ゲーム検出がOFFの場合は更新しない
+    if (!autoTracking) {
+      return
+    }
 
-      // デバッグ情報を出力
-      console.log("監視状況更新:", {
-        gameCount: status.length,
-        playingCount: status.filter((g) => g.isPlaying).length,
-        monitoring
-      })
+    try {
+      const status = await window.api.processMonitor.getMonitoringStatus()
+      setMonitoringGames(status)
     } catch (error) {
       console.error("監視状況の取得に失敗しました:", error)
     }
-  }
-
-  // 監視開始
-  const startMonitoring = async (): Promise<void> => {
-    try {
-      const result = await window.api.processMonitor.startMonitoring()
-      if (result.success) {
-        setIsMonitoring(true)
-        await updateMonitoringStatus()
-      }
-    } catch (error) {
-      console.error("監視開始に失敗しました:", error)
-    }
-  }
-
-  // 監視停止
-  const stopMonitoring = async (): Promise<void> => {
-    try {
-      const result = await window.api.processMonitor.stopMonitoring()
-      if (result.success) {
-        setIsMonitoring(false)
-        setMonitoringGames([])
-      }
-    } catch (error) {
-      console.error("監視停止に失敗しました:", error)
-    }
-  }
+  }, [autoTracking])
 
   // 時間更新とステータス更新
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTime(new Date())
-      if (isMonitoring) {
-        updateMonitoringStatus()
-      }
+      updateMonitoringStatus()
     }, 1000)
 
     return () => clearInterval(interval)
-  }, [isMonitoring])
+  }, [updateMonitoringStatus])
 
   // 初期化
   useEffect(() => {
     // 少し遅延させて監視状態を取得（メインプロセスの初期化を待つ）
     const timer = setTimeout(() => {
       updateMonitoringStatus()
-      console.log("PlayStatusBar初期化完了")
     }, 1000)
 
     return () => clearTimeout(timer)
-  }, [])
+  }, [updateMonitoringStatus])
+
+  // 自動ゲーム検出がOFFの場合は非表示
+  if (!autoTracking) {
+    return <></>
+  }
 
   const playingGames = monitoringGames.filter((game) => game.isPlaying)
   const hasPlayingGames = playingGames.length > 0
 
   return (
-    <div className="bg-base-300 border-t border-base-content/10 px-4 py-2">
-      <div className="flex items-center justify-between">
+    <div className="bg-base-300 border-t border-base-content/10 px-4 py-1 h-12">
+      <div className="flex items-center justify-between h-full">
         {/* 左側：プレイ状況 */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           {hasPlayingGames ? (
             <>
-              <FaGamepad className="text-primary" />
-              <div className="flex flex-col">
-                <div className="text-sm font-medium">
+              <FaGamepad className="text-primary text-sm" />
+              <div className="flex flex-col justify-center">
+                <div className="text-sm font-medium leading-tight">
                   プレイ中: {playingGames.map((game) => game.gameTitle).join(", ")}
                 </div>
-                <div className="text-xs text-base-content/70">
+                <div className="text-xs text-base-content/70 leading-tight">
                   {playingGames.map((game) => (
                     <span key={game.gameId} className="mr-4">
                       {game.exeName}: {formatShort(game.playTime)}
@@ -130,35 +101,10 @@ export function PlayStatusBar(): React.JSX.Element {
             </>
           ) : (
             <>
-              <FaClock className="text-base-content/50" />
-              <div className="text-sm text-base-content/70">
-                {isMonitoring ? "監視中 - プレイ中のゲームはありません" : "監視停止中"}
-              </div>
+              <FaClock className="text-base-content/50 text-sm" />
+              <div className="text-sm text-base-content/70">プレイ中のゲームはありません</div>
             </>
           )}
-        </div>
-
-        {/* 右側：監視コントロール */}
-        <div className="flex items-center gap-2">
-          <div className="text-xs text-base-content/70">
-            自動計測: {isMonitoring ? "ON" : "OFF"}
-          </div>
-          <button
-            className={`btn btn-sm ${isMonitoring ? "btn-error" : "btn-primary"}`}
-            onClick={isMonitoring ? stopMonitoring : startMonitoring}
-          >
-            {isMonitoring ? (
-              <>
-                <FaStop className="mr-1" />
-                停止
-              </>
-            ) : (
-              <>
-                <FaPlay className="mr-1" />
-                開始
-              </>
-            )}
-          </button>
         </div>
       </div>
     </div>
