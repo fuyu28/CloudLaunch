@@ -569,46 +569,54 @@ export class ProcessMonitorService extends EventEmitter {
         return processes as Array<{ name?: string; pid: number; cmd?: string }>
       } else if (process.platform === "darwin") {
         // macOS: ps コマンドでコマンドライン情報も取得
-        const { stdout } = await execAsync("ps -eo pid,comm,args")
+        const { stdout } = await execAsync("ps -eo pid,comm,args", { timeout: 5000 })
         const lines = stdout.trim().split("\n").slice(1) // ヘッダーをスキップ
 
         const processes = lines
+          .filter((line) => line.trim()) // 空行を除外
           .map((line) => {
             const match = line.trim().match(/(\d+)\s+(\S+)\s+(.*)/)
             if (match) {
-              const pid = parseInt(match[1])
+              const pid = parseInt(match[1], 10)
               const name = path.basename(match[2])
-              const cmd = match[3] || ""
+              const cmd = match[3] || match[2] // cmdがない場合はcommを使用
+
+              // 基本的な検証
+              if (isNaN(pid) || pid <= 0) {
+                return undefined
+              }
+
               return { name, pid, cmd }
             }
             return undefined
           })
-          .filter(
-            (proc): proc is { name: string; pid: number; cmd: string } =>
-              proc !== undefined && proc.pid > 0
-          )
+          .filter((proc): proc is { name: string; pid: number; cmd: string } => proc !== undefined)
 
         return processes as Array<{ name?: string; pid: number; cmd?: string }>
       } else {
         // Linux: ps コマンドでコマンドライン情報も取得
-        const { stdout } = await execAsync("ps -eo pid,comm,cmd --no-headers")
+        const { stdout } = await execAsync("ps -eo pid,comm,cmd --no-headers", { timeout: 5000 })
         const lines = stdout.trim().split("\n")
 
         const processes = lines
+          .filter((line) => line.trim()) // 空行を除外
           .map((line) => {
             const match = line.trim().match(/(\d+)\s+(\S+)\s+(.*)/)
             if (match) {
-              const pid = parseInt(match[1])
+              const pid = parseInt(match[1], 10)
               const name = path.basename(match[2])
-              const cmd = match[3] || ""
+              const cmd = match[3] || match[2] // cmdがない場合はcommを使用
+
+              // 基本的な検証
+              if (isNaN(pid) || pid <= 0) {
+                return undefined
+              }
+
               return { name, pid, cmd }
             }
             return undefined
           })
-          .filter(
-            (proc): proc is { name: string; pid: number; cmd: string } =>
-              proc !== undefined && proc.pid > 0
-          )
+          .filter((proc): proc is { name: string; pid: number; cmd: string } => proc !== undefined)
 
         return processes as Array<{ name?: string; pid: number; cmd?: string }>
       }
