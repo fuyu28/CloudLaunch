@@ -90,6 +90,8 @@ function registerBasicMemoHandlers(): void {
   ipcMain.handle(
     "memo:createMemo",
     async (_, memoData: CreateMemoData): Promise<ApiResult<MemoType>> => {
+      let createdMemo: MemoType | null = null
+
       try {
         // ゲームの存在確認
         const game = await prisma.game.findUnique({
@@ -100,26 +102,53 @@ function registerBasicMemoHandlers(): void {
           return { success: false, message: "指定されたゲームが見つかりません" }
         }
 
-        const memo = await prisma.memo.create({
-          data: memoData
+        // データベースとファイルの両方を原子的に作成
+        createdMemo = await prisma.$transaction(async (tx) => {
+          // データベースにメモを作成
+          const memo = await tx.memo.create({
+            data: memoData
+          })
+
+          // メモファイルを作成
+          const fileResult = await memoFileManager.createMemoFile(
+            memo.gameId,
+            memo.id,
+            memo.title,
+            memo.content
+          )
+
+          if (!fileResult.success) {
+            // ファイル作成に失敗した場合、トランザクションを失敗させる
+            throw new Error(`メモファイル作成エラー: ${fileResult.error}`)
+          }
+
+          return memo
         })
 
-        // メモファイルを作成
-        const fileResult = await memoFileManager.createMemoFile(
-          memo.gameId,
-          memo.id,
-          memo.title,
-          memo.content
-        )
-        if (!fileResult.success) {
-          logger.warn("メモファイル作成エラー (データベース作成は成功):", fileResult.error)
+        if (!createdMemo) {
+          throw new Error("メモの作成に失敗しました")
         }
 
-        logger.info(`メモを作成しました: ${memo.title}`)
-        return { success: true, data: memo }
+        logger.info(`メモを作成しました: ${createdMemo.title}`)
+        return { success: true, data: createdMemo }
       } catch (error) {
         logger.error("メモ作成エラー:", error)
-        return { success: false, message: "メモの作成に失敗しました" }
+
+        // エラー時のクリーンアップ（ファイルが作成されている場合は削除）
+        if (createdMemo) {
+          try {
+            await memoFileManager.deleteMemoFile(
+              createdMemo.gameId,
+              createdMemo.id,
+              createdMemo.title
+            )
+          } catch (cleanupError) {
+            logger.error("メモファイルクリーンアップエラー:", cleanupError)
+          }
+        }
+
+        const errorMessage = error instanceof Error ? error.message : "メモの作成に失敗しました"
+        return { success: false, message: errorMessage }
       }
     }
   )
@@ -130,9 +159,12 @@ function registerBasicMemoHandlers(): void {
   ipcMain.handle(
     "memo:updateMemo",
     async (_, memoId: string, updateData: UpdateMemoData): Promise<ApiResult<MemoType>> => {
+      let updatedMemo: MemoType | null = null
+      let oldMemo: MemoType | null = null
+
       try {
         // 更新前のメモ情報を取得
-        const oldMemo = await prisma.memo.findUnique({
+        oldMemo = await prisma.memo.findUnique({
           where: { id: memoId }
         })
 
@@ -140,28 +172,57 @@ function registerBasicMemoHandlers(): void {
           return { success: false, message: "メモが見つかりません" }
         }
 
-        const memo = await prisma.memo.update({
-          where: { id: memoId },
-          data: updateData
+        // データベースとファイルの両方を原子的に更新
+        updatedMemo = await prisma.$transaction(async (tx) => {
+          // データベースのメモを更新
+          const memo = await tx.memo.update({
+            where: { id: memoId },
+            data: updateData
+          })
+
+          // メモファイルを更新
+          const fileResult = await memoFileManager.updateMemoFile(
+            memo.gameId,
+            memo.id,
+            oldMemo!.title,
+            memo.title,
+            memo.content
+          )
+
+          if (!fileResult.success) {
+            // ファイル更新に失敗した場合、トランザクションを失敗させる
+            throw new Error(`メモファイル更新エラー: ${fileResult.error}`)
+          }
+
+          return memo
         })
 
-        // メモファイルを更新
-        const fileResult = await memoFileManager.updateMemoFile(
-          memo.gameId,
-          memo.id,
-          oldMemo.title,
-          memo.title,
-          memo.content
-        )
-        if (!fileResult.success) {
-          logger.warn("メモファイル更新エラー (データベース更新は成功):", fileResult.error)
+        if (!updatedMemo) {
+          throw new Error("メモの更新に失敗しました")
         }
 
-        logger.info(`メモを更新しました: ${memo.title}`)
-        return { success: true, data: memo }
+        logger.info(`メモを更新しました: ${updatedMemo.title}`)
+        return { success: true, data: updatedMemo }
       } catch (error) {
         logger.error("メモ更新エラー:", error)
-        return { success: false, message: "メモの更新に失敗しました" }
+
+        // エラー時のロールバック（古いファイルに戻す）
+        if (oldMemo && updatedMemo) {
+          try {
+            await memoFileManager.updateMemoFile(
+              oldMemo.gameId,
+              oldMemo.id,
+              updatedMemo.title,
+              oldMemo.title,
+              oldMemo.content
+            )
+          } catch (rollbackError) {
+            logger.error("メモファイルロールバックエラー:", rollbackError)
+          }
+        }
+
+        const errorMessage = error instanceof Error ? error.message : "メモの更新に失敗しました"
+        return { success: false, message: errorMessage }
       }
     }
   )
@@ -170,31 +231,69 @@ function registerBasicMemoHandlers(): void {
    * メモを削除します
    */
   ipcMain.handle("memo:deleteMemo", async (_, memoId: string): Promise<ApiResult<boolean>> => {
+    let deletedMemo: MemoType | null = null
+
     try {
       // 削除前のメモ情報を取得
-      const memo = await prisma.memo.findUnique({
+      deletedMemo = await prisma.memo.findUnique({
         where: { id: memoId }
       })
 
-      if (!memo) {
+      if (!deletedMemo) {
         return { success: false, message: "メモが見つかりません" }
       }
 
-      await prisma.memo.delete({
-        where: { id: memoId }
+      // データベースとファイルの両方を原子的に削除
+      await prisma.$transaction(async (tx) => {
+        // データベースからメモを削除
+        await tx.memo.delete({
+          where: { id: memoId }
+        })
+
+        // メモファイルを削除
+        const fileResult = await memoFileManager.deleteMemoFile(
+          deletedMemo!.gameId,
+          deletedMemo!.id,
+          deletedMemo!.title
+        )
+
+        if (!fileResult.success) {
+          // ファイル削除に失敗した場合、トランザクションを失敗させる
+          throw new Error(`メモファイル削除エラー: ${fileResult.error}`)
+        }
       })
 
-      // メモファイルを削除
-      const fileResult = await memoFileManager.deleteMemoFile(memo.gameId, memo.id, memo.title)
-      if (!fileResult.success) {
-        logger.warn("メモファイル削除エラー (データベース削除は成功):", fileResult.error)
-      }
-
-      logger.info(`メモを削除しました: ${memoId}`)
+      logger.info(`メモを削除しました: ${deletedMemo.title} (ID: ${memoId})`)
       return { success: true, data: true }
     } catch (error) {
       logger.error("メモ削除エラー:", error)
-      return { success: false, message: "メモの削除に失敗しました" }
+
+      // エラー時のロールバック（メモを再作成）
+      if (deletedMemo) {
+        try {
+          await prisma.memo.create({
+            data: {
+              id: deletedMemo.id,
+              title: deletedMemo.title,
+              content: deletedMemo.content,
+              gameId: deletedMemo.gameId,
+              createdAt: deletedMemo.createdAt,
+              updatedAt: deletedMemo.updatedAt
+            }
+          })
+          await memoFileManager.createMemoFile(
+            deletedMemo.gameId,
+            deletedMemo.id,
+            deletedMemo.title,
+            deletedMemo.content
+          )
+        } catch (rollbackError) {
+          logger.error("メモ削除ロールバックエラー:", rollbackError)
+        }
+      }
+
+      const errorMessage = error instanceof Error ? error.message : "メモの削除に失敗しました"
+      return { success: false, message: errorMessage }
     }
   })
 
