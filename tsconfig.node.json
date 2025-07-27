@@ -6,7 +6,8 @@
     "src/preload/**/*",
     "src/types/**/*",
     "src/constants/**/*",
-    "src/utils/**/*"
+    "src/utils/**/*",
+    "src/schemas/**/*"
   ],
   "compilerOptions": {
     "moduleResolution": "bundler",

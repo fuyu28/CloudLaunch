@@ -10,13 +10,13 @@
  * - 設定の保存
  *
  * 使用技術：
- * - useSettingsForm カスタムフック
+ * - useSettingsFormZod カスタムフック（Zodベース）
  * - useConnectionStatus カスタムフック
  * - SettingsFormField コンポーネント
  */
 
 import React, { useEffect } from "react"
-import { useSettingsForm } from "../hooks/useSettingsForm"
+import { useSettingsFormZod } from "../hooks/useSettingsFormZod"
 import { useConnectionStatus } from "../hooks/useConnectionStatus"
 import { useOfflineMode } from "../hooks/useOfflineMode"
 import { FaCheck, FaSyncAlt, FaTimes } from "react-icons/fa"
@@ -31,7 +31,8 @@ import { getOfflineDisabledClasses } from "../utils/offlineUtils"
  * @returns R2/S3設定コンポーネント要素
  */
 export default function R2S3Settings(): React.JSX.Element {
-  const { formData, updateField, canSubmit, isSaving, handleSave, fieldErrors } = useSettingsForm()
+  const { formData, updateField, canSubmit, isSaving, handleSave, fieldErrors } =
+    useSettingsFormZod()
   const { status, message, check } = useConnectionStatus()
   const { isOfflineMode, checkNetworkFeature } = useOfflineMode()
 

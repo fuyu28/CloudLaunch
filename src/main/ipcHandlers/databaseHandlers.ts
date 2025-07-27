@@ -22,6 +22,8 @@ import { logger } from "../utils/logger"
 import { MESSAGES } from "../../constants"
 import { ensureDefaultChapter } from "./chapterHandlers"
 import { transformGame, transformGames, transformPlaySessions } from "../utils/dataTransform"
+import { gameFormSchema } from "../../schemas/game"
+import { ZodError } from "zod"
 
 type GameUpdateData = {
   title: string
@@ -123,6 +125,8 @@ export function registerDatabaseHandlers(): void {
     "create-game",
     async (_event, game: InputGameData): Promise<ApiResult<GameType>> => {
       try {
+        // Zodスキーマで入力データを検証
+        gameFormSchema.parse(game)
         const createdGame = await prisma.$transaction(async (tx) => {
           // ゲームを作成
           const newGame = await tx.game.create({
@@ -155,6 +159,12 @@ export function registerDatabaseHandlers(): void {
         return { success: true, data: transformGame(createdGame) }
       } catch (error) {
         logger.error("ゲーム作成エラー:", error)
+        if (error instanceof ZodError) {
+          return {
+            success: false,
+            message: `入力データが無効です: ${error.issues.map((issue) => issue.message).join(", ")}`
+          }
+        }
         if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
           return { success: false, message: MESSAGES.GAME.ALREADY_EXISTS(game.title) }
         }
@@ -167,6 +177,8 @@ export function registerDatabaseHandlers(): void {
     "update-game",
     async (_event, id: string, game: InputGameData): Promise<ApiResult<GameType>> => {
       try {
+        // Zodスキーマで入力データを検証
+        gameFormSchema.parse(game)
         // 現在のゲームデータを取得してplayStatusの変更を確認
         const currentGame = await prisma.game.findUnique({
           where: { id }
@@ -203,6 +215,12 @@ export function registerDatabaseHandlers(): void {
         return { success: true, data: transformGame(updatedGame) }
       } catch (error) {
         logger.error("ゲーム更新エラー:", error)
+        if (error instanceof ZodError) {
+          return {
+            success: false,
+            message: `入力データが無効です: ${error.issues.map((issue) => issue.message).join(", ")}`
+          }
+        }
         if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
           return { success: false, message: MESSAGES.GAME.ALREADY_EXISTS(game.title) }
         }
