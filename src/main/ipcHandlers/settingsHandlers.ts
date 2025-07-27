@@ -17,7 +17,6 @@ import ProcessMonitorService from "../service/processMonitorService"
 import { ApiResult } from "../../types/result"
 import { autoTrackingSettingsSchema } from "../../schemas/settings"
 
-
 const store = new Store()
 
 export function registerSettingsHandlers(): void {
@@ -52,6 +51,7 @@ export function registerSettingsHandlers(): void {
           success: false,
           message: `入力データが無効です: ${error.issues.map((issue) => issue.message).join(", ")}`
         }
+      }
       logger.error("自動ゲーム検出設定の更新に失敗:", error)
       return {
         success: false,
