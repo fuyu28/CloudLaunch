@@ -198,73 +198,115 @@ export default function MemoList(): React.JSX.Element {
         </div>
       </div>
 
-      {/* 検索・フィルター・ソート */}
+      {/* 検索・フィルター・ソート - レスポンシブ対応 */}
       <div className="mb-6">
-        <div className="flex items-center gap-3 flex-wrap">
-          {/* 検索バー */}
-          <div className="flex items-center gap-2 flex-1 min-w-40 max-w-80">
-            <FaSearch className="text-base-content/60" />
-            <div className="relative flex-1">
-              <input
-                type="text"
-                placeholder="検索..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="input input-bordered input-sm w-full pr-8"
-              />
-              {searchQuery && (
-                <button
-                  onClick={clearSearch}
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 text-base-content/60 hover:text-base-content text-sm"
-                >
-                  ✕
-                </button>
-              )}
+        <div className="card bg-base-100 shadow-sm">
+          <div className="card-body p-4">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+              {/* 検索バー */}
+              <div className="lg:col-span-2">
+                <label className="label label-text text-xs font-semibold mb-1">検索</label>
+                <div className="flex items-center gap-2">
+                  <FaSearch className="text-base-content/60 flex-shrink-0" />
+                  <div className="relative flex-1">
+                    <input
+                      type="text"
+                      placeholder="タイトル、内容、ゲーム名で検索..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="input input-bordered input-sm w-full pr-8"
+                    />
+                    {searchQuery && (
+                      <button
+                        onClick={clearSearch}
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-base-content/60 hover:text-base-content text-sm"
+                        aria-label="検索をクリア"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* ゲームフィルター */}
+              <div>
+                <label className="label label-text text-xs font-semibold mb-1">ゲーム</label>
+                <div className="flex items-center gap-2">
+                  <FaFilter className="text-base-content/60 flex-shrink-0" />
+                  <select
+                    value={selectedGameId}
+                    onChange={(e) => setSelectedGameId(e.target.value)}
+                    className="select select-bordered select-sm w-full"
+                  >
+                    <option value="all">すべて</option>
+                    {games.map((game) => (
+                      <option key={game.id} value={game.id}>
+                        {game.title}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* ソート設定 */}
+              <div>
+                <label className="label label-text text-xs font-semibold mb-1">並び順</label>
+                <div className="flex items-center gap-2">
+                  <FaSort className="text-base-content/60 flex-shrink-0" />
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as SortOption)}
+                    className="select select-bordered select-sm flex-1"
+                  >
+                    <option value="updatedAt">更新日時</option>
+                    <option value="createdAt">作成日時</option>
+                    <option value="title">タイトル</option>
+                  </select>
+                  <button
+                    onClick={toggleSortDirection}
+                    className="btn btn-ghost btn-sm btn-square"
+                    title={sortDirection === "asc" ? "昇順" : "降順"}
+                    aria-label={`並び順を${sortDirection === "asc" ? "降順" : "昇順"}に変更`}
+                  >
+                    {sortDirection === "asc" ? <FaSortAmountUp /> : <FaSortAmountDown />}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* メモ件数とクイックアクション */}
+            <div className="flex justify-between items-center mt-4 pt-3 border-t border-base-300">
+              <div className="flex items-center gap-4">
+                <span className="text-sm text-base-content/70 font-medium">
+                  {filteredAndSortedMemos.length}件のメモ
+                </span>
+                {debouncedSearchQuery && (
+                  <span className="badge badge-info badge-sm">
+                    検索中: &quot;{debouncedSearchQuery}&quot;
+                  </span>
+                )}
+                {selectedGameId !== "all" && (
+                  <span className="badge badge-primary badge-sm">
+                    {games.find((g) => g.id === selectedGameId)?.title}
+                  </span>
+                )}
+              </div>
+              <div className="flex gap-2">
+                {(searchQuery || selectedGameId !== "all") && (
+                  <button
+                    onClick={() => {
+                      clearSearch()
+                      setSelectedGameId("all")
+                    }}
+                    className="btn btn-ghost btn-xs"
+                  >
+                    フィルターをクリア
+                  </button>
+                )}
+              </div>
             </div>
           </div>
-
-          {/* ゲームフィルター */}
-          <div className="flex items-center gap-2">
-            <FaFilter className="text-base-content/60" />
-            <select
-              value={selectedGameId}
-              onChange={(e) => setSelectedGameId(e.target.value)}
-              className="select select-bordered select-sm min-w-40"
-            >
-              <option value="all">すべてのゲーム</option>
-              {games.map((game) => (
-                <option key={game.id} value={game.id}>
-                  {game.title}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* ソート設定 */}
-          <div className="flex items-center gap-2">
-            <FaSort className="text-base-content/60" />
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as SortOption)}
-              className="select select-bordered select-sm"
-            >
-              <option value="updatedAt">更新日時</option>
-              <option value="createdAt">作成日時</option>
-              <option value="title">タイトル</option>
-            </select>
-            <button
-              onClick={toggleSortDirection}
-              className="btn btn-ghost btn-sm"
-              title={sortDirection === "asc" ? "昇順" : "降順"}
-            >
-              {sortDirection === "asc" ? <FaSortAmountUp /> : <FaSortAmountDown />}
-            </button>
-          </div>
-
-          {/* メモ件数 */}
-          <span className="text-sm text-base-content/60 ml-auto">
-            {filteredAndSortedMemos.length}件
-          </span>
         </div>
       </div>
 
@@ -304,7 +346,7 @@ export default function MemoList(): React.JSX.Element {
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
           {filteredAndSortedMemos.map((memo) => (
             <MemoCardBase
               key={memo.id}
@@ -315,9 +357,9 @@ export default function MemoList(): React.JSX.Element {
               onEdit={handleEditMemo}
               onDelete={handleDeleteConfirm}
               onSyncFromCloud={handleSyncFromCloud}
-              className="card bg-base-100 shadow-xl p-6"
-              contentMaxLength={100}
-              dropdownPosition="absolute top-0 right-0"
+              className="card bg-base-100 shadow-md hover:shadow-lg transition-all duration-200 p-4 h-48 flex flex-col"
+              contentMaxLength={120}
+              dropdownPosition="absolute top-2 right-2"
             />
           ))}
         </div>

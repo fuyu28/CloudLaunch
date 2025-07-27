@@ -293,28 +293,28 @@ export default function MemoForm({
   }
 
   return (
-    <div className="bg-base-200 px-6 py-4 min-h-screen">
+    <div className="bg-base-200 px-4 sm:px-6 py-4 min-h-screen">
       {/* ヘッダー */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
-          <button onClick={handleBack} className="btn btn-ghost">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+        <div className="flex items-center gap-4 min-w-0 flex-1">
+          <button onClick={handleBack} className="btn btn-ghost btn-sm sm:btn-md">
             <FaArrowLeft />
-            戻る
+            <span className="hidden sm:inline">戻る</span>
           </button>
-          <h1 className="text-2xl font-bold">
-            {pageTitle}
+          <div className="min-w-0 flex-1">
+            <h1 className="text-xl sm:text-2xl font-bold truncate">{pageTitle}</h1>
             {displayData.displayGameTitle && (
-              <span className="text-lg text-base-content/70 ml-2">
-                - {displayData.displayGameTitle}
-              </span>
+              <p className="text-sm sm:text-base text-base-content/70 truncate">
+                {displayData.displayGameTitle}
+              </p>
             )}
-          </h1>
+          </div>
         </div>
 
         <button
           onClick={handleSave}
           disabled={isSaving || !saveData.title || !displayData.effectiveGameId}
-          className="btn btn-primary"
+          className="btn btn-primary btn-sm sm:btn-md w-full sm:w-auto"
         >
           {isSaving ? (
             <>
@@ -367,57 +367,109 @@ export default function MemoForm({
           )}
 
           {/* タイトル入力 */}
-          <div className="form-control mb-4">
+          <div className="form-control mb-6">
             <label className="label">
               <span className="label-text text-lg font-semibold">タイトル</span>
+              <span className="label-text-alt text-xs">
+                <span
+                  className={
+                    title.length > 180
+                      ? "text-warning"
+                      : title.length > 190
+                        ? "text-error"
+                        : "text-base-content/60"
+                  }
+                >
+                  {title.length}/200文字
+                </span>
+              </span>
             </label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="メモのタイトルを入力..."
-              className="input input-bordered w-full"
+              className={`input input-bordered w-full ${title.length > 190 ? "input-error" : ""}`}
               maxLength={200}
               disabled={isSaving}
             />
-            <div className="label">
-              <span className="label-text-alt text-base-content/60">{title.length}/200文字</span>
-            </div>
+            {title.length > 190 && (
+              <div className="label">
+                <span className="label-text-alt text-error text-xs">
+                  文字数制限に近づいています
+                </span>
+              </div>
+            )}
           </div>
 
           {/* 内容入力 */}
           <div className="form-control">
-            <label className="label">
-              <span className="label-text text-lg font-semibold">内容</span>
-            </label>
-            <div className="markdown-editor-wrapper">
+            <div className="flex justify-between items-center mb-2">
+              <label className="label-text text-lg font-semibold">内容</label>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-base-content/60">{content.length}文字</span>
+                <div className="badge badge-info badge-sm">Markdown対応</div>
+              </div>
+            </div>
+
+            <div className="border border-base-300 rounded-lg overflow-hidden">
               <MDEditor
                 value={content}
                 onChange={(val) => setContent(val || "")}
                 height={400}
                 visibleDragbar={false}
+                data-color-mode="light"
                 textareaProps={{
                   placeholder:
-                    "メモをmarkdownで記入してください...\n\n基本的なMarkdown記法:\n# 見出し1\n## 見出し2\n**太字** または __太字__\n*斜体* または _斜体_\n- リスト項目\n1. 番号付きリスト\n> 引用文\n`コード` または\n```\nコードブロック\n```\n[リンクテキスト](URL)",
-                  disabled: isSaving
+                    "メモをMarkdownで記入してください...\n\n📝 基本的なMarkdown記法:\n# 見出し1\n## 見出し2\n**太字** *斜体*\n- リスト項目\n1. 番号付きリスト\n> 引用文\n`コード`\n```\nコードブロック\n```\n[リンク](URL)",
+                  disabled: isSaving,
+                  style: { fontSize: "14px", lineHeight: "1.6" }
                 }}
               />
             </div>
           </div>
 
           {/* ショートカットヒント */}
-          <div className="text-sm text-base-content/60 mt-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              <p>💡 Ctrl+S で保存</p>
-              <p>👁️ プレビューボタンで表示確認</p>
+          <div className="mt-6 space-y-3">
+            <div className="alert alert-info">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">💡</span>
+                <div>
+                  <p className="font-semibold text-sm">ショートカット</p>
+                  <p className="text-xs opacity-90">Ctrl+S で保存 • プレビューボタンで確認</p>
+                </div>
+              </div>
             </div>
-            <div className="mt-2 p-3 bg-base-200 rounded">
-              <p className="text-xs font-semibold mb-1">Markdown記法例:</p>
-              <p className="text-xs">**太字** *斜体* `コード` # 見出し - リスト &gt; 引用</p>
-              <p className="text-xs mt-1">
-                Ctrl+A（全選択）、Ctrl+C（コピー）、Ctrl+V（貼り付け）使用可能
-              </p>
-            </div>
+
+            <details className="collapse collapse-arrow bg-base-200">
+              <summary className="collapse-title text-sm font-medium">
+                📚 Markdown記法ガイド
+              </summary>
+              <div className="collapse-content text-xs space-y-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="font-semibold mb-1">テキスト装飾</p>
+                    <code className="text-xs bg-base-300 px-1 rounded">**太字**</code>
+                    <code className="text-xs bg-base-300 px-1 rounded ml-2">*斜体*</code>
+                  </div>
+                  <div>
+                    <p className="font-semibold mb-1">見出し</p>
+                    <code className="text-xs bg-base-300 px-1 rounded"># 見出し1</code>
+                    <code className="text-xs bg-base-300 px-1 rounded ml-2">## 見出し2</code>
+                  </div>
+                  <div>
+                    <p className="font-semibold mb-1">リスト</p>
+                    <code className="text-xs bg-base-300 px-1 rounded">- 項目</code>
+                    <code className="text-xs bg-base-300 px-1 rounded ml-2">1. 番号</code>
+                  </div>
+                  <div>
+                    <p className="font-semibold mb-1">その他</p>
+                    <code className="text-xs bg-base-300 px-1 rounded">`コード`</code>
+                    <code className="text-xs bg-base-300 px-1 rounded ml-2"> 引用</code>
+                  </div>
+                </div>
+              </div>
+            </details>
           </div>
         </div>
       </div>

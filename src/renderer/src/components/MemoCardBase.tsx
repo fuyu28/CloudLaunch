@@ -5,7 +5,7 @@
  * MemoCardとMemoListで共通使用されます。
  */
 
-import React from "react"
+import React, { memo, useMemo, useCallback } from "react"
 import { FaGamepad } from "react-icons/fa"
 import type { MemoType } from "src/types/memo"
 import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
@@ -44,7 +44,7 @@ interface MemoCardBaseProps {
  * @param props - コンポーネントのプロパティ
  * @returns メモカードJSX要素
  */
-export default function MemoCardBase({
+function MemoCardBase({
   memo,
   onClick,
   isDropdownOpen,
@@ -60,37 +60,58 @@ export default function MemoCardBase({
 }: MemoCardBaseProps): React.JSX.Element {
   const { formatDateWithTime } = useTimeFormat()
 
-  const truncatedTitle =
-    titleMaxLength && memo.title.length > titleMaxLength
-      ? `${memo.title.substring(0, titleMaxLength)}...`
-      : memo.title
+  // テキストの切り詰め処理を最適化
+  const truncatedTexts = useMemo(() => {
+    const truncatedTitle =
+      titleMaxLength && memo.title.length > titleMaxLength
+        ? `${memo.title.substring(0, titleMaxLength)}...`
+        : memo.title
 
-  const truncatedContent =
-    memo.content.length > contentMaxLength
-      ? `${memo.content.substring(0, contentMaxLength)}...`
-      : memo.content
+    const truncatedContent =
+      memo.content.length > contentMaxLength
+        ? `${memo.content.substring(0, contentMaxLength)}...`
+        : memo.content
+
+    return { truncatedTitle, truncatedContent }
+  }, [memo.title, memo.content, titleMaxLength, contentMaxLength])
+
+  // フォーマット済み日時をメモ化
+  const formattedDate = useMemo(() => {
+    return formatDateWithTime(memo.updatedAt)
+  }, [memo.updatedAt, formatDateWithTime])
+
+  // クリックハンドラーをメモ化
+  const handleCardClick = useCallback(() => {
+    onClick(memo.id)
+  }, [onClick, memo.id])
+
+  // CSSクラスをメモ化
+  const cardClassName = useMemo(() => {
+    return `${className} cursor-pointer hover:bg-base-200 transition-colors duration-200 relative`
+  }, [className])
 
   return (
-    <div
-      className={`${className} cursor-pointer hover:bg-base-200 transition-colors duration-200 relative`}
-      onClick={() => onClick(memo.id)}
-    >
-      <h3 className="font-semibold text-sm truncate mb-1 pr-8">{truncatedTitle}</h3>
+    <div className={cardClassName} onClick={handleCardClick}>
+      <h3 className="font-semibold text-sm truncate mb-1 pr-8">{truncatedTexts.truncatedTitle}</h3>
 
       {/* ゲーム名表示 */}
       {showGameTitle && memo.gameTitle && (
         <div className="flex items-center gap-2 text-xs text-base-content/60 mb-2">
-          <FaGamepad className="text-xs" />
-          <span>{memo.gameTitle}</span>
+          <FaGamepad className="text-xs flex-shrink-0" />
+          <span className="truncate">{memo.gameTitle}</span>
         </div>
       )}
 
       {/* 内容のプレビュー */}
-      <p className="text-xs text-base-content/60 line-clamp-2 mb-2">{truncatedContent}</p>
+      <p className="text-xs text-base-content/60 line-clamp-3 mb-2 leading-relaxed">
+        {truncatedTexts.truncatedContent}
+      </p>
 
       {/* メタ情報 */}
-      <div className="flex justify-between items-center">
-        <span className="text-xs text-base-content/50">{formatDateWithTime(memo.updatedAt)}</span>
+      <div className="flex justify-between items-center mt-auto">
+        <span className="text-xs text-base-content/50 font-medium">{formattedDate}</span>
+        {/* 文字数インジケーター */}
+        <span className="text-xs text-base-content/40">{memo.content.length}文字</span>
       </div>
 
       {/* 三点リーダーメニュー */}
@@ -106,3 +127,20 @@ export default function MemoCardBase({
     </div>
   )
 }
+
+// React.memoでコンポーネントをメモ化
+export default memo(MemoCardBase, (prevProps, nextProps) => {
+  // 浅い比較では不十分な場合のカスタム比較関数
+  return (
+    prevProps.memo.id === nextProps.memo.id &&
+    prevProps.memo.title === nextProps.memo.title &&
+    prevProps.memo.content === nextProps.memo.content &&
+    prevProps.memo.updatedAt === nextProps.memo.updatedAt &&
+    prevProps.memo.gameTitle === nextProps.memo.gameTitle &&
+    prevProps.isDropdownOpen === nextProps.isDropdownOpen &&
+    prevProps.className === nextProps.className &&
+    prevProps.titleMaxLength === nextProps.titleMaxLength &&
+    prevProps.contentMaxLength === nextProps.contentMaxLength &&
+    prevProps.showGameTitle === nextProps.showGameTitle
+  )
+})

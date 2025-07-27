@@ -5,7 +5,7 @@
  * メモ一覧への遷移と簡単なメモ情報を表示します。
  */
 
-import React, { useEffect, useState, useCallback } from "react"
+import React, { useEffect, useState, useCallback, useMemo } from "react"
 import { Link } from "react-router-dom"
 import { FaBookOpen, FaPlus } from "react-icons/fa"
 import type { MemoType } from "src/types/memo"
@@ -63,63 +63,108 @@ export default function MemoCard({ gameId }: MemoCardProps): React.JSX.Element {
     fetchMemos()
   }, [fetchMemos])
 
+  // 表示するメモリストと統計をメモ化
+  const displayData = useMemo(() => {
+    const displayMemos = memos.slice(0, 3)
+    const remainingCount = Math.max(0, memos.length - 3)
+
+    return {
+      displayMemos,
+      remainingCount,
+      totalCount: memos.length,
+      hasMore: remainingCount > 0
+    }
+  }, [memos])
+
+  // メモ統計情報をメモ化
+  const memoStats = useMemo(() => {
+    if (memos.length === 0) return null
+
+    const totalChars = memos.reduce((sum, memo) => sum + memo.content.length, 0)
+    const avgChars = Math.round(totalChars / memos.length)
+
+    return {
+      totalChars,
+      avgChars
+    }
+  }, [memos])
+
   return (
     <div className="card bg-base-100 shadow-xl h-full">
       <div className="card-body">
+        {/* ヘッダー */}
         <div className="flex items-center justify-between mb-4">
           <h2 className="card-title text-lg">
             <FaBookOpen className="text-primary" />
             メモ
           </h2>
-          <div className="badge badge-outline">{memos.length}件</div>
+          <div className="flex items-center gap-2">
+            <div className="badge badge-primary badge-outline">{displayData.totalCount}件</div>
+            {memoStats && (
+              <div className="badge badge-ghost text-xs">平均{memoStats.avgChars}文字</div>
+            )}
+          </div>
         </div>
 
         {isLoading ? (
           <div className="flex justify-center py-8">
             <div className="loading loading-spinner loading-md"></div>
           </div>
-        ) : memos.length > 0 ? (
-          <div className="space-y-3">
+        ) : displayData.totalCount > 0 ? (
+          <div className="space-y-3 min-h-0 flex-1">
             {/* 最新のメモを最大3件表示 */}
-            {memos.slice(0, 3).map((memo) => (
-              <MemoCardBase
-                key={memo.id}
-                memo={memo}
-                onClick={handleViewMemo}
-                isDropdownOpen={isOpen(memo.id)}
-                onDropdownToggle={toggleDropdown}
-                onEdit={handleEditMemo}
-                onDelete={handleDeleteConfirm}
-                onSyncFromCloud={handleSyncFromCloud}
-                showGameTitle={false}
-              />
-            ))}
+            <div className="space-y-2">
+              {displayData.displayMemos.map((memo) => (
+                <MemoCardBase
+                  key={memo.id}
+                  memo={memo}
+                  onClick={handleViewMemo}
+                  isDropdownOpen={isOpen(memo.id)}
+                  onDropdownToggle={toggleDropdown}
+                  onEdit={handleEditMemo}
+                  onDelete={handleDeleteConfirm}
+                  onSyncFromCloud={handleSyncFromCloud}
+                  showGameTitle={false}
+                  className="border border-base-300 rounded-lg p-3 hover:shadow-md transition-shadow"
+                  contentMaxLength={60}
+                />
+              ))}
+            </div>
 
             {/* もっとあることを示すインジケーター */}
-            {memos.length > 3 && (
-              <div className="text-center text-xs text-base-content/60">
-                他 {memos.length - 3} 件のメモ
+            {displayData.hasMore && (
+              <div className="bg-base-200 rounded-lg p-2 text-center">
+                <span className="text-xs text-base-content/70 font-medium">
+                  他 {displayData.remainingCount} 件のメモ
+                </span>
               </div>
             )}
           </div>
         ) : (
-          <div className="text-center py-6">
-            <div className="text-base-content/60 mb-4">
-              <FaBookOpen className="mx-auto text-3xl mb-2 opacity-50" />
-              <p className="text-sm">メモがありません</p>
+          <div className="text-center py-6 flex-1 flex flex-col justify-center">
+            <div className="text-base-content/60">
+              <FaBookOpen className="mx-auto text-4xl mb-3 opacity-50" />
+              <p className="text-sm font-medium mb-1">メモがありません</p>
+              <p className="text-xs opacity-75">ゲームについてのメモを作成しましょう</p>
             </div>
           </div>
         )}
 
         {/* アクションボタン */}
-        <div className="card-actions justify-center mt-4 space-y-2">
-          {memos.length > 0 && (
-            <Link to={`/memo/list/${gameId}`} className="btn btn-outline btn-sm w-full">
+        <div className="card-actions justify-center mt-4 space-y-2 flex-shrink-0">
+          {displayData.totalCount > 0 && (
+            <Link
+              to={`/memo/list/${gameId}`}
+              className="btn btn-outline btn-sm w-full hover:bg-primary hover:text-primary-content transition-colors"
+            >
               <FaBookOpen />
               すべてのメモを見る
             </Link>
           )}
-          <Link to={`/memo/new/${gameId}`} className="btn btn-primary btn-sm w-full">
+          <Link
+            to={`/memo/new/${gameId}`}
+            className="btn btn-primary btn-sm w-full shadow-sm hover:shadow-md transition-shadow"
+          >
             <FaPlus />
             新しいメモ
           </Link>
