@@ -534,32 +534,24 @@ export class ProcessMonitorService extends EventEmitter {
 
         // CP932からUTF-8に変換して文字化けを防ぐ
         const decodedOutput = iconv.decode(stdout as Buffer, "cp932")
-        const lines = decodedOutput.trim().split("\n")
 
-        // ヘッダー行をスキップし、空行を除外
-        const processLines = lines.slice(1).filter((line) => line.trim())
+        // 全体のCSVを一度に解析（ヘッダー付き）
+        const records = parse(decodedOutput, {
+          columns: false,
+          relax_quotes: true,
+          skip_empty_lines: true
+        })
 
-        const processes = processLines
-          .map((line) => {
-            // CSVをパース
-            const records = parse(line, {
-              columns: false,
-              relax_quotes: true,
-              skip_empty_lines: true
-            })
-
+        // ヘッダー行をスキップして処理
+        const processes = records
+          .slice(1) // ヘッダー行をスキップ
+          .map((record) => {
             // 正しくパースされたかを検証
-            if (
-              !Array.isArray(records) ||
-              records.length === 0 ||
-              !Array.isArray(records[0]) ||
-              records[0].length < 3
-            ) {
-              logger.warn(`Invalid CSV line: ${line}`)
+            if (!Array.isArray(record) || record.length < 3) {
               return undefined
             }
 
-            const [name, pidStr, fullPath] = records[0]
+            const [name, pidStr, fullPath] = record
             const pid = parseInt(pidStr, 10)
 
             // 基本的な検証（Pathがnullや空でもプロセス名があれば処理）
