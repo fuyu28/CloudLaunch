@@ -37,7 +37,7 @@ export function registerSettingsHandlers(): void {
       const processMonitor = ProcessMonitorService.getInstance()
       processMonitor.updateAutoTracking(enabled)
 
-      logger.info(`自動ゲーム検出設定を更新しました: ${enabled ? "有効" : "無効"} (即座に反映)`)
+      logger.info(`自動ゲーム検出設定を更新: ${enabled ? "有効" : "無効"}`)
 
       return { success: true }
     } catch (error) {
