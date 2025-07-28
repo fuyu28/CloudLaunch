@@ -1,4 +1,4 @@
-import { BrowserWindow, ipcMain } from "electron"
+import { BrowserWindow, ipcMain, shell } from "electron"
 
 export function registerWindowHandler(win: BrowserWindow): void {
   ipcMain.handle("minimize-window", () => {
@@ -10,5 +10,14 @@ export function registerWindowHandler(win: BrowserWindow): void {
   })
   ipcMain.handle("close-window", () => {
     win.close()
+  })
+
+  ipcMain.handle("open-folder", async (_, folderPath: string) => {
+    try {
+      await shell.openPath(folderPath)
+      return { success: true }
+    } catch {
+      return { success: false, message: "フォルダを開けませんでした" }
+    }
   })
 }

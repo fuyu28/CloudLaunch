@@ -14,6 +14,7 @@ import { processMonitorAPI } from "./api/processMonitorPreload"
 import { windowAPI } from "./api/windowPreload"
 import { chapterPreload } from "./api/chapterPreload"
 import { settingsPreloadApi } from "./api/settingsPreload"
+import { memoApi } from "./api/memoPreload"
 import { cloudDataApi } from "./api/cloudDataPreload"
 
 const api = {
@@ -31,7 +32,8 @@ const api = {
   game: launchGameAPI,
   processMonitor: processMonitorAPI,
   chapter: chapterPreload,
-  settings: settingsPreloadApi
+  settings: settingsPreloadApi,
+  memo: memoApi
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

@@ -81,6 +81,7 @@ export interface WindowAPI {
   minimize(): Promise<void>
   toggleMaximize(): Promise<void>
   close(): Promise<void>
+  openFolder(folderPath: string): Promise<{ success: boolean; message?: string }>
 }
 
 export interface MonitoringGameStatus {
@@ -132,6 +133,31 @@ export interface SettingsAPI {
   getAutoTracking(): Promise<ApiResult<boolean>>
 }
 
+// メモ型は src/types/memo.d.ts で定義されており、そちらを使用
+import type {
+  MemoType,
+  CreateMemoData,
+  UpdateMemoData,
+  CloudMemoInfo,
+  MemoSyncResult
+} from "../types/memo"
+
+export interface MemoAPI {
+  getMemosByGameId(gameId: string): Promise<ApiResult<MemoType[]>>
+  getMemoById(memoId: string): Promise<ApiResult<MemoType | null>>
+  createMemo(memoData: CreateMemoData): Promise<ApiResult<MemoType>>
+  updateMemo(memoId: string, updateData: UpdateMemoData): Promise<ApiResult<MemoType>>
+  deleteMemo(memoId: string): Promise<ApiResult<boolean>>
+  getMemoFilePath(memoId: string): Promise<ApiResult<string>>
+  getGameMemoDir(gameId: string): Promise<ApiResult<string>>
+  getAllMemos(): Promise<ApiResult<MemoType[]>>
+  getMemoRootDir(): Promise<ApiResult<string>>
+  uploadMemoToCloud(memoId: string): Promise<ApiResult<boolean>>
+  downloadMemoFromCloud(gameTitle: string, memoFileName: string): Promise<ApiResult<string>>
+  getCloudMemos(): Promise<ApiResult<CloudMemoInfo[]>>
+  syncMemosFromCloud(gameId?: string): Promise<ApiResult<MemoSyncResult>>
+}
+  
 export interface CloudDataItem {
   name: string
   totalSize: number
@@ -182,4 +208,5 @@ export interface API {
   processMonitor: ProcessMonitorAPI
   chapter: ChapterAPI
   settings: SettingsAPI
+  memo: MemoAPI
 }

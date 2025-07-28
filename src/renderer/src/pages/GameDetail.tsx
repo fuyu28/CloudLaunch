@@ -22,6 +22,7 @@ import ChapterSettingsModal from "@renderer/components/ChapterSettingsModal"
 import ChapterAddModal from "@renderer/components/ChapterAddModal"
 import PlaySessionManagementModal from "@renderer/components/PlaySessionManagementModal"
 import PlayStatusSelector from "@renderer/components/PlayStatusSelector"
+import MemoCard from "@renderer/components/MemoCard"
 import { useToastHandler } from "@renderer/hooks/useToastHandler"
 import { useOfflineMode } from "@renderer/hooks/useOfflineMode"
 
@@ -42,7 +43,7 @@ export default function GameDetail(): React.JSX.Element {
   const [refreshKey, setRefreshKey] = useState(0)
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
   const { showToast } = useToastHandler()
-  const { formatSmart, formatDate } = useTimeFormat()
+  const { formatSmart, formatDateWithTime } = useTimeFormat()
   const { isOfflineMode, checkNetworkFeature } = useOfflineMode()
 
   // ゲームデータを取得
@@ -304,10 +305,12 @@ export default function GameDetail(): React.JSX.Element {
 
                 {/* メタ情報 */}
                 <div className="flex flex-wrap text-sm text-base-content/60 gap-4 mb-6">
-                  <span>最終プレイ: {game.lastPlayed ? formatDate(game.lastPlayed) : "なし"}</span>
+                  <span>
+                    最終プレイ: {game.lastPlayed ? formatDateWithTime(game.lastPlayed) : "なし"}
+                  </span>
                   <span>総プレイ時間: {formatSmart(game.totalPlayTime ?? 0)}</span>
                   {game.playStatus === "played" && game.clearedAt && (
-                    <span>クリア日時: {formatDate(game.clearedAt)}</span>
+                    <span>クリア日時: {formatDateWithTime(game.clearedAt)}</span>
                   )}
                 </div>
               </div>
@@ -347,7 +350,7 @@ export default function GameDetail(): React.JSX.Element {
           onProcessManagement={() => setIsProcessModalOpen(true)}
         />
 
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           {/* 章表示・管理カード */}
           <ChapterDisplayCard
             key={`chapter-display-${refreshKey}`}
@@ -370,6 +373,9 @@ export default function GameDetail(): React.JSX.Element {
             onUpload={handleUploadSaveData}
             onDownload={handleDownloadSaveData}
           />
+
+          {/* メモ管理カード */}
+          <MemoCard gameId={game.id} />
         </div>
       </div>
 

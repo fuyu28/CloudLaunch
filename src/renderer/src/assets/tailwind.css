@@ -6,3 +6,178 @@
   exclude: rootscrollgutter;
 }
 @plugin 'tailwind-scrollbar';
+
+/* Memo Editor Styles */
+.memo-textarea {
+  scrollbar-width: thin;
+  scrollbar-color: oklch(var(--bc) / 0.2) transparent;
+}
+
+.memo-textarea::-webkit-scrollbar {
+  width: 8px;
+}
+
+.memo-textarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.memo-textarea::-webkit-scrollbar-thumb {
+  background-color: oklch(var(--bc) / 0.2);
+  border-radius: 4px;
+}
+
+.memo-textarea::-webkit-scrollbar-thumb:hover {
+  background-color: oklch(var(--bc) / 0.3);
+}
+
+/* MDEditor プレビュー修正（ツールバーを除外） */
+.w-md-editor-preview ul:not(.w-md-editor-toolbar ul):not(.w-md-editor-toolbar-child ul) {
+  list-style-type: disc !important;
+  list-style-position: outside !important;
+  padding-left: 1.5rem !important;
+  margin-left: 0.5rem !important;
+}
+
+.w-md-editor-preview ol:not(.w-md-editor-toolbar ol):not(.w-md-editor-toolbar-child ol) {
+  list-style-type: decimal !important;
+  list-style-position: outside !important;
+  padding-left: 1.5rem !important;
+  margin-left: 0.5rem !important;
+}
+
+.w-md-editor-preview li:not(.w-md-editor-toolbar li):not(.w-md-editor-toolbar-child li) {
+  display: list-item !important;
+  margin-bottom: 0.25rem !important;
+  text-indent: 0 !important;
+}
+
+.w-md-editor-preview ul:not(.w-md-editor-toolbar ul) ul:not(.w-md-editor-toolbar ul) {
+  list-style-type: circle !important;
+  margin-top: 0.25rem !important;
+}
+
+.w-md-editor-preview
+  ul:not(.w-md-editor-toolbar ul)
+  ul:not(.w-md-editor-toolbar ul)
+  ul:not(.w-md-editor-toolbar ul) {
+  list-style-type: square !important;
+}
+
+/* MDEditor プレビュー全体のスタイル調整 */
+.w-md-editor-preview {
+  line-height: 1.6 !important;
+}
+
+/* MDEditor コンテナでのリスト修正（プレビューコンテンツのみ） */
+.w-md-editor-preview-content ul,
+.w-md-editor-preview .wmde-markdown ul {
+  list-style: disc !important;
+  list-style-position: outside !important;
+  padding-left: 1.5rem !important;
+  margin-left: 0.5rem !important;
+}
+
+.w-md-editor-preview-content ol,
+.w-md-editor-preview .wmde-markdown ol {
+  list-style: decimal !important;
+  list-style-position: outside !important;
+  padding-left: 1.5rem !important;
+  margin-left: 0.5rem !important;
+}
+
+.w-md-editor-preview-content li,
+.w-md-editor-preview .wmde-markdown li {
+  display: list-item !important;
+  margin-bottom: 0.25rem !important;
+  text-indent: 0 !important;
+  padding-left: 0 !important;
+}
+
+.w-md-editor-preview p {
+  margin-bottom: 1rem !important;
+}
+
+.w-md-editor-preview h1,
+.w-md-editor-preview h2,
+.w-md-editor-preview h3,
+.w-md-editor-preview h4,
+.w-md-editor-preview h5,
+.w-md-editor-preview h6 {
+  margin-top: 1.5rem !important;
+  margin-bottom: 0.75rem !important;
+  font-weight: bold !important;
+}
+
+.w-md-editor-preview h1 {
+  font-size: 2rem !important;
+  border-bottom: 2px solid oklch(var(--bc) / 0.2) !important;
+  padding-bottom: 0.5rem !important;
+}
+
+.w-md-editor-preview h2 {
+  font-size: 1.5rem !important;
+  border-bottom: 1px solid oklch(var(--bc) / 0.15) !important;
+  padding-bottom: 0.25rem !important;
+}
+
+.w-md-editor-preview h3 {
+  font-size: 1.25rem !important;
+}
+
+.w-md-editor-preview blockquote {
+  border-left: 4px solid oklch(var(--primary)) !important;
+  padding-left: 1rem !important;
+  margin: 1rem 0 !important;
+  color: oklch(var(--bc) / 0.7) !important;
+  background-color: oklch(var(--b2)) !important;
+  padding: 0.75rem 1rem !important;
+  border-radius: 0.375rem !important;
+}
+
+.w-md-editor-preview code {
+  background-color: oklch(var(--b2)) !important;
+  padding: 0.125rem 0.25rem !important;
+  border-radius: 0.25rem !important;
+  font-size: 0.875rem !important;
+}
+
+.w-md-editor-preview pre {
+  background-color: oklch(var(--b2)) !important;
+  padding: 1rem !important;
+  border-radius: 0.5rem !important;
+  overflow-x: auto !important;
+  margin: 1rem 0 !important;
+}
+
+.w-md-editor-preview pre code {
+  background-color: transparent !important;
+  padding: 0 !important;
+}
+
+/* MDEditor ツールバーは元のスタイルを維持 */
+
+/* ReactMarkdown プレビュー修正 (MemoView) */
+.prose ul {
+  list-style-type: disc !important;
+  margin-left: 1.5rem !important;
+}
+
+.prose ol {
+  list-style-type: decimal !important;
+  margin-left: 1.5rem !important;
+}
+
+.prose li {
+  display: list-item !important;
+  margin-bottom: 0.25rem !important;
+}
+
+.prose ul ul {
+  list-style-type: circle !important;
+  margin-left: 1rem !important;
+}
+
+.prose ul ul ul {
+  list-style-type: square !important;
+  margin-left: 1rem !important;
+}

@@ -28,7 +28,7 @@ export default function GameCard({
         hover:shadow-xl
       "
     >
-      <Link to={`/games/${id}`}>
+      <Link to={`/game/${id}`}>
         <div className="group relative h-40 w-full bg-base-200">
           <DynamicImage
             src={imagePath || ""}

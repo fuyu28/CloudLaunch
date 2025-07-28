@@ -19,6 +19,7 @@
       "Bash(npm run lint:*)",
       "Bash(npm run build:*)",
       "Bash(npm test:*)",
+      "Bash(npx prettier:*)"
       "Bash(touch:*)"
     ],
     "deny": []

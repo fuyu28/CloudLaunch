@@ -63,7 +63,7 @@ function CloudDataCard({
   onUpload,
   onDownload
 }: CloudDataCardProps): React.JSX.Element {
-  const { formatDate } = useTimeFormat()
+  const { formatDateWithTime } = useTimeFormat()
   const { isOfflineMode, checkNetworkFeature } = useOfflineMode()
   const [cloudData, setCloudData] = useState<CloudDataInfo>({ exists: false })
   const [fileDetails, setFileDetails] = useState<CloudFileDetails | undefined>(undefined)
@@ -244,7 +244,7 @@ function CloudDataCard({
                   <FaCloudDownloadAlt className="text-success" />
                   <span className="font-medium">
                     クラウドデータが存在します
-                    {cloudData.uploadedAt && ` (${formatDate(cloudData.uploadedAt)})`}
+                    {cloudData.uploadedAt && ` (${formatDateWithTime(cloudData.uploadedAt)})`}
                   </span>
                 </div>
 
@@ -272,7 +272,7 @@ function CloudDataCard({
                           <span className="font-mono truncate flex-1 mr-2">{file.name}</span>
                           <div className="flex gap-2 text-base-content/60">
                             <span>{formatFileSize(file.size)}</span>
-                            <span>{formatDate(file.lastModified)}</span>
+                            <span>{formatDateWithTime(file.lastModified)}</span>
                           </div>
                         </div>
                       ))}
