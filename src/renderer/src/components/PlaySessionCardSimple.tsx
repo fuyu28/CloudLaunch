@@ -83,7 +83,7 @@ const PlaySessionCardSimple = memo(function PlaySessionCardSimple({
   }, [fetchSessions])
 
   return (
-    <div className="card bg-base-100 border-2 border-accent/30 shadow-sm">
+    <div className="card bg-base-100 border-2 border-base-content/10 shadow-sm">
       <div className="card-body p-4">
         {/* アクションボタン */}
         {!hiddenButtons && (

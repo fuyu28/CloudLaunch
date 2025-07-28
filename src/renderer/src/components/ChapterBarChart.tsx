@@ -122,7 +122,7 @@ const ChapterBarChart = memo(function ChapterBarChart({
 
   if (chapterStats.length === 0) {
     return (
-      <div className="card bg-base-100 shadow-xl">
+      <div className="card bg-base-100 border-2 border-base-content/10 shadow-sm">
         <div className="card-body">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
@@ -140,7 +140,7 @@ const ChapterBarChart = memo(function ChapterBarChart({
   }
 
   return (
-    <div className="card bg-base-100 border-2 border-secondary/30 shadow-sm">
+    <div className="card bg-base-100 border-2 border-base-content/10 shadow-sm">
       <div className="card-body p-4">
         {/* 単一の棒グラフ */}
         <div className="mb-6">
