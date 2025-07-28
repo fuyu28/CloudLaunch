@@ -32,7 +32,6 @@ import {
   sortOptionLabels,
   filterStateLabels
 } from "../state/settings"
-
 import type { SortOption, FilterOption } from "src/types/menu"
 
 /**

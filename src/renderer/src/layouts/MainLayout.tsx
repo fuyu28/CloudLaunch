@@ -1,4 +1,3 @@
-import PlayStatusBar from "@renderer/components/PlayStatusBar"
 import { themeAtom } from "@renderer/state/settings"
 import { useAtom } from "jotai"
 import { useRef, useEffect } from "react"
@@ -8,6 +7,8 @@ import { FiMenu, FiCloud } from "react-icons/fi"
 import { IoIosHome, IoIosSettings } from "react-icons/io"
 import { VscChromeClose, VscChromeMaximize, VscChromeMinimize } from "react-icons/vsc"
 import { Outlet, NavLink, useLocation } from "react-router-dom"
+
+import PlayStatusBar from "@renderer/components/PlayStatusBar"
 
 export default function MainLayout(): React.JSX.Element {
   const location = useLocation()

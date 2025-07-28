@@ -6,8 +6,9 @@
  * プレイ頻度の高い日ほど濃い色で表示されます。
  */
 
-import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
 import { useMemo } from "react"
+
+import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
 
 import type { PlaySessionType } from "src/types/game"
 

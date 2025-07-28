@@ -17,8 +17,9 @@
  * - React Suspenseライクなローディング表示
  */
 
-import { useImageLoader } from "@renderer/hooks/useImageLoader"
 import { memo } from "react"
+
+import { useImageLoader } from "@renderer/hooks/useImageLoader"
 
 import type { ImgHTMLAttributes } from "react"
 

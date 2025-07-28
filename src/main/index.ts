@@ -4,7 +4,6 @@ import { electronApp, optimizer, is } from "@electron-toolkit/utils"
 import { app, shell, BrowserWindow, ipcMain } from "electron"
 
 import { registerWindowHandler } from "./ipcHandlers/windowsHandler"
-
 import { registerAllHandlers } from "./registerHandlers"
 import { ProcessMonitorService } from "./service/processMonitorService"
 import { logger } from "./utils/logger"

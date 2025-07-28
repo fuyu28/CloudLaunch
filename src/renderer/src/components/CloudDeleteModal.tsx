@@ -11,8 +11,9 @@
  * - 削除/キャンセルの操作
  */
 
-import { useCloudDeleteConfirm } from "@renderer/hooks/useCloudDeleteConfirm"
 import { FiAlertTriangle } from "react-icons/fi"
+
+import { useCloudDeleteConfirm } from "@renderer/hooks/useCloudDeleteConfirm"
 
 import ConfirmModal from "./ConfirmModal"
 import type { ConfirmDetails, WarningItem } from "./ConfirmModal"

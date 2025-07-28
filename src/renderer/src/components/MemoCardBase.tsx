@@ -5,12 +5,12 @@
  * MemoCardとMemoListで共通使用されます。
  */
 
-import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
 import { memo, useMemo, useCallback } from "react"
 import { FaGamepad } from "react-icons/fa"
 
-import MemoDropdownMenu from "./MemoDropdownMenu"
+import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
 
+import MemoDropdownMenu from "./MemoDropdownMenu"
 import type { MemoType } from "src/types/memo"
 
 interface MemoCardBaseProps {

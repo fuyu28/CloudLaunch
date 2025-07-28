@@ -21,8 +21,9 @@
  * ```
  */
 
-import { handleApiError, withLoadingToast } from "@renderer/utils/errorHandler"
 import { useState, useCallback } from "react"
+
+import { handleApiError, withLoadingToast } from "@renderer/utils/errorHandler"
 
 import type { GameType } from "../../../types/game"
 import { createRemotePath } from "../../../utils"

@@ -5,9 +5,10 @@
  * GitHub草風のヒートマップと組み合わせてプレイ活動を視覚化します。
  */
 
-import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
 import { useState, useCallback, useEffect } from "react"
 import { FaPlus, FaGamepad, FaCog } from "react-icons/fa"
+
+import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
 
 import PlayHeatmap from "./PlayHeatmap"
 import type { PlaySessionType } from "src/types/game"
