@@ -6,7 +6,6 @@ import { FaArrowLeftLong } from "react-icons/fa6"
 import { useParams, useNavigate, Navigate } from "react-router-dom"
 
 import ChapterAddModal from "@renderer/components/ChapterAddModal"
-import ChapterBarChart from "@renderer/components/ChapterBarChart"
 import ChapterDisplayCard from "@renderer/components/ChapterDisplayCard"
 import ChapterSettingsModal from "@renderer/components/ChapterSettingsModal"
 import CloudDataCard from "@renderer/components/CloudDataCard"
@@ -14,9 +13,9 @@ import ConfirmModal from "@renderer/components/ConfirmModal"
 import GameInfo from "@renderer/components/GameInfo"
 import GameFormModal from "@renderer/components/GameModal"
 import MemoCard from "@renderer/components/MemoCard"
-import PlaySessionCard from "@renderer/components/PlaySessionCard"
 import PlaySessionManagementModal from "@renderer/components/PlaySessionManagementModal"
 import PlaySessionModal from "@renderer/components/PlaySessionModal"
+import PlayStatistics from "@renderer/components/PlayStatistics"
 
 import { useGameEdit } from "@renderer/hooks/useGameEdit"
 import { useGameSaveData } from "@renderer/hooks/useGameSaveData"
@@ -273,8 +272,8 @@ export default function GameDetail(): React.JSX.Element {
         戻る
       </button>
 
-      {/* 上部：ゲーム情報カード */}
-      <div className="mb-6">
+      {/* 上段：ゲーム情報カード */}
+      <div className="mb-3">
         <GameInfo
           game={game}
           isUpdatingStatus={isUpdatingStatus}
@@ -288,54 +287,43 @@ export default function GameDetail(): React.JSX.Element {
         />
       </div>
 
-      {/* 中部：章統計グラフ */}
-      <div className="mb-6">
-        <ChapterBarChart
-          key={`chapter-chart-${refreshKey}`}
-          gameId={game.id}
-          gameTitle={game.title}
+      {/* 中段：プレイ統計 */}
+      <div className="mb-4">
+        <PlayStatistics
+          game={game}
+          refreshKey={refreshKey}
+          onAddPlaySession={handleOpenPlaySessionModal}
+          onOpenProcessManagement={() => setIsProcessModalOpen(true)}
         />
       </div>
 
-      {/* 下部：機能カード群 */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        {/* プレイセッション管理カード */}
-        <PlaySessionCard
-          key={`play-session-${refreshKey}`}
+      {/* 下段：その他の管理機能 */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* 章表示・管理カード */}
+        <ChapterDisplayCard
+          key={`chapter-display-${refreshKey}`}
           gameId={game.id}
           gameTitle={game.title}
-          onAddSession={handleOpenPlaySessionModal}
-          onSessionUpdated={refreshGameData}
-          onProcessManagement={() => setIsProcessModalOpen(true)}
+          currentChapterId={game.currentChapter || undefined}
+          onChapterSettings={handleOpenChapterSettings}
+          onAddChapter={handleOpenChapterAdd}
+          onChapterChange={refreshGameData}
         />
 
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          {/* 章表示・管理カード */}
-          <ChapterDisplayCard
-            key={`chapter-display-${refreshKey}`}
-            gameId={game.id}
-            gameTitle={game.title}
-            currentChapterId={game.currentChapter || undefined}
-            onChapterSettings={handleOpenChapterSettings}
-            onAddChapter={handleOpenChapterAdd}
-            onChapterChange={refreshGameData}
-          />
+        {/* クラウドデータ管理カード */}
+        <CloudDataCard
+          gameId={game.id}
+          gameTitle={game.title}
+          hasSaveFolder={!!game.saveFolderPath}
+          isValidCreds={isValidCreds}
+          isUploading={isUploading}
+          isDownloading={isDownloading}
+          onUpload={handleUploadSaveData}
+          onDownload={handleDownloadSaveData}
+        />
 
-          {/* クラウドデータ管理カード */}
-          <CloudDataCard
-            gameId={game.id}
-            gameTitle={game.title}
-            hasSaveFolder={!!game.saveFolderPath}
-            isValidCreds={isValidCreds}
-            isUploading={isUploading}
-            isDownloading={isDownloading}
-            onUpload={handleUploadSaveData}
-            onDownload={handleDownloadSaveData}
-          />
-
-          {/* メモ管理カード */}
-          <MemoCard gameId={game.id} />
-        </div>
+        {/* メモ管理カード */}
+        <MemoCard gameId={game.id} />
       </div>
 
       {/* モーダル */}

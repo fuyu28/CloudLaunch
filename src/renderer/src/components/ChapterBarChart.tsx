@@ -140,14 +140,8 @@ const ChapterBarChart = memo(function ChapterBarChart({
   }
 
   return (
-    <div className="card bg-base-100 shadow-xl">
-      <div className="card-body">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <FaChartBar className="text-info" />
-            <h3 className="card-title">章別プレイ統計</h3>
-          </div>
-        </div>
+    <div className="card bg-base-100 border-2 border-secondary/30 shadow-sm">
+      <div className="card-body p-4">
         {/* 単一の棒グラフ */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
