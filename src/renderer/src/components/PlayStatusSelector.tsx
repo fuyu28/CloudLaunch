@@ -19,7 +19,6 @@
  * ```
  */
 
-import React from "react"
 import { FaChevronDown, FaGamepad, FaPlay, FaCheck } from "react-icons/fa"
 
 /**

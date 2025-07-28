@@ -6,12 +6,18 @@
  */
 
 import { ipcMain } from "electron"
-import { prisma } from "../db"
-import { ApiResult } from "../../types/result"
-import { Chapter, ChapterStats, ChapterCreateInput, ChapterUpdateInput } from "../../types/chapter"
-import { logger } from "../utils/logger"
-import { chapterCreateSchema, chapterUpdateSchema, chapterIdSchema } from "../../schemas/chapter"
 import { ZodError } from "zod"
+
+import { chapterCreateSchema, chapterUpdateSchema, chapterIdSchema } from "../../schemas/chapter"
+import type {
+  Chapter,
+  ChapterStats,
+  ChapterCreateInput,
+  ChapterUpdateInput
+} from "../../types/chapter"
+import type { ApiResult } from "../../types/result"
+import { prisma } from "../db"
+import { logger } from "../utils/logger"
 
 /**
  * ゲームの章一覧を取得

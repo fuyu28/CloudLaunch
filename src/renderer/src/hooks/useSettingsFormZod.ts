@@ -26,10 +26,11 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react"
 import toast from "react-hot-toast"
-import { credsSchema } from "../../../schemas/credentials"
-import type { ApiResult } from "../../../types/result"
-import type { Creds } from "../../../types/creds"
 import { ZodError } from "zod"
+
+import { credsSchema } from "../../../schemas/credentials"
+import type { Creds } from "../../../types/creds"
+import type { ApiResult } from "../../../types/result"
 
 /**
  * 設定フォームデータの型定義（Zodスキーマから生成）

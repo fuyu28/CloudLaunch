@@ -11,10 +11,10 @@
  * - ローディング状態の管理
  */
 
-import React from "react"
 import { FiFolder, FiFile } from "react-icons/fi"
-import type { CloudDataItem, CloudFileDetail } from "@renderer/hooks/useCloudData"
+
 import { formatFileSize, formatDate } from "../../../utils/cloudUtils"
+import type { CloudDataItem, CloudFileDetail } from "@renderer/hooks/useCloudData"
 
 /**
  * ファイル詳細モーダルのプロパティ

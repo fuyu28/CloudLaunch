@@ -5,15 +5,16 @@
  * react-markdownを使用してmarkdownを適切にレンダリングします。
  */
 
-import React, { useEffect, useState, useCallback } from "react"
-import { useParams, Link, useNavigate } from "react-router-dom"
-import { useMemoNavigation } from "@renderer/hooks/useMemoNavigation"
-import ReactMarkdown from "react-markdown"
-import { FaArrowLeft, FaEdit, FaTrash, FaExternalLinkAlt } from "react-icons/fa"
-import { useToastHandler } from "@renderer/hooks/useToastHandler"
-import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
-import type { MemoType } from "src/types/memo"
 import ConfirmModal from "@renderer/components/ConfirmModal"
+import { useMemoNavigation } from "@renderer/hooks/useMemoNavigation"
+import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
+import { useToastHandler } from "@renderer/hooks/useToastHandler"
+import { useEffect, useState, useCallback } from "react"
+import { FaArrowLeft, FaEdit, FaTrash, FaExternalLinkAlt } from "react-icons/fa"
+import ReactMarkdown from "react-markdown"
+import { useParams, Link, useNavigate } from "react-router-dom"
+
+import type { MemoType } from "src/types/memo"
 
 export default function MemoView(): React.JSX.Element {
   const { memoId } = useParams<{ memoId: string }>()

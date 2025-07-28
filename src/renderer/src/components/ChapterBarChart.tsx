@@ -5,10 +5,11 @@
  * 各章のプレイ時間の割合を視覚的に確認できます。
  */
 
+import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
 import { useEffect, useState } from "react"
 import { FaChartBar } from "react-icons/fa"
-import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
-import { ChapterStats } from "../../../types/chapter"
+
+import type { ChapterStats } from "../../../types/chapter"
 
 interface ChapterBarChartProps {
   /** ゲームID */

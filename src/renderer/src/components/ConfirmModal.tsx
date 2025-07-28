@@ -11,8 +11,8 @@
  * - 柔軟なボタンスタイル（primary/error対応）
  */
 
-import React from "react"
 import { FiAlertTriangle } from "react-icons/fi"
+
 import { BaseModal } from "./BaseModal"
 
 /**

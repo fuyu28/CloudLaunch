@@ -12,7 +12,9 @@
 
 import { useState, useEffect, useCallback } from "react"
 import toast from "react-hot-toast"
-import { DAISYUI_THEMES, ThemeName } from "../constants/themes"
+
+import type { ThemeName } from "../constants/themes"
+import { DAISYUI_THEMES } from "../constants/themes"
 
 /**
  * テーマフックの戻り値

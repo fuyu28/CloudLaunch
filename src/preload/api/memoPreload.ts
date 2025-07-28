@@ -7,8 +7,15 @@
  */
 
 import { ipcRenderer } from "electron"
+
+import type {
+  MemoType,
+  CreateMemoData,
+  UpdateMemoData,
+  CloudMemoInfo,
+  MemoSyncResult
+} from "../../types/memo"
 import type { ApiResult } from "../../types/result"
-import type { MemoType, CreateMemoData, UpdateMemoData } from "../../types/memo"
 
 export const memoApi = {
   /**
@@ -117,7 +124,7 @@ export const memoApi = {
    * クラウドストレージからメモ一覧を取得します
    * @returns クラウドメモ一覧
    */
-  getCloudMemos: async (): Promise<ApiResult<import("../../types/memo").CloudMemoInfo[]>> => {
+  getCloudMemos: async (): Promise<ApiResult<CloudMemoInfo[]>> => {
     return await ipcRenderer.invoke("memo:getCloudMemos")
   },
 
@@ -126,9 +133,7 @@ export const memoApi = {
    * @param gameId 特定のゲームのみ同期する場合のゲームID（オプション）
    * @returns 同期結果
    */
-  syncMemosFromCloud: async (
-    gameId?: string
-  ): Promise<ApiResult<import("../../types/memo").MemoSyncResult>> => {
+  syncMemosFromCloud: async (gameId?: string): Promise<ApiResult<MemoSyncResult>> => {
     return await ipcRenderer.invoke("memo:syncMemosFromCloud", gameId)
   }
 }

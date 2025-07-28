@@ -22,7 +22,6 @@
  * ```
  */
 
-import React from "react"
 import { MESSAGES } from "../../../constants"
 
 /**

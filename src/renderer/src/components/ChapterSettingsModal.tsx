@@ -7,9 +7,10 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react"
 import { FaEdit, FaTrash, FaChevronUp, FaChevronDown, FaTimes, FaSave } from "react-icons/fa"
-import { Chapter } from "../../../types/chapter"
+
 import ConfirmModal from "./ConfirmModal"
 import { chapterUpdateSchema } from "../../../schemas/chapter"
+import type { Chapter } from "../../../types/chapter"
 import { useZodValidation } from "../hooks/useZodValidation"
 
 interface ChapterSettingsModalProps {

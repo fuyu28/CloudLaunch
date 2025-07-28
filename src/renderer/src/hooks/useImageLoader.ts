@@ -12,7 +12,8 @@
 
 import { useEffect, useState } from "react"
 import toast from "react-hot-toast"
-import { ApiResult } from "src/types/result"
+
+import type { ApiResult } from "src/types/result"
 
 /**
  * 画像読み込み状態の型定義

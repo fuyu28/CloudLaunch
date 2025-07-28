@@ -15,12 +15,13 @@
  * - SettingsFormField コンポーネント
  */
 
-import React, { useEffect } from "react"
-import { useSettingsFormZod } from "../hooks/useSettingsFormZod"
+import { useEffect } from "react"
+import { FaCheck, FaSyncAlt, FaTimes } from "react-icons/fa"
+
+import SettingsFormField from "./SettingsFormField"
 import { useConnectionStatus } from "../hooks/useConnectionStatus"
 import { useOfflineMode } from "../hooks/useOfflineMode"
-import { FaCheck, FaSyncAlt, FaTimes } from "react-icons/fa"
-import SettingsFormField from "./SettingsFormField"
+import { useSettingsFormZod } from "../hooks/useSettingsFormZod"
 import { getOfflineDisabledClasses } from "../utils/offlineUtils"
 
 /**

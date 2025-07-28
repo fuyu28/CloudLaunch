@@ -38,9 +38,10 @@ jest.mock("electron", () => ({
 }))
 
 import { ipcMain } from "electron"
-import { registerDatabaseHandlers } from "../databaseHandlers"
+
 import type { FilterOption, SortOption } from "../../../types/menu"
 import { logger } from "../../utils/logger"
+import { registerDatabaseHandlers } from "../databaseHandlers"
 
 describe("databaseHandlers", () => {
   // モックされたIPC handlers

@@ -21,8 +21,6 @@
  * ```
  */
 
-import React from "react"
-
 /**
  * 設定フォームフィールドコンポーネントのprops
  */

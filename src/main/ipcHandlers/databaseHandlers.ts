@@ -12,18 +12,20 @@
  * ユーザーフレンドリーなメッセージを返します。
  */
 
+import { Prisma } from "@prisma/client"
 import { ipcMain } from "electron"
-import { prisma } from "../db"
-import { PlayStatus, Prisma } from "@prisma/client"
-import type { FilterOption, SortOption } from "../../types/menu"
-import type { InputGameData, GameType, PlaySessionType } from "../../types/game"
-import { ApiResult } from "../../types/result"
-import { logger } from "../utils/logger"
-import { MESSAGES } from "../../constants"
-import { ensureDefaultChapter } from "./chapterHandlers"
-import { transformGame, transformGames, transformPlaySessions } from "../utils/dataTransform"
-import { gameFormSchema } from "../../schemas/game"
 import { ZodError } from "zod"
+
+import { ensureDefaultChapter } from "./chapterHandlers"
+import { MESSAGES } from "../../constants"
+import { gameFormSchema } from "../../schemas/game"
+import type { InputGameData, GameType, PlaySessionType } from "../../types/game"
+import type { FilterOption, SortOption } from "../../types/menu"
+import type { ApiResult } from "../../types/result"
+import { prisma } from "../db"
+import { transformGame, transformGames, transformPlaySessions } from "../utils/dataTransform"
+import { logger } from "../utils/logger"
+import type { PlayStatus } from "@prisma/client"
 
 type GameUpdateData = {
   title: string

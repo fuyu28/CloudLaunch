@@ -20,9 +20,9 @@
  * ```
  */
 
-import React, { useState, useEffect, useRef } from "react"
-import { FaClock, FaEdit, FaPlay, FaStop, FaCheck, FaTimes } from "react-icons/fa"
 import { useTimeFormat, timeUtils } from "@renderer/hooks/useTimeFormat"
+import { useState, useEffect, useRef } from "react"
+import { FaClock, FaEdit, FaPlay, FaStop, FaCheck, FaTimes } from "react-icons/fa"
 
 /**
  * プレイセッション追加モーダルのprops

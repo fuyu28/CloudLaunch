@@ -15,9 +15,9 @@
  * - 分離されたコンポーネント
  */
 
-import React, { useState } from "react"
 import GeneralSettings from "@renderer/components/GeneralSettings"
 import R2S3Settings from "@renderer/components/R2S3Settings"
+import { useState } from "react"
 
 type TabType = "general" | "r2s3"
 

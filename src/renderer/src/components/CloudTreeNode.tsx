@@ -4,14 +4,10 @@
  * ツリービューでのディレクトリ・ファイル表示とインタラクション機能を提供します。
  */
 
-import React from "react"
 import { FiFolder, FiFile, FiTrash2, FiChevronRight, FiChevronDown } from "react-icons/fi"
-import {
-  CloudDirectoryNode,
-  formatFileSize,
-  formatDate,
-  countFilesRecursively
-} from "../../../utils/cloudUtils"
+
+import type { CloudDirectoryNode } from "../../../utils/cloudUtils"
+import { formatFileSize, formatDate, countFilesRecursively } from "../../../utils/cloudUtils"
 
 /**
  * ツリーノードコンポーネントのプロパティ

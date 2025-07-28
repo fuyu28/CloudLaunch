@@ -12,10 +12,11 @@
 import { ipcMain } from "electron"
 import Store from "electron-store"
 import { ZodError } from "zod"
-import { logger } from "../utils/logger"
-import ProcessMonitorService from "../service/processMonitorService"
-import { ApiResult } from "../../types/result"
+
 import { autoTrackingSettingsSchema } from "../../schemas/settings"
+import type { ApiResult } from "../../types/result"
+import ProcessMonitorService from "../service/processMonitorService"
+import { logger } from "../utils/logger"
 
 const store = new Store()
 

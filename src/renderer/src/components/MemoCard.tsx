@@ -5,14 +5,16 @@
  * メモ一覧への遷移と簡単なメモ情報を表示します。
  */
 
-import React, { useEffect, useState, useCallback, useMemo } from "react"
-import { Link } from "react-router-dom"
-import { FaBookOpen, FaPlus } from "react-icons/fa"
-import type { MemoType } from "src/types/memo"
 import { useDropdownMenu } from "@renderer/hooks/useDropdownMenu"
 import { useMemoOperations } from "@renderer/hooks/useMemoOperations"
-import MemoCardBase from "./MemoCardBase"
+import { useEffect, useState, useCallback, useMemo } from "react"
+import { FaBookOpen, FaPlus } from "react-icons/fa"
+import { Link } from "react-router-dom"
+
 import ConfirmModal from "./ConfirmModal"
+import MemoCardBase from "./MemoCardBase"
+
+import type { MemoType } from "src/types/memo"
 
 interface MemoCardProps {
   gameId: string

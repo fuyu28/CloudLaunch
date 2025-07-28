@@ -1,6 +1,7 @@
 import { ipcRenderer } from "electron"
-import { ValidatePathResult } from "../../types/file"
-import { ApiResult } from "../../types/result"
+
+import type { ValidatePathResult } from "../../types/file"
+import type { ApiResult } from "../../types/result"
 
 export const fileAPI = {
   selectFile: (filters: Electron.FileFilter[]): Promise<ApiResult<string | undefined>> =>

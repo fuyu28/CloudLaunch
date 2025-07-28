@@ -9,9 +9,11 @@
  * - セキュリティ機能（パス検証、リミット制御）
  */
 
-import { ListObjectsV2Command, DeleteObjectsCommand, S3Client } from "@aws-sdk/client-s3"
+import { ListObjectsV2Command, DeleteObjectsCommand } from "@aws-sdk/client-s3"
+
 import { CONFIG } from "../../constants/config"
 import { logger } from "../utils/logger"
+import type { S3Client } from "@aws-sdk/client-s3"
 
 /**
  * クラウドストレージサービス専用エラークラス

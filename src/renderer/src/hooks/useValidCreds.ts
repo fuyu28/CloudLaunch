@@ -15,9 +15,9 @@
  * ```
  */
 
+import { isValidCredsAtom } from "@renderer/state/credentials"
 import { useSetAtom } from "jotai"
 import { useCallback } from "react"
-import { isValidCredsAtom } from "@renderer/state/credentials"
 
 /**
  * 認証情報検証フック

@@ -24,12 +24,14 @@
  * - HTTP Content-Typeヘッダーの検証（Web）
  */
 
-import { ipcMain } from "electron"
-import path from "path"
 import fs from "fs/promises"
-import { ApiResult } from "../../types/result"
-import { logger } from "../utils/logger"
+import path from "path"
+
+import { ipcMain } from "electron"
+
 import { MESSAGES } from "../../constants"
+import type { ApiResult } from "../../types/result"
+import { logger } from "../utils/logger"
 
 const mimeMap: Record<string, string> = {
   png: "image/png",

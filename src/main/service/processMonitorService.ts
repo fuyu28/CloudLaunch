@@ -19,16 +19,18 @@
  * ```
  */
 
-import path from "path"
+import { exec } from "child_process"
 import { EventEmitter } from "events"
-import Store from "electron-store"
-import psList from "ps-list"
+import path from "path"
+import { promisify } from "util"
+
 import { parse } from "csv-parse/sync"
+import Store from "electron-store"
+import * as iconv from "iconv-lite"
+import psList from "ps-list"
+
 import { prisma } from "../db"
 import { logger } from "../utils/logger"
-import { exec } from "child_process"
-import * as iconv from "iconv-lite"
-import { promisify } from "util"
 
 const execAsync = promisify(exec)
 

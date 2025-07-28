@@ -7,7 +7,8 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { FaBook, FaChevronLeft, FaChevronRight, FaPlus, FaCog } from "react-icons/fa"
-import { Chapter } from "../../../types/chapter"
+
+import type { Chapter } from "../../../types/chapter"
 
 interface ChapterDisplayCardProps {
   /** ゲームID */

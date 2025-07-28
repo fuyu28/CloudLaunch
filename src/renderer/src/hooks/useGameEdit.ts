@@ -28,11 +28,12 @@
  * ```
  */
 
-import { useState, useCallback } from "react"
-import { NavigateFunction } from "react-router-dom"
 import { handleApiError, showSuccessToast } from "@renderer/utils/errorHandler"
+import { useState, useCallback } from "react"
+
 import type { GameType, InputGameData } from "../../../types/game"
 import type { ApiResult } from "../../../types/result"
+import type { NavigateFunction } from "react-router-dom"
 
 type SetterOrUpdater<Value> = (value: Value | ((prev: Value) => Value)) => void
 

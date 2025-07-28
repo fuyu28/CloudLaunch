@@ -1,4 +1,6 @@
-import { BrowserWindow, ipcMain, shell } from "electron"
+import { ipcMain, shell } from "electron"
+
+import type { BrowserWindow } from "electron"
 
 export function registerWindowHandler(win: BrowserWindow): void {
   ipcMain.handle("minimize-window", () => {

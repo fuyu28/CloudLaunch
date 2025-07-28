@@ -4,15 +4,11 @@
  * カードビューでのクラウドデータアイテム表示とアクション機能を提供します。
  */
 
-import React from "react"
 import { FiFolder, FiFile, FiTrash2 } from "react-icons/fi"
-import {
-  formatFileSize,
-  formatDate,
-  countFilesRecursively,
-  CloudDirectoryNode
-} from "../../../utils/cloudUtils"
-import { CloudDataItem } from "@renderer/hooks/useCloudData"
+
+import type { CloudDirectoryNode } from "../../../utils/cloudUtils"
+import { formatFileSize, formatDate, countFilesRecursively } from "../../../utils/cloudUtils"
+import type { CloudDataItem } from "@renderer/hooks/useCloudData"
 
 /**
  * クラウドデータアイテムカードのプロパティ

@@ -5,8 +5,8 @@
  * バックエンドとフロントエンド間のデータ変換を行います。
  */
 
-import type { Game, PlaySession, Upload } from "@prisma/client"
 import type { GameType, PlaySessionType } from "../../types/game.d"
+import type { Game, PlaySession, Upload } from "@prisma/client"
 
 /**
  * nullをundefinedに変換するヘルパー関数

@@ -13,11 +13,12 @@
  */
 
 import Store from "electron-store"
-import type { Creds } from "../../types/creds"
-import { ApiResult } from "../../types/result"
 import keytar from "keytar"
-import { logger } from "../utils/logger"
+
 import { MESSAGES } from "../../constants/messages"
+import type { Creds } from "../../types/creds"
+import type { ApiResult } from "../../types/result"
+import { logger } from "../utils/logger"
 
 interface StoreSchema {
   bucketName: string

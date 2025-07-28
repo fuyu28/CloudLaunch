@@ -17,9 +17,10 @@
  * - DaisyUI コンポーネント
  */
 
-import React from "react"
 import { useAtom } from "jotai"
 import toast from "react-hot-toast"
+
+import { DAISYUI_THEMES } from "../constants/themes"
 import {
   themeAtom,
   changeThemeAtom,
@@ -31,7 +32,7 @@ import {
   sortOptionLabels,
   filterStateLabels
 } from "../state/settings"
-import { DAISYUI_THEMES } from "../constants/themes"
+
 import type { SortOption, FilterOption } from "src/types/menu"
 
 /**

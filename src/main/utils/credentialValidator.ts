@@ -11,12 +11,12 @@
  * - 認証情報の完全性チェック
  */
 
-import { S3Client } from "@aws-sdk/client-s3"
+import { MESSAGES } from "../../constants"
+import type { Creds as Credential } from "../../types/creds"
+import type { ApiResult } from "../../types/result"
 import { createR2Client } from "../r2Client"
 import { getCredential } from "../service/credentialService"
-import { ApiResult } from "../../types/result"
-import { Creds as Credential } from "../../types/creds"
-import { MESSAGES } from "../../constants"
+import type { S3Client } from "@aws-sdk/client-s3"
 
 /**
  * 認証情報検証結果の型定義

@@ -1,6 +1,6 @@
-import { ApiResult } from "../../types/result"
 import { logger } from "./logger"
 import { MESSAGES } from "../../constants"
+import type { ApiResult } from "../../types/result"
 
 export interface ErrorInfo {
   code: string

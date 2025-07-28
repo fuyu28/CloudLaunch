@@ -12,12 +12,13 @@
 /// <reference types="@testing-library/jest-dom" />
 
 import { renderHook, act } from "@testing-library/react"
+
+import type { API } from "../../../../preload/preload.d"
+import type { InputGameData, GameType } from "../../../../types/game"
+import type { FilterOption, SortOption } from "../../../../types/menu"
+import type { ApiResult } from "../../../../types/result"
 import { useGameActions } from "../useGameActions"
 import { useLoadingState } from "../useLoadingState"
-import type { InputGameData, GameType } from "../../../../types/game"
-import type { ApiResult } from "../../../../types/result"
-import type { FilterOption, SortOption } from "../../../../types/menu"
-import type { API } from "../../../../preload/preload.d"
 
 const mockUseLoadingState = useLoadingState as jest.MockedFunction<typeof useLoadingState>
 

@@ -1,11 +1,23 @@
-import { Game } from "@prisma/client"
+import type {
+  Chapter,
+  ChapterStats,
+  ChapterCreateInput,
+  ChapterUpdateInput
+} from "../types/chapter"
 import type { Creds } from "../types/creds"
-import { AwsSdkError } from "../types/error"
-import { FilterOption, SortOption } from "../types/menu"
-import { InputGameData, PlaySessionType } from "../types/game"
-import { ApiResult } from "../types/result"
-import { ValidatePathResult } from "../types/file"
-import { Chapter, ChapterStats, ChapterCreateInput, ChapterUpdateInput } from "../types/chapter"
+import type { AwsSdkError } from "../types/error"
+import type { ValidatePathResult } from "../types/file"
+import type { InputGameData, PlaySessionType } from "../types/game"
+import type {
+  MemoType,
+  CreateMemoData,
+  UpdateMemoData,
+  CloudMemoInfo,
+  MemoSyncResult
+} from "../types/memo"
+import type { FilterOption, SortOption } from "../types/menu"
+import type { ApiResult } from "../types/result"
+import type { Game } from "@prisma/client"
 
 export interface FileAPI {
   selectFile(filters: Electron.FileFilter[]): Promise<ApiResult<string | undefined>>
@@ -134,13 +146,6 @@ export interface SettingsAPI {
 }
 
 // メモ型は src/types/memo.d.ts で定義されており、そちらを使用
-import type {
-  MemoType,
-  CreateMemoData,
-  UpdateMemoData,
-  CloudMemoInfo,
-  MemoSyncResult
-} from "../types/memo"
 
 export interface MemoAPI {
   getMemosByGameId(gameId: string): Promise<ApiResult<MemoType[]>>
@@ -157,7 +162,7 @@ export interface MemoAPI {
   getCloudMemos(): Promise<ApiResult<CloudMemoInfo[]>>
   syncMemosFromCloud(gameId?: string): Promise<ApiResult<MemoSyncResult>>
 }
-  
+
 export interface CloudDataItem {
   name: string
   totalSize: number

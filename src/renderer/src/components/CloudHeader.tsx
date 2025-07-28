@@ -11,8 +11,8 @@
  * - ローディング状態の表示
  */
 
-import React from "react"
 import { FiTrash2, FiRefreshCw, FiCloud, FiFolder, FiFolderPlus } from "react-icons/fi"
+
 import type { CloudDataItem, CloudDirectoryNode } from "@renderer/hooks/useCloudData"
 
 /**

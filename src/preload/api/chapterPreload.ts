@@ -6,8 +6,14 @@
  */
 
 import { ipcRenderer } from "electron"
-import { ApiResult } from "../../types/result"
-import { Chapter, ChapterStats, ChapterCreateInput, ChapterUpdateInput } from "../../types/chapter"
+
+import type {
+  Chapter,
+  ChapterStats,
+  ChapterCreateInput,
+  ChapterUpdateInput
+} from "../../types/chapter"
+import type { ApiResult } from "../../types/result"
 
 export const chapterPreload = {
   /**

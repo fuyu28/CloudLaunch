@@ -5,9 +5,8 @@
  * ゲーム選択機能付きで、任意のゲームに対してメモを作成できます。
  */
 
-import React from "react"
-import { useNavigate, useSearchParams } from "react-router-dom"
 import MemoForm from "@renderer/components/MemoForm"
+import { useNavigate, useSearchParams } from "react-router-dom"
 
 export default function MemoCreate(): React.JSX.Element {
   const navigate = useNavigate()

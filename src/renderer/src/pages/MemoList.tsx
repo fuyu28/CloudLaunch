@@ -5,28 +5,27 @@
  * サイドメニューからアクセス可能な全メモ閲覧画面です。
  */
 
-import React, { useEffect, useState, useCallback, useMemo } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import ConfirmModal from "@renderer/components/ConfirmModal"
+import FloatingButton from "@renderer/components/FloatingButton"
+import MemoCardBase from "@renderer/components/MemoCardBase"
+import { useDebounce } from "@renderer/hooks/useDebounce"
+import { useDropdownMenu } from "@renderer/hooks/useDropdownMenu"
+import { useMemoOperations } from "@renderer/hooks/useMemoOperations"
+import { useToastHandler } from "@renderer/hooks/useToastHandler"
+import { useEffect, useState, useCallback, useMemo } from "react"
 import {
   FaPlus,
   FaFolder,
-  FaFilter,
   FaSearch,
   FaSortAmountDown,
   FaSortAmountUp,
-  FaSort,
   FaSync
 } from "react-icons/fa"
-import { useToastHandler } from "@renderer/hooks/useToastHandler"
-import { useDebounce } from "@renderer/hooks/useDebounce"
-import type { MemoType } from "src/types/memo"
-import type { GameType } from "src/types/game"
-import FloatingButton from "@renderer/components/FloatingButton"
-import { useDropdownMenu } from "@renderer/hooks/useDropdownMenu"
-import { useMemoOperations } from "@renderer/hooks/useMemoOperations"
-import MemoCardBase from "@renderer/components/MemoCardBase"
-import ConfirmModal from "@renderer/components/ConfirmModal"
 import { VscChromeClose } from "react-icons/vsc"
+import { Link, useNavigate } from "react-router-dom"
+
+import type { GameType } from "src/types/game"
+import type { MemoType } from "src/types/memo"
 
 type SortOption = "updatedAt" | "createdAt" | "title"
 type SortDirection = "asc" | "desc"

@@ -12,8 +12,9 @@
 /// <reference types="@testing-library/jest-dom" />
 
 import { renderHook, act } from "@testing-library/react"
-import { useToastHandler, executeWithToast } from "../useToastHandler"
 import toast from "react-hot-toast"
+
+import { useToastHandler, executeWithToast } from "../useToastHandler"
 
 // React Hot Toastのモック
 jest.mock("react-hot-toast", () => ({

@@ -31,7 +31,9 @@
  */
 
 import { useState, useCallback, useMemo } from "react"
-import { ZodSchema, ZodError } from "zod"
+import { ZodError } from "zod"
+
+import type { ZodSchema } from "zod"
 
 /**
  * バリデーション状態の型定義

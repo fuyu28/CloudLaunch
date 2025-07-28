@@ -5,7 +5,6 @@
  * MemoCardとMemoListで共通使用されます。
  */
 
-import React from "react"
 import { FaEdit, FaTrash, FaEllipsisV, FaSync } from "react-icons/fa"
 
 interface MemoDropdownMenuProps {

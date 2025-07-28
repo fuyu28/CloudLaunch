@@ -6,9 +6,10 @@
  * プレイ頻度の高い日ほど濃い色で表示されます。
  */
 
-import { useMemo } from "react"
 import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
-import { PlaySessionType } from "src/types/game"
+import { useMemo } from "react"
+
+import type { PlaySessionType } from "src/types/game"
 
 interface PlayHeatmapProps {
   /** プレイセッションデータの配列 */

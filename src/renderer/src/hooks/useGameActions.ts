@@ -10,11 +10,12 @@
  */
 
 import { useCallback } from "react"
+
 import { useLoadingState } from "./useLoadingState"
 import { MESSAGES } from "../../../constants"
 import type { InputGameData, GameType } from "../../../types/game"
-import type { ApiResult } from "../../../types/result"
 import type { SortOption, FilterOption } from "../../../types/menu"
+import type { ApiResult } from "../../../types/result"
 
 /// <reference types="../../../preload/index.d.ts" />
 

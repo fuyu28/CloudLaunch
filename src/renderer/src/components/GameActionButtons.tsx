@@ -19,10 +19,9 @@
  * ```
  */
 
-import React from "react"
+import { FaTrash } from "react-icons/fa"
 import { IoIosPlay } from "react-icons/io"
 import { MdEdit } from "react-icons/md"
-import { FaTrash } from "react-icons/fa"
 
 /**
  * ゲーム基本操作ボタンコンポーネントのprops
