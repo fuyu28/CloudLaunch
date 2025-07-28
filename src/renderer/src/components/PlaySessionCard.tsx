@@ -5,7 +5,7 @@
  * GitHub草風のヒートマップと組み合わせてプレイ活動を視覚化します。
  */
 
-import { useState, useCallback, useEffect } from "react"
+import { useState, useCallback, useEffect, useMemo, memo } from "react"
 import { FaPlus, FaGamepad, FaCog } from "react-icons/fa"
 
 import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
@@ -32,7 +32,7 @@ interface PlaySessionCardProps {
  * @param props - コンポーネントのプロパティ
  * @returns プレイセッションカードコンポーネント
  */
-export default function PlaySessionCard({
+const PlaySessionCard = memo(function PlaySessionCard({
   gameId,
   onAddSession,
   onProcessManagement
@@ -40,13 +40,33 @@ export default function PlaySessionCard({
   const { formatSmart } = useTimeFormat()
   const [sessions, setSessions] = useState<PlaySessionType[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [stats, setStats] = useState({
-    totalSessions: 0,
-    totalTime: 0,
-    averageTime: 0,
-    thisWeekTime: 0,
-    thisMonthTime: 0
-  })
+
+  // 統計情報をメモ化して計算
+  const stats = useMemo(() => {
+    const now = new Date()
+    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+    const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+
+    const totalSessions = sessions.length
+    const totalTime = sessions.reduce((sum, session) => sum + session.duration, 0)
+    const averageTime = totalSessions > 0 ? totalTime / totalSessions : 0
+
+    const thisWeekTime = sessions
+      .filter((session) => new Date(session.playedAt) >= oneWeekAgo)
+      .reduce((sum, session) => sum + session.duration, 0)
+
+    const thisMonthTime = sessions
+      .filter((session) => new Date(session.playedAt) >= oneMonthAgo)
+      .reduce((sum, session) => sum + session.duration, 0)
+
+    return {
+      totalSessions,
+      totalTime,
+      averageTime,
+      thisWeekTime,
+      thisMonthTime
+    }
+  }, [sessions])
 
   // プレイセッションデータを取得
   const fetchSessions = useCallback(async () => {
@@ -58,31 +78,6 @@ export default function PlaySessionCard({
 
       if (result.success && result.data) {
         setSessions(result.data)
-
-        // 統計を計算
-        const now = new Date()
-        const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-        const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
-
-        const totalSessions = result.data.length
-        const totalTime = result.data.reduce((sum, session) => sum + session.duration, 0)
-        const averageTime = totalSessions > 0 ? Math.round(totalTime / totalSessions) : 0
-
-        const thisWeekTime = result.data
-          .filter((session) => new Date(session.playedAt) >= oneWeekAgo)
-          .reduce((sum, session) => sum + session.duration, 0)
-
-        const thisMonthTime = result.data
-          .filter((session) => new Date(session.playedAt) >= oneMonthAgo)
-          .reduce((sum, session) => sum + session.duration, 0)
-
-        setStats({
-          totalSessions,
-          totalTime,
-          averageTime,
-          thisWeekTime,
-          thisMonthTime
-        })
       }
     } catch (error) {
       console.error("プレイセッション取得エラー:", error)
@@ -154,4 +149,6 @@ export default function PlaySessionCard({
       </div>
     </div>
   )
-}
+})
+
+export default PlaySessionCard

@@ -28,7 +28,7 @@
  * ```
  */
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useMemo } from "react"
 
 import { handleApiError, showSuccessToast } from "@renderer/utils/errorHandler"
 
@@ -83,28 +83,31 @@ export function useGameEdit(
   navigate: NavigateFunction,
   setFilteredGames: SetterOrUpdater<GameType[]>
 ): GameEditResult {
-  const [editData, setEditData] = useState<InputGameData | undefined>(undefined)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [isLaunching, setIsLaunching] = useState(false)
 
-  /**
-   * 編集モーダルを開く
-   */
-  const openEdit = useCallback(() => {
-    if (!game) return
-
+  // 編集データをメモ化
+  const editData = useMemo(() => {
+    if (!game) return undefined
     const { title, publisher, imagePath, exePath, saveFolderPath, playStatus } = game
-    setEditData({
+    return {
       title,
       publisher,
       imagePath,
       exePath,
       saveFolderPath,
       playStatus
-    })
-    setIsEditModalOpen(true)
+    }
   }, [game])
+
+  /**
+   * 編集モーダルを開く
+   */
+  const openEdit = useCallback(() => {
+    if (!editData) return
+    setIsEditModalOpen(true)
+  }, [editData])
 
   /**
    * 編集モーダルを閉じる
@@ -117,7 +120,7 @@ export function useGameEdit(
    * 編集モーダルが完全に閉じた後の処理
    */
   const onEditClosed = useCallback(() => {
-    setEditData(undefined)
+    // メモ化されたeditDataを使用するため、特別な処理は不要
   }, [])
 
   /**

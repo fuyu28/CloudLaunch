@@ -4,7 +4,7 @@
  * クラウドデータの取得、削除、ナビゲーション機能を提供します。
  */
 
-import { useState, useCallback, useRef } from "react"
+import { useState, useCallback, useRef, useMemo } from "react"
 import { toast } from "react-hot-toast"
 
 import type { CloudDirectoryNode } from "../../../utils/cloudUtils"
@@ -59,14 +59,22 @@ export interface UseCloudDataReturn {
  * クラウドデータ管理フック
  */
 export function useCloudData(): UseCloudDataReturn {
-  const [cloudData, setCloudData] = useState<CloudDataItem[]>([])
-  const [directoryTree, setDirectoryTree] = useState<CloudDirectoryNode[]>([])
-  const [loading, setLoading] = useState(true)
-  const [currentPath, setCurrentPath] = useState<string[]>([])
-  const [currentDirectoryNodes, setCurrentDirectoryNodes] = useState<CloudDirectoryNode[]>([])
+  // 状態を統合管理
+  const [state, setState] = useState({
+    cloudData: [] as CloudDataItem[],
+    directoryTree: [] as CloudDirectoryNode[],
+    loading: true,
+    currentPath: [] as string[]
+  })
 
   // ナビゲーションキャッシュ
   const navigationCacheRef = useRef<Map<string, CloudDirectoryNode[]>>(new Map())
+
+  // 現在のディレクトリノードをメモ化
+  const currentDirectoryNodes = useMemo(() => {
+    if (state.directoryTree.length === 0) return []
+    return getNodesByPath(state.directoryTree, state.currentPath)
+  }, [state.directoryTree, state.currentPath])
 
   /**
    * ナビゲーションキャッシュをクリア
@@ -76,59 +84,47 @@ export function useCloudData(): UseCloudDataReturn {
   }, [])
 
   /**
-   * 指定したパスの子ディレクトリ・ファイルを取得（キャッシュ対応）
-   */
-  const getNodesByPathCached = useCallback(
-    (tree: CloudDirectoryNode[], path: string[]): CloudDirectoryNode[] => {
-      const cacheKey = path.join("/") || "root"
-      const cachedNodes = navigationCacheRef.current.get(cacheKey)
-      if (cachedNodes) {
-        return cachedNodes
-      }
-
-      const resultNodes = getNodesByPath(tree, path)
-      navigationCacheRef.current.set(cacheKey, resultNodes)
-      return resultNodes
-    },
-    []
-  )
-
-  /**
    * クラウドデータ一覧を取得
    */
   const fetchCloudData = useCallback(async (): Promise<void> => {
-    setLoading(true)
+    setState((prev) => ({ ...prev, loading: true }))
+
     try {
-      // カードビュー用のデータを取得
-      const cardResult = await window.api.cloudData.listCloudData()
-      if (cardResult.success && cardResult.data) {
-        clearNavigationCache()
-        setCloudData(cardResult.data)
-      } else {
+      // 並列でデータを取得
+      const [cardResult, treeResult] = await Promise.all([
+        window.api.cloudData.listCloudData(),
+        window.api.cloudData.getDirectoryTree()
+      ])
+
+      // カードビュー用のデータ処理
+      const cloudData = cardResult.success && cardResult.data ? cardResult.data : []
+      if (!cardResult.success) {
         toast.error("クラウドデータの取得に失敗しました")
-        setCloudData([])
       }
 
-      // ツリービュー用のデータを取得
-      const treeResult = await window.api.cloudData.getDirectoryTree()
-      if (treeResult.success && treeResult.data) {
-        setDirectoryTree(treeResult.data)
-        navigationCacheRef.current.clear()
-        setCurrentPath([])
-        setCurrentDirectoryNodes([])
-      } else {
+      // ツリービュー用のデータ処理
+      const directoryTree = treeResult.success && treeResult.data ? treeResult.data : []
+      if (!treeResult.success) {
         console.warn("ディレクトリツリーの取得に失敗しました")
-        setDirectoryTree([])
-        setCurrentDirectoryNodes([])
       }
+
+      // キャッシュクリアと状態更新
+      clearNavigationCache()
+      setState({
+        cloudData,
+        directoryTree,
+        loading: false,
+        currentPath: []
+      })
     } catch (error) {
       console.error("クラウドデータ取得エラー:", error)
       toast.error("クラウドデータの取得に失敗しました")
-      setCloudData([])
-      setDirectoryTree([])
-      setCurrentDirectoryNodes([])
-    } finally {
-      setLoading(false)
+      setState({
+        cloudData: [],
+        directoryTree: [],
+        loading: false,
+        currentPath: []
+      })
     }
   }, [clearNavigationCache])
 
@@ -137,44 +133,26 @@ export function useCloudData(): UseCloudDataReturn {
    */
   const navigateToDirectory = useCallback(
     (directoryName: string): void => {
-      const newPath = [...currentPath, directoryName]
-      setCurrentPath(newPath)
-
-      if (directoryTree.length > 0) {
-        const nodes = getNodesByPathCached(directoryTree, newPath)
-        setCurrentDirectoryNodes(nodes)
-      }
+      const newPath = [...state.currentPath, directoryName]
+      setState((prev) => ({ ...prev, currentPath: newPath }))
     },
-    [currentPath, directoryTree, getNodesByPathCached]
+    [state.currentPath]
   )
 
   /**
    * カードビューで親ディレクトリに戻る
    */
   const navigateBack = useCallback((): void => {
-    const newPath = currentPath.slice(0, -1)
-    setCurrentPath(newPath)
-
-    if (directoryTree.length > 0) {
-      const nodes = getNodesByPathCached(directoryTree, newPath)
-      setCurrentDirectoryNodes(nodes)
-    }
-  }, [currentPath, directoryTree, getNodesByPathCached])
+    const newPath = state.currentPath.slice(0, -1)
+    setState((prev) => ({ ...prev, currentPath: newPath }))
+  }, [state.currentPath])
 
   /**
    * 指定パスに直接移動
    */
-  const navigateToPath = useCallback(
-    (newPath: string[]): void => {
-      setCurrentPath(newPath)
-
-      if (directoryTree.length > 0) {
-        const nodes = getNodesByPathCached(directoryTree, newPath)
-        setCurrentDirectoryNodes(nodes)
-      }
-    },
-    [directoryTree, getNodesByPathCached]
-  )
+  const navigateToPath = useCallback((newPath: string[]): void => {
+    setState((prev) => ({ ...prev, currentPath: newPath }))
+  }, [])
 
   /**
    * クラウドデータを削除
@@ -184,7 +162,7 @@ export function useCloudData(): UseCloudDataReturn {
       try {
         // 全削除の場合
         if ("path" in item && item.path === "*") {
-          const deletePromises = cloudData.map(async (cloudItem) => {
+          const deletePromises = state.cloudData.map(async (cloudItem) => {
             return window.api.cloudData.deleteCloudData(cloudItem.remotePath)
           })
 
@@ -228,15 +206,15 @@ export function useCloudData(): UseCloudDataReturn {
         toast.error("削除に失敗しました")
       }
     },
-    [cloudData, fetchCloudData]
+    [state.cloudData, fetchCloudData]
   )
 
   return {
     // State
-    cloudData,
-    directoryTree,
-    loading,
-    currentPath,
+    cloudData: state.cloudData,
+    directoryTree: state.directoryTree,
+    loading: state.loading,
+    currentPath: state.currentPath,
     currentDirectoryNodes,
 
     // Actions

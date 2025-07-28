@@ -11,19 +11,16 @@ import ChapterDisplayCard from "@renderer/components/ChapterDisplayCard"
 import ChapterSettingsModal from "@renderer/components/ChapterSettingsModal"
 import CloudDataCard from "@renderer/components/CloudDataCard"
 import ConfirmModal from "@renderer/components/ConfirmModal"
-import DynamicImage from "@renderer/components/DynamicImage"
-import GameActionButtons from "@renderer/components/GameActionButtons"
+import GameInfo from "@renderer/components/GameInfo"
 import GameFormModal from "@renderer/components/GameModal"
 import MemoCard from "@renderer/components/MemoCard"
 import PlaySessionCard from "@renderer/components/PlaySessionCard"
 import PlaySessionManagementModal from "@renderer/components/PlaySessionManagementModal"
 import PlaySessionModal from "@renderer/components/PlaySessionModal"
-import PlayStatusSelector from "@renderer/components/PlayStatusSelector"
 
 import { useGameEdit } from "@renderer/hooks/useGameEdit"
 import { useGameSaveData } from "@renderer/hooks/useGameSaveData"
 import { useOfflineMode } from "@renderer/hooks/useOfflineMode"
-import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
 import { useToastHandler } from "@renderer/hooks/useToastHandler"
 import { useValidateCreds } from "@renderer/hooks/useValidCreds"
 
@@ -46,7 +43,6 @@ export default function GameDetail(): React.JSX.Element {
   const [refreshKey, setRefreshKey] = useState(0)
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
   const { showToast } = useToastHandler()
-  const { formatSmart, formatDateWithTime } = useTimeFormat()
   const { isOfflineMode, checkNetworkFeature } = useOfflineMode()
 
   // ゲームデータを取得
@@ -278,58 +274,18 @@ export default function GameDetail(): React.JSX.Element {
       </button>
 
       {/* 上部：ゲーム情報カード */}
-      <div className="card bg-base-100 shadow-xl mb-6">
-        <div className="card-body">
-          <div className="flex flex-col lg:flex-row gap-6">
-            {/* 左：サムネイル */}
-            <figure className="flex-shrink-0 w-full lg:w-80 aspect-[4/3] bg-base-200 rounded-lg overflow-hidden">
-              <DynamicImage
-                src={game.imagePath || ""}
-                alt={game.title}
-                className="w-full h-full object-contain text-black"
-              />
-            </figure>
-
-            {/* 右：情報＆アクション */}
-            <div className="flex-1 flex flex-col justify-between">
-              {/* ゲーム情報 */}
-              <div>
-                <h1 className="text-3xl font-bold mb-2">{game.title}</h1>
-                <p className="text-lg text-base-content/70 mb-4">{game.publisher}</p>
-
-                {/* プレイステータス */}
-                <div className="mb-4">
-                  <PlayStatusSelector
-                    currentStatus={game.playStatus}
-                    onStatusChange={handleStatusChange}
-                    disabled={isUpdatingStatus}
-                  />
-                </div>
-
-                {/* メタ情報 */}
-                <div className="flex flex-wrap text-sm text-base-content/60 gap-4 mb-6">
-                  <span>
-                    最終プレイ: {game.lastPlayed ? formatDateWithTime(game.lastPlayed) : "なし"}
-                  </span>
-                  <span>総プレイ時間: {formatSmart(game.totalPlayTime ?? 0)}</span>
-                  {game.playStatus === "played" && game.clearedAt && (
-                    <span>クリア日時: {formatDateWithTime(game.clearedAt)}</span>
-                  )}
-                </div>
-              </div>
-
-              {/* アクションボタン */}
-              <div className="mt-4">
-                <GameActionButtons
-                  onLaunch={handleLaunchGame}
-                  onEdit={openEdit}
-                  onDelete={openDelete}
-                  isLaunching={isLaunching}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
+      <div className="mb-6">
+        <GameInfo
+          game={game}
+          isUpdatingStatus={isUpdatingStatus}
+          isLaunching={isLaunching}
+          onStatusChange={(status) =>
+            handleStatusChange(status as "unplayed" | "playing" | "played")
+          }
+          onLaunchGame={handleLaunchGame}
+          onEditGame={openEdit}
+          onDeleteGame={openDelete}
+        />
       </div>
 
       {/* 中部：章統計グラフ */}
