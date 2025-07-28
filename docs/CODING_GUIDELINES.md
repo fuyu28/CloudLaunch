@@ -1,6 +1,6 @@
-# GameSync コーディングガイドライン
+# CloudLaunch コーディングガイドライン
 
-このドキュメントは、GameSyncプロジェクトにおけるコーディング規約とベストプラクティスを定義します。
+このドキュメントは、CloudLaunchプロジェクトにおけるコーディング規約とベストプラクティスを定義します。
 
 ## 目次
 
@@ -16,40 +16,18 @@
 
 ### ディレクトリ構造
 
+> 詳細なディレクトリ構成は [SYSTEM_SPECIFICATION.md](./SYSTEM_SPECIFICATION.md#ディレクトリ構成) を参照してください。
+
+このセクションでは、コーディング規約の観点から重要な配置ルールを説明します：
+
 ```
 src/
-├── constants/         # 定数管理（NEW）
-│   ├── messages.ts    # UI・エラーメッセージ統一管理
-│   ├── config.ts      # 設定値・デフォルト値の定数化
-│   ├── patterns.ts    # 正規表現パターンの共通化
-│   └── index.ts       # 統一エクスポート
-├── utils/             # 共通ユーティリティ（NEW）
-│   ├── stringUtils.ts # 文字列操作・サニタイズ関数
-│   ├── validationUtils.ts # バリデーション関数の統一
-│   ├── pathUtils.ts   # パス操作・ファイル処理関数
-│   └── index.ts       # 統一エクスポート
-├── types/             # 共有型定義（EXPANDED）
-│   ├── validation.ts  # バリデーション関連型の統一
-│   ├── path.ts        # パス関連型の整理
-│   ├── common.ts      # 共通型のエクスポート
-│   ├── result.ts      # API結果型
-│   ├── error.ts       # エラー型
-│   └── ...
+├── constants/         # 定数管理 - ハードコーディング撲滅
+├── utils/             # 共通ユーティリティ - コード重複削除
+├── types/             # 共有型定義 - 型安全性確保
 ├── main/              # Electron メインプロセス
-│   ├── ipcHandlers/   # IPC通信ハンドラー
-│   ├── service/       # ビジネスロジックサービス
-│   └── utils/         # ユーティリティ関数
 ├── preload/           # セキュリティブリッジ
-│   └── api/           # レンダラー向けAPI定義
 └── renderer/          # React フロントエンド
-    ├── components/    # 再利用可能コンポーネント
-    ├── pages/         # ページコンポーネント
-    ├── state/         # Jotai 状態管理
-    ├── hooks/         # カスタムフック（EXPANDED）
-    │   ├── useGameActions.ts  # ゲーム操作ロジック
-    │   ├── useToastHandler.ts # トースト処理
-    │   └── ...
-    └── utils/         # フロントエンドユーティリティ
 ```
 
 ### ファイル命名規約
@@ -115,6 +93,8 @@ export async function validatePathWithType(
 - 日本語で記述（プロジェクトが日本語ベースのため）
 
 ## TypeScript コーディング規約
+
+> 詳細な型システム運用方針は [TYPE_SYSTEM_GUIDE.md](./TYPE_SYSTEM_GUIDE.md) を参照してください。
 
 ### 型安全性
 

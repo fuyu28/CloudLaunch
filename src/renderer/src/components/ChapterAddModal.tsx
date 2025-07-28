@@ -5,8 +5,11 @@
  * 章名の入力と作成処理を提供します。
  */
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useMemo } from "react"
 import { FaPlus, FaTimes } from "react-icons/fa"
+import { handleApiError, handleUnexpectedError } from "../utils/errorHandler"
+import { chapterCreateSchema } from "../../../schemas/chapter"
+import { useZodValidation } from "../hooks/useZodValidation"
 
 interface ChapterAddModalProps {
   /** モーダルの表示状態 */
@@ -34,39 +37,59 @@ export default function ChapterAddModal({
   const [chapterName, setChapterName] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  // フォームデータ
+  const formData = useMemo(() => ({ name: chapterName.trim(), gameId }), [chapterName, gameId])
+
+  // バリデーション
+  const validation = useZodValidation(chapterCreateSchema, formData)
+
+  // 入力変更時
+  const handleNameChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setChapterName(e.target.value)
+      validation.touch("name")
+    },
+    [validation]
+  )
+
   // モーダルを閉じる
   const handleClose = useCallback(() => {
     if (isSubmitting) return
     setChapterName("")
+    validation.resetTouched()
     onClose()
-  }, [isSubmitting, onClose])
+  }, [isSubmitting, validation, onClose])
 
   // 章を追加
   const handleSubmit = useCallback(async (): Promise<void> => {
-    if (!chapterName.trim() || isSubmitting) return
+    if (isSubmitting) return
+
+    // バリデーション実行
+    const validationResult = validation.validate()
+    if (!validationResult.isValid) {
+      return
+    }
 
     try {
       setIsSubmitting(true)
 
-      const result = await window.api.chapter.createChapter({
-        name: chapterName.trim(),
-        gameId
-      })
+      const result = await window.api.chapter.createChapter(formData)
 
       if (result.success) {
         // 成功時の処理
         setChapterName("")
+        validation.resetTouched()
         onChapterAdded?.()
         onClose()
       } else {
-        console.error("章の追加に失敗:", result.message)
+        handleApiError(result, "章の追加に失敗しました")
       }
     } catch (error) {
-      console.error("章の追加に失敗:", error)
+      handleUnexpectedError(error, "章の追加")
     } finally {
       setIsSubmitting(false)
     }
-  }, [chapterName, gameId, isSubmitting, onChapterAdded, onClose])
+  }, [formData, isSubmitting, validation, onChapterAdded, onClose])
 
   // Enterキーでの送信
   const handleKeyDown = useCallback(
@@ -103,13 +126,18 @@ export default function ChapterAddModal({
             <input
               type="text"
               value={chapterName}
-              onChange={(e) => setChapterName(e.target.value)}
+              onChange={handleNameChange}
               onKeyDown={handleKeyDown}
-              className="input input-bordered w-full"
+              className={`input input-bordered w-full ${
+                validation.hasError("name") ? "input-error" : ""
+              }`}
               placeholder="例: 第1章、プロローグ、エピローグ"
               disabled={isSubmitting}
               autoFocus
             />
+            {validation.getError("name") && (
+              <div className="text-error text-sm mt-1">{validation.getError("name")}</div>
+            )}
             <label className="label">
               <span className="label-text-alt text-base-content/60">章名を入力してください</span>
             </label>
@@ -123,7 +151,7 @@ export default function ChapterAddModal({
           <button
             className="btn btn-primary"
             onClick={handleSubmit}
-            disabled={!chapterName.trim() || isSubmitting}
+            disabled={!validation.canSubmit || isSubmitting}
           >
             {isSubmitting ? (
               <>

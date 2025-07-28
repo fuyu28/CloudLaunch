@@ -9,6 +9,9 @@ import { ipcMain } from "electron"
 import { prisma } from "../db"
 import { ApiResult } from "../../types/result"
 import { Chapter, ChapterStats, ChapterCreateInput, ChapterUpdateInput } from "../../types/chapter"
+import { logger } from "../utils/logger"
+import { chapterCreateSchema, chapterUpdateSchema, chapterIdSchema } from "../../schemas/chapter"
+import { ZodError } from "zod"
 
 /**
  * ゲームの章一覧を取得
@@ -18,18 +21,27 @@ import { Chapter, ChapterStats, ChapterCreateInput, ChapterUpdateInput } from ".
  */
 export const getChapters = async (gameId: string): Promise<ApiResult<Chapter[]>> => {
   try {
-    if (!gameId) {
+    // ZodスキーマでゲームIDを検証
+    const validatedGameId = chapterIdSchema.parse(gameId)
+
+    if (!validatedGameId) {
       return { success: false, message: "ゲームIDが指定されていません" }
     }
 
     const chapters = await prisma.chapter.findMany({
-      where: { gameId },
+      where: { gameId: validatedGameId },
       orderBy: { order: "asc" }
     })
 
     return { success: true, data: chapters }
   } catch (error) {
-    console.error("章一覧取得エラー:", error)
+    if (error instanceof ZodError) {
+      return {
+        success: false,
+        message: `入力データが無効です: ${error.issues.map((issue) => issue.message).join(", ")}`
+      }
+    }
+    logger.error("章一覧取得エラー:", error)
     return { success: false, message: "章一覧の取得に失敗しました" }
   }
 }
@@ -42,17 +54,12 @@ export const getChapters = async (gameId: string): Promise<ApiResult<Chapter[]>>
  */
 export const createChapter = async (input: ChapterCreateInput): Promise<ApiResult<Chapter>> => {
   try {
-    if (!input.name?.trim()) {
-      return { success: false, message: "章名を入力してください" }
-    }
-
-    if (!input.gameId) {
-      return { success: false, message: "ゲームIDが指定されていません" }
-    }
+    // Zodスキーマで入力データを検証
+    const validatedInput = chapterCreateSchema.parse(input)
 
     // 最大order値を取得
     const maxOrderChapter = await prisma.chapter.findFirst({
-      where: { gameId: input.gameId },
+      where: { gameId: validatedInput.gameId },
       orderBy: { order: "desc" }
     })
 
@@ -60,15 +67,21 @@ export const createChapter = async (input: ChapterCreateInput): Promise<ApiResul
 
     const chapter = await prisma.chapter.create({
       data: {
-        name: input.name.trim(),
-        gameId: input.gameId,
-        order: nextOrder
+        name: validatedInput.name,
+        gameId: validatedInput.gameId,
+        order: validatedInput.order ?? nextOrder
       }
     })
 
     return { success: true, data: chapter }
   } catch (error) {
-    console.error("章作成エラー:", error)
+    if (error instanceof ZodError) {
+      return {
+        success: false,
+        message: `入力データが無効です: ${error.issues.map((issue) => issue.message).join(", ")}`
+      }
+    }
+    logger.error("章作成エラー:", error)
     if (error instanceof Error && error.message.includes("Unique constraint")) {
       return { success: false, message: "同じ名前の章が既に存在します" }
     }
@@ -88,12 +101,16 @@ export const updateChapter = async (
   input: ChapterUpdateInput
 ): Promise<ApiResult<Chapter>> => {
   try {
-    if (!chapterId) {
+    // Zodスキーマで入力データを検証
+    const validatedChapterId = chapterIdSchema.parse(chapterId)
+    const validatedInput = chapterUpdateSchema.parse(input)
+
+    if (!validatedChapterId) {
       return { success: false, message: "章IDが指定されていません" }
     }
 
     const existingChapter = await prisma.chapter.findUnique({
-      where: { id: chapterId }
+      where: { id: validatedChapterId }
     })
 
     if (!existingChapter) {
@@ -101,24 +118,29 @@ export const updateChapter = async (
     }
 
     const updateData: Partial<Chapter> = {}
-    if (input.name !== undefined) {
-      if (!input.name.trim()) {
-        return { success: false, message: "章名を入力してください" }
-      }
-      updateData.name = input.name.trim()
+    if (validatedInput.name !== undefined) {
+      updateData.name = validatedInput.name
     }
-    if (input.order !== undefined) {
-      updateData.order = input.order
+    if (validatedInput.order !== undefined) {
+      updateData.order = validatedInput.order
     }
+    // Note: isActive property is not part of the current Chapter model
+    // This can be added when the database schema is updated
 
     const chapter = await prisma.chapter.update({
-      where: { id: chapterId },
+      where: { id: validatedChapterId },
       data: updateData
     })
 
     return { success: true, data: chapter }
   } catch (error) {
-    console.error("章更新エラー:", error)
+    if (error instanceof ZodError) {
+      return {
+        success: false,
+        message: `入力データが無効です: ${error.issues.map((issue) => issue.message).join(", ")}`
+      }
+    }
+    logger.error("章更新エラー:", error)
     if (error instanceof Error && error.message.includes("Unique constraint")) {
       return { success: false, message: "同じ名前の章が既に存在します" }
     }
@@ -134,12 +156,15 @@ export const updateChapter = async (
  */
 export const deleteChapter = async (chapterId: string): Promise<ApiResult<void>> => {
   try {
-    if (!chapterId) {
+    // Zodスキーマで章IDを検証
+    const validatedChapterId = chapterIdSchema.parse(chapterId)
+
+    if (!validatedChapterId) {
       return { success: false, message: "章IDが指定されていません" }
     }
 
     const existingChapter = await prisma.chapter.findUnique({
-      where: { id: chapterId }
+      where: { id: validatedChapterId }
     })
 
     if (!existingChapter) {
@@ -147,12 +172,18 @@ export const deleteChapter = async (chapterId: string): Promise<ApiResult<void>>
     }
 
     await prisma.chapter.delete({
-      where: { id: chapterId }
+      where: { id: validatedChapterId }
     })
 
     return { success: true, data: undefined }
   } catch (error) {
-    console.error("章削除エラー:", error)
+    if (error instanceof ZodError) {
+      return {
+        success: false,
+        message: `入力データが無効です: ${error.issues.map((issue) => issue.message).join(", ")}`
+      }
+    }
+    logger.error("章削除エラー:", error)
     return { success: false, message: "章の削除に失敗しました" }
   }
 }
@@ -192,7 +223,7 @@ export const updateChapterOrders = async (
 
     return { success: true, data: undefined }
   } catch (error) {
-    console.error("章順序更新エラー:", error)
+    logger.error("章順序更新エラー:", error)
     return { success: false, message: "章順序の更新に失敗しました" }
   }
 }
@@ -231,7 +262,7 @@ export const ensureDefaultChapter = async (gameId: string): Promise<ApiResult<Ch
 
     return { success: true, data: defaultChapter }
   } catch (error) {
-    console.error("デフォルト章の作成に失敗:", error)
+    logger.error("デフォルト章の作成に失敗:", error)
     return { success: false, message: "デフォルト章の作成に失敗しました" }
   }
 }
@@ -273,7 +304,7 @@ export const setCurrentChapter = async (
 
     return { success: true, data: undefined }
   } catch (error) {
-    console.error("現在の章の変更に失敗:", error)
+    logger.error("現在の章の変更に失敗:", error)
     return { success: false, message: "現在の章の変更に失敗しました" }
   }
 }
@@ -320,7 +351,7 @@ export const getChapterStats = async (gameId: string): Promise<ApiResult<Chapter
 
     return { success: true, data: chapterStats }
   } catch (error) {
-    console.error("章別統計取得エラー:", error)
+    logger.error("章別統計取得エラー:", error)
     return { success: false, message: "章別統計の取得に失敗しました" }
   }
 }

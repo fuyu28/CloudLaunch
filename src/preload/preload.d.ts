@@ -11,6 +11,8 @@ export interface FileAPI {
   selectFile(filters: Electron.FileFilter[]): Promise<ApiResult<string | undefined>>
   selectFolder(): Promise<ApiResult<string | undefined>>
   validatePath(filePath: string, expectType?: string): Promise<ValidatePathResult>
+  checkFileExists(filePath: string): Promise<boolean>
+  checkDirectoryExists(dirPath: string): Promise<boolean>
 }
 
 export interface SaveDataUploadAPI {
@@ -155,6 +157,40 @@ export interface MemoAPI {
   getCloudMemos(): Promise<ApiResult<CloudMemoInfo[]>>
   syncMemosFromCloud(gameId?: string): Promise<ApiResult<MemoSyncResult>>
 }
+  
+export interface CloudDataItem {
+  name: string
+  totalSize: number
+  fileCount: number
+  lastModified: Date
+  remotePath: string
+}
+
+export interface CloudFileDetail {
+  name: string
+  size: number
+  lastModified: Date
+  key: string
+  relativePath: string
+}
+
+export interface CloudDirectoryNode {
+  name: string
+  path: string
+  isDirectory: boolean
+  size: number
+  lastModified: Date
+  children?: CloudDirectoryNode[]
+  objectKey?: string
+}
+
+export interface CloudDataAPI {
+  listCloudData(): Promise<ApiResult<CloudDataItem[]>>
+  deleteCloudData(remotePath: string): Promise<ApiResult>
+  getCloudFileDetails(remotePath: string): Promise<ApiResult<CloudFileDetail[]>>
+  getDirectoryTree(): Promise<ApiResult<CloudDirectoryNode[]>>
+  deleteFile(objectKey: string): Promise<ApiResult>
+}
 
 export interface API {
   file: FileAPI
@@ -164,6 +200,7 @@ export interface API {
     download: SaveDataDownloadAPI
     listFolders: SaveDataFolderAPI
   }
+  cloudData: CloudDataAPI
   credential: CredentialAPI
   database: DatabaseAPI
   loadImage: LoadImageAPI

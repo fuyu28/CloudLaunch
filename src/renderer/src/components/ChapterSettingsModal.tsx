@@ -5,10 +5,12 @@
  * 章の一覧表示と各章の操作機能を提供します。
  */
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { FaEdit, FaTrash, FaChevronUp, FaChevronDown, FaTimes, FaSave } from "react-icons/fa"
 import { Chapter } from "../../../types/chapter"
 import ConfirmModal from "./ConfirmModal"
+import { chapterUpdateSchema } from "../../../schemas/chapter"
+import { useZodValidation } from "../hooks/useZodValidation"
 
 interface ChapterSettingsModalProps {
   /** モーダルの表示状態 */
@@ -40,6 +42,12 @@ export default function ChapterSettingsModal({
   const [isSaving, setIsSaving] = useState(false)
   const [deletingChapter, setDeletingChapter] = useState<Chapter | undefined>(undefined)
 
+  // 編集用フォームデータ
+  const editFormData = useMemo(() => ({ name: editName.trim() }), [editName])
+
+  // バリデーション
+  const validation = useZodValidation(chapterUpdateSchema, editFormData)
+
   // 章データを取得
   const fetchChapters = useCallback(async (): Promise<void> => {
     if (!gameId || !isOpen) return
@@ -67,34 +75,54 @@ export default function ChapterSettingsModal({
   }, [fetchChapters])
 
   // 編集開始
-  const startEditing = useCallback((chapter: Chapter) => {
-    setEditingChapter(chapter)
-    setEditName(chapter.name)
-  }, [])
+  const startEditing = useCallback(
+    (chapter: Chapter) => {
+      setEditingChapter(chapter)
+      setEditName(chapter.name)
+      validation.resetTouched()
+    },
+    [validation]
+  )
 
   // 編集キャンセル
   const cancelEditing = useCallback(() => {
     setEditingChapter(undefined)
     setEditName("")
-  }, [])
+    validation.resetTouched()
+  }, [validation])
+
+  // 編集中の名前変更
+  const handleEditNameChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setEditName(e.target.value)
+      validation.touch("name")
+    },
+    [validation]
+  )
 
   // 章名保存
   const saveChapterName = useCallback(async (): Promise<void> => {
-    if (!editingChapter || !editName.trim()) return
+    if (!editingChapter) return
+
+    // バリデーション実行
+    const validationResult = validation.validate()
+    if (!validationResult.isValid) {
+      return
+    }
 
     try {
       setIsSaving(true)
-      const result = await window.api.chapter.updateChapter(editingChapter.id, {
-        name: editName.trim()
-      })
+
+      const result = await window.api.chapter.updateChapter(editingChapter.id, editFormData)
 
       if (result.success) {
         // ローカル状態を更新
         setChapters((prev) =>
-          prev.map((ch) => (ch.id === editingChapter.id ? { ...ch, name: editName.trim() } : ch))
+          prev.map((ch) => (ch.id === editingChapter.id ? { ...ch, name: editFormData.name } : ch))
         )
         setEditingChapter(undefined)
         setEditName("")
+        validation.resetTouched()
         onChaptersUpdated?.()
       } else {
         console.error("章名の更新に失敗:", result.message)
@@ -104,7 +132,7 @@ export default function ChapterSettingsModal({
     } finally {
       setIsSaving(false)
     }
-  }, [editingChapter, editName, onChaptersUpdated])
+  }, [editingChapter, editFormData, validation, onChaptersUpdated])
 
   // 章削除確認モーダルを開く
   const openDeleteConfirmation = useCallback((chapter: Chapter) => {
@@ -254,29 +282,36 @@ export default function ChapterSettingsModal({
                       <span className="text-sm text-base-content/60 w-8">{chapter.order}</span>
 
                       {editingChapter?.id === chapter.id ? (
-                        <div className="flex items-center gap-2 flex-1">
-                          <input
-                            type="text"
-                            value={editName}
-                            onChange={(e) => setEditName(e.target.value)}
-                            className="input input-sm input-bordered flex-1"
-                            placeholder="章名を入力"
-                            disabled={isSaving}
-                          />
-                          <button
-                            className="btn btn-primary btn-sm"
-                            onClick={saveChapterName}
-                            disabled={!editName.trim() || isSaving}
-                          >
-                            <FaSave />
-                          </button>
-                          <button
-                            className="btn btn-ghost btn-sm"
-                            onClick={cancelEditing}
-                            disabled={isSaving}
-                          >
-                            <FaTimes />
-                          </button>
+                        <div className="flex flex-col gap-1 flex-1">
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="text"
+                              value={editName}
+                              onChange={handleEditNameChange}
+                              className={`input input-sm input-bordered flex-1 ${
+                                validation.hasError("name") ? "input-error" : ""
+                              }`}
+                              placeholder="章名を入力"
+                              disabled={isSaving}
+                            />
+                            <button
+                              className="btn btn-primary btn-sm"
+                              onClick={saveChapterName}
+                              disabled={!validation.canSubmit || isSaving}
+                            >
+                              <FaSave />
+                            </button>
+                            <button
+                              className="btn btn-ghost btn-sm"
+                              onClick={cancelEditing}
+                              disabled={isSaving}
+                            >
+                              <FaTimes />
+                            </button>
+                          </div>
+                          {validation.getError("name") && (
+                            <div className="text-error text-xs">{validation.getError("name")}</div>
+                          )}
                         </div>
                       ) : (
                         <span className="font-medium flex-1">{chapter.name}</span>

@@ -8,7 +8,7 @@
  * - デフォルトソート順の設定
  * - デフォルトフィルター状態の設定
  * - オフラインモードの設定
- * - 起動時の自動計測の設定
+ * - 自動ゲーム検出の設定
  * - 設定の永続化
  * - リアルタイムでの変更反映
  *
@@ -38,7 +38,7 @@ import type { SortOption, FilterOption } from "src/types/menu"
  * 一般設定コンポーネント
  *
  * テーマ選択、デフォルトソート順、デフォルトフィルター状態、
- * オフラインモード、起動時の自動計測など、アプリケーションの一般的な設定を提供します。
+ * オフラインモード、自動ゲーム検出など、アプリケーションの一般的な設定を提供します。
  *
  * @returns 一般設定コンポーネント要素
  */
@@ -73,7 +73,7 @@ export default function GeneralSettings(): React.JSX.Element {
     }
   }
 
-  // 自動計測変更ハンドラー
+  // 自動ゲーム検出変更ハンドラー
   const handleAutoTrackingChange = async (enabled: boolean): Promise<void> => {
     setAutoTracking(enabled)
 
@@ -82,15 +82,15 @@ export default function GeneralSettings(): React.JSX.Element {
       const result = await window.api.settings.updateAutoTracking(enabled)
       if (result.success) {
         if (enabled) {
-          toast.success("起動時の自動計測を有効にしました（次回起動時に反映）")
+          toast.success("自動ゲーム検出を有効にしました")
         } else {
-          toast.success("起動時の自動計測を無効にしました（次回起動時に反映）")
+          toast.success("自動ゲーム検出を無効にしました")
         }
       } else {
         toast.error("設定の更新に失敗しました")
       }
     } catch (error) {
-      console.error("自動計測設定の更新エラー:", error)
+      console.error("自動ゲーム検出設定の更新エラー:", error)
       toast.error("設定の更新に失敗しました")
     }
   }
@@ -166,7 +166,7 @@ export default function GeneralSettings(): React.JSX.Element {
                 </label>
               </div>
 
-              {/* 自動計測 */}
+              {/* 自動ゲーム検出 */}
               <div className="form-control">
                 <label className="label cursor-pointer justify-start p-0">
                   <input
@@ -176,9 +176,11 @@ export default function GeneralSettings(): React.JSX.Element {
                     onChange={(e) => handleAutoTrackingChange(e.target.checked)}
                   />
                   <div>
-                    <span className="label-text font-medium">起動時の自動計測</span>
+                    <span className="label-text font-medium">自動ゲーム検出</span>
                     <p className="text-xs text-base-content/50 mt-1">
-                      {autoTracking ? "ゲーム起動時に自動計測開始" : "手動で自動検出の開始が必要"}
+                      {autoTracking
+                        ? "実行中ゲームを自動検出して監視開始"
+                        : "手動でのゲーム登録のみ"}
                     </p>
                   </div>
                 </label>

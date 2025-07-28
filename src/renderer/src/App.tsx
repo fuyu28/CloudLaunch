@@ -7,6 +7,7 @@ import MemoList from "./pages/MemoList"
 import MemoEditor from "./pages/MemoEditor"
 import MemoView from "./pages/MemoView"
 import MemoCreate from "./pages/MemoCreate"
+import Cloud from "./pages/Cloud"
 import MainLayout from "./layouts/MainLayout"
 
 export default function App(): React.JSX.Element {
@@ -16,7 +17,7 @@ export default function App(): React.JSX.Element {
         <Route index element={<Home />} />
         <Route path="/game/:id" element={<GameDetail />} />
         <Route path="/settings" element={<Settings />} />
-
+        <Route path="/cloud" element={<Cloud />} />
         {/* メモ関連ルート */}
         <Route path="/memo" element={<MemoList />} />
         <Route path="/memo/create" element={<MemoCreate />} />

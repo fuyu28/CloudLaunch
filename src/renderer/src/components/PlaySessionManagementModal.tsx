@@ -16,7 +16,7 @@
  * @param onProcessUpdated - セッション情報更新時のコールバック
  */
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useState, useMemo } from "react"
 import { RxCross1 } from "react-icons/rx"
 import { FaEdit } from "react-icons/fa"
 import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
@@ -24,14 +24,21 @@ import { useToastHandler } from "@renderer/hooks/useToastHandler"
 import { Chapter } from "../../../types/chapter"
 import type { PlaySessionType } from "../../../types/game"
 import ConfirmModal from "./ConfirmModal"
+import { playSessionEditSchema } from "../../../schemas/playSession"
+import { useZodValidation } from "../hooks/useZodValidation"
 
 /**
  * 編集用のフォームデータ
  */
-interface EditFormData {
+interface EditFormData extends Record<string, unknown> {
   sessionName: string
   chapterId: string | null
 }
+
+/**
+ * 編集フォームのフィールド名の型
+ */
+type EditFormFields = keyof Pick<EditFormData, "sessionName" | "chapterId">
 
 /**
  * セッション管理モーダルのProps
@@ -70,6 +77,12 @@ export default function PlaySessionManagementModal({
     sessionName: "",
     chapterId: null
   })
+
+  // フォームデータをuseMemoでラップ
+  const memoizedEditFormData = useMemo(() => editFormData, [editFormData])
+
+  // バリデーション
+  const validation = useZodValidation(playSessionEditSchema, memoizedEditFormData)
   const { formatSmart, formatDateWithTime } = useTimeFormat()
   const { showToast } = useToastHandler()
 
@@ -116,14 +129,18 @@ export default function PlaySessionManagementModal({
   /**
    * 編集モーダルを開く
    */
-  const openEditModal = useCallback((process: PlaySessionType) => {
-    setEditingProcess(process)
-    setEditFormData({
-      sessionName: process.sessionName ?? "未設定",
-      chapterId: process.chapterId
-    })
-    setIsEditModalOpen(true)
-  }, [])
+  const openEditModal = useCallback(
+    (process: PlaySessionType) => {
+      setEditingProcess(process)
+      setEditFormData({
+        sessionName: process.sessionName ?? "未設定",
+        chapterId: process.chapterId
+      })
+      validation.resetTouched() // タッチ状態をリセット
+      setIsEditModalOpen(true)
+    },
+    [validation]
+  )
 
   /**
    * 編集モーダルを閉じる
@@ -135,7 +152,19 @@ export default function PlaySessionManagementModal({
       sessionName: "",
       chapterId: null
     })
-  }, [])
+    validation.resetTouched() // タッチ状態をリセット
+  }, [validation])
+
+  /**
+   * フォーム入力変更処理
+   */
+  const handleFormChange = useCallback(
+    (field: EditFormFields, value: string | null) => {
+      setEditFormData((prev) => ({ ...prev, [field]: value }))
+      validation.touch(field)
+    },
+    [validation]
+  )
 
   /**
    * セッション編集処理
@@ -143,12 +172,19 @@ export default function PlaySessionManagementModal({
   const handleEditSession = useCallback(async () => {
     if (!editingProcess) return
 
+    // バリデーション実行
+    const validationResult = validation.validate()
+    if (!validationResult.isValid) {
+      showToast("入力内容に問題があります", "error")
+      return
+    }
+
     try {
       // セッション名を更新
-      if (editFormData.sessionName !== editingProcess.sessionName) {
+      if (memoizedEditFormData.sessionName !== editingProcess.sessionName) {
         const nameResult = await window.api.database.updateSessionName(
           editingProcess.id,
-          editFormData.sessionName
+          memoizedEditFormData.sessionName
         )
         if (!nameResult.success) {
           showToast("セッション名の更新に失敗しました", "error")
@@ -159,7 +195,7 @@ export default function PlaySessionManagementModal({
       // 章を更新
       const chapterResult = await window.api.database.updateSessionChapter(
         editingProcess.id,
-        editFormData.chapterId
+        memoizedEditFormData.chapterId
       )
       if (!chapterResult.success) {
         showToast("章の更新に失敗しました", "error")
@@ -174,7 +210,15 @@ export default function PlaySessionManagementModal({
       console.error("セッション編集エラー:", error)
       showToast("セッションの更新に失敗しました", "error")
     }
-  }, [editingProcess, editFormData, fetchProcesses, onProcessUpdated, showToast, closeEditModal])
+  }, [
+    editingProcess,
+    memoizedEditFormData,
+    validation,
+    fetchProcesses,
+    onProcessUpdated,
+    showToast,
+    closeEditModal
+  ])
 
   /**
    * セッション削除処理
@@ -334,13 +378,16 @@ export default function PlaySessionManagementModal({
               </label>
               <input
                 type="text"
-                className="input input-bordered w-full"
+                className={`input input-bordered w-full ${
+                  validation.hasError("sessionName") ? "input-error" : ""
+                }`}
                 value={editFormData.sessionName}
-                onChange={(e) =>
-                  setEditFormData((prev) => ({ ...prev, sessionName: e.target.value }))
-                }
+                onChange={(e) => handleFormChange("sessionName", e.target.value)}
                 placeholder="セッション名を入力"
               />
+              {validation.getError("sessionName") && (
+                <div className="text-error text-sm mt-1">{validation.getError("sessionName")}</div>
+              )}
             </div>
 
             {/* 章選択 */}
@@ -349,14 +396,11 @@ export default function PlaySessionManagementModal({
                 <span className="label-text">紐づける章</span>
               </label>
               <select
-                className="select select-bordered w-full"
+                className={`select select-bordered w-full ${
+                  validation.hasError("chapterId") ? "select-error" : ""
+                }`}
                 value={editFormData.chapterId || ""}
-                onChange={(e) =>
-                  setEditFormData((prev) => ({
-                    ...prev,
-                    chapterId: e.target.value || null
-                  }))
-                }
+                onChange={(e) => handleFormChange("chapterId", e.target.value || null)}
               >
                 <option value="">章を選択しない</option>
                 {chapters.map((chapter) => (
@@ -365,6 +409,9 @@ export default function PlaySessionManagementModal({
                   </option>
                 ))}
               </select>
+              {validation.getError("chapterId") && (
+                <div className="text-error text-sm mt-1">{validation.getError("chapterId")}</div>
+              )}
             </div>
           </div>
 

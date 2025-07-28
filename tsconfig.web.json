@@ -9,7 +9,8 @@
     "src/preload/preload.d.ts",
     "src/types/**/*",
     "src/utils/**/*",
-    "src/constants/**/*"
+    "src/constants/**/*",
+    "src/schemas/**/*"
   ],
   "compilerOptions": {
     "composite": true,

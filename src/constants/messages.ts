@@ -135,6 +135,10 @@ export const MESSAGES = {
     SET_FAILED: (error: string) => `認証情報の設定に失敗しました: ${error}`,
     GET_FAILED: "認証情報の取得に失敗しました。",
     KEYCHAIN_NOT_FOUND: "システムキーチェーンが存在しません。OSの設定を確認してください。",
+    KEYCHAIN_ITEM_NOT_FOUND:
+      "認証情報がシステムキーチェーンに見つかりません。認証情報を再設定してください。",
+    KEYCHAIN_ACCESS_DENIED:
+      "システムキーチェーンへのアクセスが拒否されました。アプリケーションの権限を確認してください。",
     GET_ERROR: (error: string) => `認証情報の取得エラー: ${error}`,
     VALIDATION_FAILED: (error: string) => `認証情報の検証中にエラーが発生しました: ${error}`,
     VALIDATION_UNKNOWN: "認証情報の検証中に不明なエラーが発生しました"

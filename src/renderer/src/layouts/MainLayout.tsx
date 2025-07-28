@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from "react"
 import { Outlet, NavLink, useLocation } from "react-router-dom"
-import { FiMenu } from "react-icons/fi"
+import { FiMenu, FiCloud } from "react-icons/fi"
 import { IoIosHome, IoIosSettings } from "react-icons/io"
 import { FaEdit } from "react-icons/fa"
 import { VscChromeClose, VscChromeMaximize, VscChromeMinimize } from "react-icons/vsc"
@@ -16,6 +16,16 @@ export default function MainLayout(): React.JSX.Element {
   const isHome = location.pathname === "/"
   const isSettings = location.pathname === "/settings"
   const isMemo = location.pathname === "/memo" || location.pathname.startsWith("/memo/")
+  const isCloud = location.pathname === "/cloud"
+
+  const pageMap: [boolean, string][] = [
+    [isHome, "ホーム"],
+    [isSettings, "設定"],
+    [isCloud, "クラウド"],
+    [isMemo, "メモ"]
+  ]
+
+  const pageLabel = pageMap.find(([cond]) => cond)?.[1] ?? ""
 
   const closeDrawer = (): void => {
     if (drawerRef.current) drawerRef.current.checked = false
@@ -25,7 +35,6 @@ export default function MainLayout(): React.JSX.Element {
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", currentTheme)
   }, [currentTheme])
-
   return (
     <div className="drawer drawer-mobile min-h-screen bg-base-200">
       <input id="main-drawer" type="checkbox" className="drawer-toggle" ref={drawerRef} />
@@ -75,6 +84,20 @@ export default function MainLayout(): React.JSX.Element {
                 >
                   <FaEdit className="mr-2 text-lg" />
                   <span className="flex-1">メモ</span>
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/cloud"
+                  className={({ isActive }) =>
+                    `flex items-center w-full p-3 rounded-md ${
+                      isActive ? "bg-primary text-primary-content font-medium" : "hover:bg-base-300"
+                    }`
+                  }
+                  onClick={closeDrawer}
+                >
+                  <FiCloud className="mr-2 text-lg" />
+                  <span className="flex-1">クラウド</span>
                 </NavLink>
               </li>
             </ul>
@@ -128,9 +151,7 @@ export default function MainLayout(): React.JSX.Element {
           </label>
 
           {/* 中央タイトルもドラッグ可能 */}
-          <h1 className="flex-1 text-center text-lg font-medium leading-none">
-            {isHome ? "ホーム" : isSettings ? "設定" : isMemo ? "メモ" : ""}
-          </h1>
+          <h1 className="flex-1 text-center text-lg font-medium leading-none">{pageLabel}</h1>
 
           {/* ウィンドウ操作ボタン群 */}
           <div className="absolute inset-y-0 right-0 flex [-webkit-app-region:no-drag]">

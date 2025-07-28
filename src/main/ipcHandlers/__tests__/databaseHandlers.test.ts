@@ -143,12 +143,7 @@ describe("databaseHandlers", () => {
     it("最近プレイした順でソートできる", async () => {
       mockPrisma.game.findMany.mockResolvedValue(mockGames)
 
-      await mockHandlers["list-games"](
-        {},
-        "",
-        "all" as FilterOption,
-        "recentlyPlayed" as SortOption
-      )
+      await mockHandlers["list-games"]({}, "", "all" as FilterOption, "lastPlayed" as SortOption)
 
       expect(mockPrisma.game.findMany).toHaveBeenCalledWith({
         where: {
