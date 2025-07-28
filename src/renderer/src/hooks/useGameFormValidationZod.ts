@@ -30,7 +30,7 @@ import {
 /**
  * バリデーションエラーの型定義
  */
-export interface ValidationErrors {
+export type ValidationErrors = {
   title?: string
   publisher?: string
   exePath?: string
@@ -41,7 +41,7 @@ export interface ValidationErrors {
 /**
  * ゲームフォームバリデーションフックの戻り値
  */
-export interface GameFormValidationResult {
+export type GameFormValidationResult = {
   /** 送信可能かどうか */
   canSubmit: boolean
   /** バリデーションエラー（タッチされたフィールドのみ表示） */

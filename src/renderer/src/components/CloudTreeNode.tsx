@@ -12,7 +12,7 @@ import { formatFileSize, formatDate, countFilesRecursively } from "../../../util
 /**
  * ツリーノードコンポーネントのプロパティ
  */
-interface CloudTreeNodeProps {
+type CloudTreeNodeProps = {
   node: CloudDirectoryNode
   level: number
   expandedNodes: Set<string>

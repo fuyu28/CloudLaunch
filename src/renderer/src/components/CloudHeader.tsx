@@ -23,7 +23,7 @@ export type ViewMode = "cards" | "tree"
 /**
  * クラウドヘッダーのプロパティ
  */
-interface CloudHeaderProps {
+type CloudHeaderProps = {
   /** 現在のビューモード */
   viewMode: ViewMode
   /** ビューモード変更コールバック */

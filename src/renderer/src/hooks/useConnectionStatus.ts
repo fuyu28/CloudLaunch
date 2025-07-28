@@ -22,7 +22,7 @@ import type { AsyncStatus } from "src/types/common"
 /**
  * 接続状態フックの戻り値
  */
-export interface ConnectionStatusResult {
+export type ConnectionStatusResult = {
   /** 接続状態 */
   status: AsyncStatus
   /** エラーメッセージ */

@@ -16,7 +16,7 @@ import ChapterBarChart from "./ChapterBarChart"
 import PlaySessionCardSimple from "./PlaySessionCardSimple"
 import type { GameType } from "src/types/game"
 
-interface PlayStatisticsProps {
+type PlayStatisticsProps = {
   /** ゲーム情報 */
   game: GameType
   /** 更新キー（データ再取得トリガー） */

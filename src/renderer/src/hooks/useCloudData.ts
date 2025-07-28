@@ -16,7 +16,7 @@ export type { CloudDirectoryNode } from "../../../utils/cloudUtils"
 /**
  * クラウドデータアイテムの型定義
  */
-export interface CloudDataItem {
+export type CloudDataItem = {
   name: string
   totalSize: number
   fileCount: number
@@ -27,7 +27,7 @@ export interface CloudDataItem {
 /**
  * クラウドファイル詳細情報の型定義
  */
-export interface CloudFileDetail {
+export type CloudFileDetail = {
   name: string
   size: number
   lastModified: Date
@@ -38,7 +38,7 @@ export interface CloudFileDetail {
 /**
  * useCloudDataフックの戻り値の型定義
  */
-export interface UseCloudDataReturn {
+export type UseCloudDataReturn = {
   // State
   cloudData: CloudDataItem[]
   directoryTree: CloudDirectoryNode[]

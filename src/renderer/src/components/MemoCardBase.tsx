@@ -13,7 +13,7 @@ import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
 import MemoDropdownMenu from "./MemoDropdownMenu"
 import type { MemoType } from "src/types/memo"
 
-interface MemoCardBaseProps {
+type MemoCardBaseProps = {
   /** メモデータ */
   memo: MemoType
   /** カードクリック時の処理 */

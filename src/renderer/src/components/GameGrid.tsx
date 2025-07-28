@@ -14,7 +14,7 @@ import { memo } from "react"
 import GameCard from "./GameCard"
 import type { GameType } from "src/types/game"
 
-interface GameGridProps {
+type GameGridProps = {
   /** ゲーム一覧 */
   games: GameType[]
   /** ゲーム起動ハンドラ */

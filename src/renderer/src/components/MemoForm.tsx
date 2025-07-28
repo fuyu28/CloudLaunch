@@ -17,7 +17,7 @@ import type { CreateMemoData, UpdateMemoData } from "src/types/memo"
 import "@uiw/react-md-editor/markdown-editor.css"
 import "@uiw/react-markdown-preview/markdown.css"
 
-export interface MemoFormProps {
+export type MemoFormProps = {
   /** フォームのモード */
   mode: "create" | "edit"
   /** 編集時のメモID */

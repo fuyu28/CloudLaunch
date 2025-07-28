@@ -18,7 +18,7 @@ import GameActionButtons from "./GameActionButtons"
 import PlayStatusSelector from "./PlayStatusSelector"
 import type { GameType } from "src/types/game"
 
-interface GameInfoProps {
+type GameInfoProps = {
   /** ゲーム情報 */
   game: GameType
   /** プレイステータス更新中フラグ */

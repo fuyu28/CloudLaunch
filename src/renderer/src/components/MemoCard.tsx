@@ -16,7 +16,7 @@ import ConfirmModal from "./ConfirmModal"
 import MemoCardBase from "./MemoCardBase"
 import type { MemoType } from "src/types/memo"
 
-interface MemoCardProps {
+type MemoCardProps = {
   gameId: string
 }
 

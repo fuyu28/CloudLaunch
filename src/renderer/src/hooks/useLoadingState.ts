@@ -21,7 +21,7 @@ import { useToastHandler, executeWithToast, type ToastOptions } from "./useToast
 /**
  * ローディング状態の型定義
  */
-export interface LoadingState {
+export type LoadingState = {
   /** ローディング中かどうか */
   isLoading: boolean
   /** エラーメッセージ */

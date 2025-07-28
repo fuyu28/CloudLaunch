@@ -12,7 +12,7 @@ import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
 
 import type { PlaySessionType } from "src/types/game"
 
-interface PlaySessionCardSimpleProps {
+type PlaySessionCardSimpleProps = {
   /** ゲームID */
   gameId: string
   /** ゲームタイトル */

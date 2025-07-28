@@ -28,7 +28,7 @@ import { useTimeFormat, timeUtils } from "@renderer/hooks/useTimeFormat"
 /**
  * プレイセッション追加モーダルのprops
  */
-export interface PlaySessionModalProps {
+export type PlaySessionModalProps = {
   /** モーダルが開いているかどうか */
   isOpen: boolean
   /** モーダルを閉じる時のコールバック */

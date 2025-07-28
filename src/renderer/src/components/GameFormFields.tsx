@@ -29,7 +29,7 @@ import type { GameFormValidationResult } from "../hooks/useGameFormValidationZod
 /**
  * ゲームフォームフィールドコンポーネントのprops
  */
-export interface GameFormFieldsProps {
+export type GameFormFieldsProps = {
   /** ゲームデータ */
   gameData: InputGameData
   /** フィールド変更時のコールバック */

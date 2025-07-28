@@ -17,7 +17,7 @@ import { FiHome, FiChevronRight, FiArrowLeft } from "react-icons/fi"
 /**
  * パンくずリストのプロパティ
  */
-interface CloudBreadcrumbProps {
+type CloudBreadcrumbProps = {
   /** 現在のパス */
   currentPath: string[]
   /** パス移動コールバック */

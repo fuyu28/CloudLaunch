@@ -12,7 +12,7 @@ import { chapterCreateSchema } from "../../../schemas/chapter"
 import { useZodValidation } from "../hooks/useZodValidation"
 import { handleApiError, handleUnexpectedError } from "../utils/errorHandler"
 
-interface ChapterAddModalProps {
+type ChapterAddModalProps = {
   /** モーダルの表示状態 */
   isOpen: boolean
   /** ゲームID */

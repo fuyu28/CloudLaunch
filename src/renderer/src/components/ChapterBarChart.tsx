@@ -12,7 +12,7 @@ import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
 
 import type { ChapterStats } from "../../../types/chapter"
 
-interface ChapterBarChartProps {
+type ChapterBarChartProps = {
   /** ゲームID */
   gameId: string
   /** ゲームタイトル */

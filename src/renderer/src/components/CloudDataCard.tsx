@@ -13,14 +13,14 @@ import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
 
 import { getOfflineDisabledClasses } from "@renderer/utils/offlineUtils"
 
-interface CloudDataInfo {
+type CloudDataInfo = {
   exists: boolean
   uploadedAt?: Date
   size?: number
   comment?: string
 }
 
-interface CloudFileDetails {
+type CloudFileDetails = {
   exists: boolean
   totalSize: number
   files: Array<{
@@ -31,7 +31,7 @@ interface CloudFileDetails {
   }>
 }
 
-interface CloudDataCardProps {
+type CloudDataCardProps = {
   /** ゲームID */
   gameId: string
   /** ゲームタイトル */

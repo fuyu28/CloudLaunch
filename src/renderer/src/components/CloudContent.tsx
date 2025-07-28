@@ -22,7 +22,7 @@ import type { CloudDataItem } from "@renderer/hooks/useCloudData"
 /**
  * クラウドコンテンツのプロパティ
  */
-interface CloudContentProps {
+type CloudContentProps = {
   /** ビューモード */
   viewMode: ViewMode
   /** ローディング状態 */

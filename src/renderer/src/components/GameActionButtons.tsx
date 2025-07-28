@@ -26,7 +26,7 @@ import { MdEdit } from "react-icons/md"
 /**
  * ゲーム基本操作ボタンコンポーネントのprops
  */
-export interface GameActionButtonsProps {
+export type GameActionButtonsProps = {
   /** ゲームID */
   gameId: string
   /** セーブデータフォルダパス */

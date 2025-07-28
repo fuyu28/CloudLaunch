@@ -22,7 +22,7 @@ import type { ApiResult } from "../../../types/result"
 /**
  * ゲーム操作フックのprops
  */
-export interface UseGameActionsProps {
+export type UseGameActionsProps = {
   /** 現在の検索ワード */
   searchWord: string
   /** 現在のフィルター */

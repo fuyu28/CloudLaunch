@@ -38,7 +38,7 @@ import type { ZodSchema } from "zod"
 /**
  * バリデーション状態の型定義
  */
-export interface ValidationState<T> {
+export type ValidationState<T> = {
   /** エラーメッセージのマップ */
   errors: Record<keyof T, string | undefined>
   /** タッチされたフィールドのセット */
@@ -50,7 +50,7 @@ export interface ValidationState<T> {
 /**
  * Zodバリデーションフックの戻り値の型定義
  */
-export interface ZodValidationResult<T> {
+export type ZodValidationResult<T> = {
   /** 特定フィールドのエラーを取得 */
   getError: (field: keyof T) => string | undefined
   /** 特定フィールドにエラーがあるかチェック */

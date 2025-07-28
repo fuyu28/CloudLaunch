@@ -23,7 +23,7 @@ import type { CloudDataItem } from "@renderer/hooks/useCloudData"
 /**
  * 削除確認モーダルのプロパティ
  */
-interface CloudDeleteModalProps {
+type CloudDeleteModalProps = {
   /** 削除対象のアイテム */
   deleteConfirm: CloudDataItem | CloudDirectoryNode | null
   /** キャンセルコールバック */

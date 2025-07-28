@@ -18,7 +18,7 @@ import type { ApiResult } from "src/types/result"
 /**
  * 画像読み込み状態の型定義
  */
-interface ImageLoadState {
+type ImageLoadState = {
   /** 読み込み済み画像のdata URL */
   imageSrc?: string
   /** 読み込み中フラグ */

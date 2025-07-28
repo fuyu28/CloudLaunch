@@ -41,7 +41,7 @@ type SetterOrUpdater<Value> = (value: Value | ((prev: Value) => Value)) => void
 /**
  * ゲーム編集操作フックの戻り値
  */
-export interface GameEditResult {
+export type GameEditResult = {
   /** 編集用のゲームデータ */
   editData: InputGameData | undefined
   /** 編集モーダルが開いているかどうか */

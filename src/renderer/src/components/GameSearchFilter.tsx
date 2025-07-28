@@ -14,7 +14,7 @@ import { CiSearch } from "react-icons/ci"
 
 import type { FilterOption, SortOption } from "src/types/menu"
 
-interface GameSearchFilterProps {
+type GameSearchFilterProps = {
   /** 検索ワード */
   searchWord: string
   /** ソートオプション */

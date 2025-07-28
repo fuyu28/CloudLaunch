@@ -46,7 +46,7 @@ export type SettingsFormData = {
 /**
  * バリデーションエラーの型定義
  */
-export interface SettingsValidationErrors {
+export type SettingsValidationErrors = {
   bucketName?: string
   endpoint?: string
   region?: string
@@ -57,7 +57,7 @@ export interface SettingsValidationErrors {
 /**
  * 設定フォーム管理フックの戻り値
  */
-export interface SettingsFormResult {
+export type SettingsFormResult = {
   /** フォームデータ */
   formData: SettingsFormData
   /** フィールド更新関数 */
