@@ -43,6 +43,11 @@ export default tseslint.config(
               pattern: "@renderer/hooks/**",
               group: "internal",
               position: "after" // internal グループ末尾に
+            },
+            {
+              pattern: "@renderer/utils/**",
+              group: "internal",
+              position: "after"
             }
           ],
           // 型 import ("import type") は parent/type のグループ扱い
