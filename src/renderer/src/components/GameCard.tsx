@@ -1,3 +1,4 @@
+import { memo, useCallback } from "react"
 import { IoIosPlay } from "react-icons/io"
 import { Link } from "react-router-dom"
 
@@ -12,7 +13,7 @@ type GameCardProps = {
   onLaunchGame: (exePath: string) => void
 }
 
-export default function GameCard({
+const GameCard = memo(function GameCard({
   id,
   title,
   publisher,
@@ -20,6 +21,14 @@ export default function GameCard({
   exePath,
   onLaunchGame
 }: GameCardProps): React.JSX.Element {
+  const handleLaunchClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault()
+      onLaunchGame(exePath)
+    },
+    [exePath, onLaunchGame]
+  )
+
   return (
     <div
       className="
@@ -46,10 +55,7 @@ export default function GameCard({
           >
             <button
               type="button"
-              onClick={(e) => {
-                e.preventDefault()
-                onLaunchGame(exePath)
-              }}
+              onClick={handleLaunchClick}
               aria-label="ゲームを起動"
               className="bg-base-100/80
               rounded-full p-2 shadow-md
@@ -69,4 +75,6 @@ export default function GameCard({
       </Link>
     </div>
   )
-}
+})
+
+export default GameCard
