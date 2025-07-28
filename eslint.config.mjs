@@ -30,23 +30,29 @@ export default tseslint.config(
       "import/order": [
         "warn",
         {
-          groups: [
-            "builtin", // Node.jsビルトインモジュール
-            "external", // 外部ライブラリ（reactなど）
-            "internal", // 自作モジュール（@やエイリアスなど）
-            ["parent", "sibling", "index", "type"] // 相対パス
-          ],
+          // グループ順は外部→内部→相対／型
+          groups: ["builtin", "external", "internal", ["parent", "sibling", "index", "type"]],
+          // internal グループの中で「components → hooks」の順序を明示
           pathGroups: [
             {
-              pattern: "./ipcHandlers/**",
+              pattern: "@renderer/components/**",
               group: "internal",
-              position: "after"
+              position: "before" // internal グループ先頭に
+            },
+            {
+              pattern: "@renderer/hooks/**",
+              group: "internal",
+              position: "after" // internal グループ末尾に
             }
           ],
+          // 型 import ("import type") は parent/type のグループ扱い
+          pathGroupsExcludedImportTypes: ["type"],
+          // 同グループ内は昇順アルファベットソート
           alphabetize: {
             order: "asc",
             caseInsensitive: true
           },
+          // グループ間には必ず空行を
           "newlines-between": "always"
         }
       ],
