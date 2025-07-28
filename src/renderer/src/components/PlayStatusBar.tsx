@@ -14,11 +14,13 @@
  * ```
  */
 
-import React, { useEffect, useState } from "react"
-import { useAtom } from "jotai"
-import { FaClock, FaGamepad } from "react-icons/fa"
-import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
 import { autoTrackingAtom } from "@renderer/state/settings"
+import { useAtom } from "jotai"
+import React, { useEffect, useState } from "react"
+import { FaClock, FaGamepad } from "react-icons/fa"
+
+import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
+
 import type { MonitoringGameStatus } from "../../../types/game"
 
 /**

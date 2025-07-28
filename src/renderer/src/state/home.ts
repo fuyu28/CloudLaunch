@@ -1,7 +1,8 @@
 import { atom } from "jotai"
+
+import { defaultSortOptionAtom, defaultFilterStateAtom } from "./settings"
 import type { GameType } from "src/types/game"
 import type { FilterOption, SortOption } from "src/types/menu"
-import { defaultSortOptionAtom, defaultFilterStateAtom } from "./settings"
 
 // 検索ワード
 export const searchWordAtom = atom<string>("")

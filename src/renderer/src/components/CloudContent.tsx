@@ -11,13 +11,13 @@
  * - ローディング状態の表示
  */
 
-import React from "react"
 import { FiCloud, FiFolder } from "react-icons/fi"
-import type { CloudDataItem } from "@renderer/hooks/useCloudData"
-import type { CloudDirectoryNode } from "../../../utils/cloudUtils"
+
+import type { ViewMode } from "./CloudHeader"
 import { CloudItemCard, DirectoryNodeCard } from "./CloudItemCard"
 import CloudTreeNode from "./CloudTreeNode"
-import type { ViewMode } from "./CloudHeader"
+import type { CloudDirectoryNode } from "../../../utils/cloudUtils"
+import type { CloudDataItem } from "@renderer/hooks/useCloudData"
 
 /**
  * クラウドコンテンツのプロパティ

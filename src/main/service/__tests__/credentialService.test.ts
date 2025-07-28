@@ -9,9 +9,11 @@
 
 /// <reference types="jest" />
 
-import type { Creds } from "../../../types/creds"
 import * as keytar from "keytar"
+
 import { MESSAGES } from "../../../constants"
+// eslint-disable-next-line import/order
+import type { Creds } from "../../../types/creds"
 
 // モックの設定
 jest.mock("keytar")

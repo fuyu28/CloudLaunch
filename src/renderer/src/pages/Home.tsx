@@ -1,17 +1,19 @@
-import React, { useEffect, useState, useCallback } from "react"
 import { useAtom } from "jotai"
+import { useEffect, useState, useCallback } from "react"
 import { CiSearch } from "react-icons/ci"
 import { IoIosAdd } from "react-icons/io"
+
+import FloatingButton from "@renderer/components/FloatingButton"
 import GameCard from "@renderer/components/GameCard"
 import GameFormModal from "@renderer/components/GameModal"
-import FloatingButton from "@renderer/components/FloatingButton"
-import { searchWordAtom, filterAtom, sortAtom, visibleGamesAtom } from "../state/home"
-import { useDebounce } from "../hooks/useDebounce"
-import { useLoadingState } from "../hooks/useLoadingState"
-import { useGameActions } from "../hooks/useGameActions"
+
 import { CONFIG, MESSAGES } from "../../../constants"
-import type { SortOption, FilterOption } from "src/types/menu"
+import { useDebounce } from "../hooks/useDebounce"
+import { useGameActions } from "../hooks/useGameActions"
+import { useLoadingState } from "../hooks/useLoadingState"
+import { searchWordAtom, filterAtom, sortAtom, visibleGamesAtom } from "../state/home"
 import type { GameType } from "src/types/game"
+import type { SortOption, FilterOption } from "src/types/menu"
 
 export default function Home(): React.ReactElement {
   const [searchWord, setSearchWord] = useAtom(searchWordAtom)

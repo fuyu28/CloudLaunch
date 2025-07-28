@@ -1,6 +1,6 @@
-import React from "react"
-import { Link } from "react-router-dom"
 import { IoIosPlay } from "react-icons/io"
+import { Link } from "react-router-dom"
+
 import DynamicImage from "./DynamicImage"
 
 type GameCardProps = {

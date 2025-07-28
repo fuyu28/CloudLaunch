@@ -10,10 +10,10 @@
 
 /// <reference types="jest" />
 
-import { MESSAGES } from "../messages"
 import { CONFIG } from "../config"
-import { PATTERNS } from "../patterns"
 import * as constantsIndex from "../index"
+import { MESSAGES } from "../messages"
+import { PATTERNS } from "../patterns"
 
 describe("constants", () => {
   describe("MESSAGES", () => {

@@ -9,6 +9,7 @@
  */
 
 import toast from "react-hot-toast"
+
 import type { ApiResult } from "../../../types/result"
 
 /**

@@ -15,7 +15,8 @@
  */
 
 import { ipcRenderer } from "electron"
-import { ApiResult } from "../../types/result"
+
+import type { ApiResult } from "../../types/result"
 
 /**
  * クラウドデータアイテムの型定義

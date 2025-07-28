@@ -16,8 +16,9 @@
 import { atom } from "jotai"
 import { atomWithStorage } from "jotai/utils"
 import toast from "react-hot-toast"
-import { ThemeName } from "../constants/themes"
-import { SortOption, FilterOption } from "src/types/menu"
+
+import type { ThemeName } from "../constants/themes"
+import type { SortOption, FilterOption } from "src/types/menu"
 
 /**
  * 設定関連のatoms

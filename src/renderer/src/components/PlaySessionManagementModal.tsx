@@ -17,14 +17,16 @@
  */
 
 import { useCallback, useEffect, useState, useMemo } from "react"
-import { RxCross1 } from "react-icons/rx"
 import { FaEdit } from "react-icons/fa"
+import { RxCross1 } from "react-icons/rx"
+
 import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
 import { useToastHandler } from "@renderer/hooks/useToastHandler"
-import { Chapter } from "../../../types/chapter"
-import type { PlaySessionType } from "../../../types/game"
+
 import ConfirmModal from "./ConfirmModal"
 import { playSessionEditSchema } from "../../../schemas/playSession"
+import type { Chapter } from "../../../types/chapter"
+import type { PlaySessionType } from "../../../types/game"
 import { useZodValidation } from "../hooks/useZodValidation"
 
 /**

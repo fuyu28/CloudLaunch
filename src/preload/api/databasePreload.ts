@@ -1,7 +1,8 @@
 import { ipcRenderer } from "electron"
-import { FilterOption, SortOption } from "../../types/menu"
-import { InputGameData, PlaySessionType, GameType } from "../../types/game"
-import { ApiResult } from "../../types/result"
+
+import type { InputGameData, PlaySessionType, GameType } from "../../types/game"
+import type { FilterOption, SortOption } from "../../types/menu"
+import type { ApiResult } from "../../types/result"
 
 export const databaseAPI = {
   listGames: (searchWord: string, filter: FilterOption, sort: SortOption): Promise<GameType[]> =>

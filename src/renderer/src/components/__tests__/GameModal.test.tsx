@@ -14,10 +14,11 @@
 
 import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import GameModal from "../GameModal"
+import { toast } from "react-hot-toast"
+
 import type { InputGameData } from "../../../../types/game"
 import type { ApiResult } from "../../../../types/result"
-import { toast } from "react-hot-toast"
+import GameModal from "../GameModal"
 
 // React Hot Toastのモック
 jest.mock("react-hot-toast", () => {

@@ -15,8 +15,9 @@
  */
 
 import { useCallback, useEffect, useState } from "react"
+
 import { useValidateCreds } from "./useValidCreds"
-import { AsyncStatus } from "src/types/common"
+import type { AsyncStatus } from "src/types/common"
 
 /**
  * 接続状態フックの戻り値

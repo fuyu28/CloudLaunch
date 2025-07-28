@@ -17,8 +17,11 @@
  * - React Suspenseライクなローディング表示
  */
 
-import React, { memo, ImgHTMLAttributes } from "react"
+import { memo } from "react"
+
 import { useImageLoader } from "@renderer/hooks/useImageLoader"
+
+import type { ImgHTMLAttributes } from "react"
 
 // ① ImgHTMLAttributes で <img> の全属性を継承
 type DynamicImgProps = Omit<ImgHTMLAttributes<HTMLImageElement>, "src"> & {

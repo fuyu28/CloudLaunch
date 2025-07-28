@@ -12,8 +12,7 @@
  */
 
 import { ipcMain } from "electron"
-import { prisma } from "../db"
-import type { ApiResult } from "../../types/result"
+
 import type {
   MemoType,
   CreateMemoData,
@@ -21,15 +20,17 @@ import type {
   CloudMemoInfo,
   MemoSyncResult
 } from "../../types/memo"
-import { logger } from "../utils/logger"
-import { memoFileManager } from "../utils/memoFileManager"
-import { validateCredentialsForR2 } from "../utils/credentialValidator"
-import { syncMemos } from "../service/memoSyncService"
+import type { ApiResult } from "../../types/result"
+import { prisma } from "../db"
 import {
   getCloudMemos,
   downloadMemoFromCloud,
   uploadMemoToCloud
 } from "../service/cloudMemoService"
+import { syncMemos } from "../service/memoSyncService"
+import { validateCredentialsForR2 } from "../utils/credentialValidator"
+import { logger } from "../utils/logger"
+import { memoFileManager } from "../utils/memoFileManager"
 
 export function registerMemoHandlers(): void {
   // メモファイルマネージャーの初期化

@@ -24,20 +24,18 @@
  * - ネットワーク・権限・ファイルシステムエラーの適切な処理
  */
 
-import { join, dirname, relative } from "path"
 import { promises as fs } from "fs"
+import { join, dirname, relative } from "path"
+
+import { GetObjectCommand, ListObjectsV2Command, HeadObjectCommand } from "@aws-sdk/client-s3"
 import { ipcMain } from "electron"
-import {
-  GetObjectCommand,
-  ListObjectsV2Command,
-  HeadObjectCommand,
-  S3Client
-} from "@aws-sdk/client-s3"
-import { ApiResult } from "../../types/result"
-import { withFileOperationErrorHandling } from "../utils/ipcErrorHandler"
-import { validateCredentialsForR2 } from "../utils/credentialValidator"
+
+import type { ApiResult } from "../../types/result"
 import { createRemotePath } from "../../utils/stringUtils"
+import { validateCredentialsForR2 } from "../utils/credentialValidator"
+import { withFileOperationErrorHandling } from "../utils/ipcErrorHandler"
 import { logger } from "../utils/logger"
+import type { S3Client } from "@aws-sdk/client-s3"
 
 /**
  * リモートパス配下のすべてのオブジェクトキーを取得する関数

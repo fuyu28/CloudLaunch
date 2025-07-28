@@ -1,7 +1,8 @@
 import { ipcRenderer } from "electron"
+
 import type { Creds } from "../../types/creds"
-import { ApiResult } from "../../types/result"
-import { AwsSdkError } from "../../types/error"
+import type { AwsSdkError } from "../../types/error"
+import type { ApiResult } from "../../types/result"
 
 export const credentialAPI = {
   upsertCredential: (creds: Creds): Promise<ApiResult<void>> =>

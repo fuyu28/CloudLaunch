@@ -18,15 +18,18 @@
  * - 統一されたエラーハンドリングとユーザーフレンドリーなメッセージ
  */
 
-import { ipcMain, dialog } from "electron"
-import { validatePathWithType } from "../utils/file"
-import { ValidatePathResult, PathType } from "../../types/file"
-import { ApiResult } from "../../types/result"
-import { logger } from "../utils/logger"
-import { MESSAGES } from "../../constants"
 import * as fs from "fs"
-import { fileSelectionSchema, fileExistenceSchema } from "../../schemas/file"
+
+import { ipcMain, dialog } from "electron"
 import { ZodError } from "zod"
+
+import { MESSAGES } from "../../constants"
+import { fileSelectionSchema, fileExistenceSchema } from "../../schemas/file"
+import type { ValidatePathResult } from "../../types/file"
+import { PathType } from "../../types/file"
+import type { ApiResult } from "../../types/result"
+import { validatePathWithType } from "../utils/file"
+import { logger } from "../utils/logger"
 
 export function registerFileDialogHandlers(): void {
   /**

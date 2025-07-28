@@ -10,10 +10,11 @@
  */
 
 import { ipcMain } from "electron"
+
+import type { ApiResult } from "../../types/result"
+import { prisma } from "../db"
 import { ProcessMonitorService } from "../service/processMonitorService"
 import { logger } from "../utils/logger"
-import { ApiResult } from "../../types/result"
-import { prisma } from "../db"
 
 /**
  * プロセス監視関連のIPCハンドラーを登録

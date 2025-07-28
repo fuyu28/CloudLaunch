@@ -7,8 +7,10 @@
  */
 
 import { useMemo } from "react"
+
 import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
-import { PlaySessionType } from "src/types/game"
+
+import type { PlaySessionType } from "src/types/game"
 
 interface PlayHeatmapProps {
   /** プレイセッションデータの配列 */

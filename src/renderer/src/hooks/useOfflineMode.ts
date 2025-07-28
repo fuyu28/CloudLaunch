@@ -15,6 +15,7 @@
 
 import { useAtom } from "jotai"
 import toast from "react-hot-toast"
+
 import { offlineModeAtom } from "../state/settings"
 
 type OfflineModeHook = {

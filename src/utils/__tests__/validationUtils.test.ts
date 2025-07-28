@@ -10,6 +10,7 @@
 
 /// <reference types="jest" />
 
+import type { ValidationErrors } from "../validationUtils"
 import {
   validateRequired,
   validateMinLength,
@@ -18,8 +19,7 @@ import {
   validateR2OrS3Endpoint,
   combineValidationResults,
   hasValidationErrors,
-  getFirstErrorMessage,
-  ValidationErrors
+  getFirstErrorMessage
 } from "../validationUtils"
 
 describe("validationUtils", () => {

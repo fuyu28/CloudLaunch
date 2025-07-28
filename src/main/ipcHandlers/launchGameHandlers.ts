@@ -24,15 +24,17 @@
  * - ユーザーフレンドリーなエラーメッセージ
  */
 
-import { ipcMain } from "electron"
 import { spawn } from "child_process"
 import * as path from "path"
-import { ApiResult } from "../../types/result"
-import { PathType } from "../../types/file"
-import { validatePathWithType } from "../utils/file"
-import { createErrorResult, createAppError } from "../utils/errorHandler"
-import { logger } from "../utils/logger"
+
+import { ipcMain } from "electron"
+
 import { MESSAGES } from "../../constants"
+import { PathType } from "../../types/file"
+import type { ApiResult } from "../../types/result"
+import { createErrorResult, createAppError } from "../utils/errorHandler"
+import { validatePathWithType } from "../utils/file"
+import { logger } from "../utils/logger"
 
 export function registerLaunchGameHandlers(): void {
   /**

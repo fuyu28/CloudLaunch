@@ -1,11 +1,13 @@
-import { app, shell, BrowserWindow, ipcMain } from "electron"
 import { join } from "path"
+
 import { electronApp, optimizer, is } from "@electron-toolkit/utils"
-import icon from "../../build/icon.ico?asset"
-import { registerAllHandlers } from "./registerHandlers"
+import { app, shell, BrowserWindow, ipcMain } from "electron"
+
 import { registerWindowHandler } from "./ipcHandlers/windowsHandler"
-import { logger } from "./utils/logger"
+import { registerAllHandlers } from "./registerHandlers"
 import { ProcessMonitorService } from "./service/processMonitorService"
+import { logger } from "./utils/logger"
+import icon from "../../build/icon.ico?asset"
 
 function createWindow(): void {
   // Create the browser window.

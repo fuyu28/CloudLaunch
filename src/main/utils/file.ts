@@ -1,7 +1,11 @@
 import { promises as fs } from "fs"
-import { fileTypeFromFile, FileTypeResult } from "file-type"
-import { PathType, ValidatePathResult } from "../../types/file"
+
+import { fileTypeFromFile } from "file-type"
+
 import { logger } from "./logger"
+import type { ValidatePathResult } from "../../types/file"
+import { PathType } from "../../types/file"
+import type { FileTypeResult } from "file-type"
 
 const EXE_HEADER = Buffer.from([0x4d, 0x5a]) // "MZ"
 

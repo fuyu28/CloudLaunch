@@ -1,8 +1,9 @@
 // awsErrorHandler.ts
 import { S3ServiceException } from "@aws-sdk/client-s3"
-import { AwsSdkError } from "../../types/error"
+
 import { logger } from "./logger"
 import { MESSAGES } from "../../constants"
+import type { AwsSdkError } from "../../types/error"
 
 /**
  * AWS SDK のエラーを一元処理する．

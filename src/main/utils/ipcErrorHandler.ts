@@ -20,11 +20,11 @@
  * ```
  */
 
-import { IpcMainInvokeEvent } from "electron"
-import { ApiResult } from "../../types/result"
 import { handleAwsSdkError } from "./awsSdkErrorHandler"
 import { logger } from "./logger"
 import { MESSAGES } from "../../constants"
+import type { ApiResult } from "../../types/result"
+import type { IpcMainInvokeEvent } from "electron"
 
 /**
  * IPC ハンドラー関数の型定義

@@ -1,4 +1,4 @@
-import { PlayStatus } from "@prisma/client"
+import type { PlayStatus } from "@prisma/client"
 
 export type GameType = {
   id: string

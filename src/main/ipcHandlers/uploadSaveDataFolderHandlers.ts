@@ -23,15 +23,18 @@
  * - ネットワーク・権限・ファイルアクセスエラーの適切な処理
  */
 
+import { createReadStream } from "fs"
 import { readdir, readFile, stat } from "fs/promises"
-import { createReadStream, ReadStream } from "fs"
 import { join, relative } from "path"
-import { ipcMain } from "electron"
+
 import { PutObjectCommand } from "@aws-sdk/client-s3"
-import { ApiResult } from "../../types/result"
-import { withFileOperationErrorHandling } from "../utils/ipcErrorHandler"
+import { ipcMain } from "electron"
+
+import type { ApiResult } from "../../types/result"
 import { validateCredentialsForR2 } from "../utils/credentialValidator"
+import { withFileOperationErrorHandling } from "../utils/ipcErrorHandler"
 import { logger } from "../utils/logger"
+import type { ReadStream } from "fs"
 
 /**
  * ディレクトリを再帰的にスキャンしてすべてのファイルパスを取得

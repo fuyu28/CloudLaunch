@@ -1,5 +1,6 @@
 import { ipcRenderer } from "electron"
-import { ApiResult } from "../../types/result"
+
+import type { ApiResult } from "../../types/result"
 
 export const launchGameAPI = {
   launchGame: (filePath: string): Promise<ApiResult> => ipcRenderer.invoke("launch-game", filePath),

@@ -1,12 +1,13 @@
-import React, { useRef, useEffect } from "react"
-import { Outlet, NavLink, useLocation } from "react-router-dom"
+import { themeAtom } from "@renderer/state/settings"
+import { useAtom } from "jotai"
+import { useRef, useEffect } from "react"
+import { Toaster } from "react-hot-toast"
+import { FaEdit } from "react-icons/fa"
 import { FiMenu, FiCloud } from "react-icons/fi"
 import { IoIosHome, IoIosSettings } from "react-icons/io"
-import { FaEdit } from "react-icons/fa"
 import { VscChromeClose, VscChromeMaximize, VscChromeMinimize } from "react-icons/vsc"
-import { Toaster } from "react-hot-toast"
-import { useAtom } from "jotai"
-import { themeAtom } from "@renderer/state/settings"
+import { Outlet, NavLink, useLocation } from "react-router-dom"
+
 import PlayStatusBar from "@renderer/components/PlayStatusBar"
 
 export default function MainLayout(): React.JSX.Element {

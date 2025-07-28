@@ -1,8 +1,9 @@
-import { app } from "electron"
-import { is } from "@electron-toolkit/utils"
-import { PrismaClient } from "@prisma/client"
 import fs from "fs"
 import path from "path"
+
+import { is } from "@electron-toolkit/utils"
+import { PrismaClient } from "@prisma/client"
+import { app } from "electron"
 
 const userDataDir = app.getPath("userData")
 const devDbPath = path.join(process.cwd(), "dev.db")
