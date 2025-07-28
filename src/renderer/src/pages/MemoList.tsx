@@ -26,6 +26,7 @@ import { useDropdownMenu } from "@renderer/hooks/useDropdownMenu"
 import { useMemoOperations } from "@renderer/hooks/useMemoOperations"
 import MemoCardBase from "@renderer/components/MemoCardBase"
 import ConfirmModal from "@renderer/components/ConfirmModal"
+import { VscChromeClose } from "react-icons/vsc"
 
 type SortOption = "updatedAt" | "createdAt" | "title"
 type SortDirection = "asc" | "desc"
@@ -198,115 +199,110 @@ export default function MemoList(): React.JSX.Element {
         </div>
       </div>
 
-      {/* 検索・フィルター・ソート - レスポンシブ対応 */}
-      <div className="mb-6">
-        <div className="card bg-base-100 shadow-sm">
-          <div className="card-body p-4">
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-              {/* 検索バー */}
-              <div className="lg:col-span-2">
-                <label className="label label-text text-xs font-semibold mb-1">検索</label>
-                <div className="flex items-center gap-2">
-                  <FaSearch className="text-base-content/60 flex-shrink-0" />
-                  <div className="relative flex-1">
-                    <input
-                      type="text"
-                      placeholder="タイトル、内容、ゲーム名で検索..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="input input-bordered input-sm w-full pr-8"
-                    />
-                    {searchQuery && (
-                      <button
-                        onClick={clearSearch}
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-base-content/60 hover:text-base-content text-sm"
-                        aria-label="検索をクリア"
-                      >
-                        ✕
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
+      {/* 検索・フィルター・ソート */}
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+        {/* 検索バー */}
+        <label className="input w-96 flex items-center">
+          <FaSearch />
+          <input
+            type="text"
+            className="grow ml-2"
+            placeholder="タイトル、内容、ゲーム名で検索..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          {searchQuery && (
+            <button
+              onClick={clearSearch}
+              className="text-base-content/60 hover:text-base-content"
+              aria-label="検索をクリア"
+            >
+              <VscChromeClose />
+            </button>
+          )}
+        </label>
 
-              {/* ゲームフィルター */}
-              <div>
-                <label className="label label-text text-xs font-semibold mb-1">ゲーム</label>
-                <div className="flex items-center gap-2">
-                  <FaFilter className="text-base-content/60 flex-shrink-0" />
-                  <select
-                    value={selectedGameId}
-                    onChange={(e) => setSelectedGameId(e.target.value)}
-                    className="select select-bordered select-sm w-full"
-                  >
-                    <option value="all">すべて</option>
-                    {games.map((game) => (
-                      <option key={game.id} value={game.id}>
-                        {game.title}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+        {/* フィルター・ソートグループ */}
+        <div className="flex items-center gap-3 px-6">
+          <span className="text-sm leading-tight">ゲーム:</span>
+          <select
+            value={selectedGameId}
+            onChange={(e) => setSelectedGameId(e.target.value)}
+            className="select select-bordered text-sm w-40 h-9"
+          >
+            <option value="all">すべて</option>
+            {games.map((game) => (
+              <option key={game.id} value={game.id}>
+                {game.title}
+              </option>
+            ))}
+          </select>
 
-              {/* ソート設定 */}
-              <div>
-                <label className="label label-text text-xs font-semibold mb-1">並び順</label>
-                <div className="flex items-center gap-2">
-                  <FaSort className="text-base-content/60 flex-shrink-0" />
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value as SortOption)}
-                    className="select select-bordered select-sm flex-1"
-                  >
-                    <option value="updatedAt">更新日時</option>
-                    <option value="createdAt">作成日時</option>
-                    <option value="title">タイトル</option>
-                  </select>
-                  <button
-                    onClick={toggleSortDirection}
-                    className="btn btn-ghost btn-sm btn-square"
-                    title={sortDirection === "asc" ? "昇順" : "降順"}
-                    aria-label={`並び順を${sortDirection === "asc" ? "降順" : "昇順"}に変更`}
-                  >
-                    {sortDirection === "asc" ? <FaSortAmountUp /> : <FaSortAmountDown />}
-                  </button>
-                </div>
-              </div>
-            </div>
+          <span className="text-sm leading-tight">並び順:</span>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as SortOption)}
+            className="select select-bordered text-sm w-32 h-9"
+          >
+            <option value="updatedAt">更新日時</option>
+            <option value="createdAt">作成日時</option>
+            <option value="title">タイトル</option>
+          </select>
 
-            {/* メモ件数とクイックアクション */}
-            <div className="flex justify-between items-center mt-4 pt-3 border-t border-base-300">
-              <div className="flex items-center gap-4">
-                <span className="text-sm text-base-content/70 font-medium">
-                  {filteredAndSortedMemos.length}件のメモ
-                </span>
-                {debouncedSearchQuery && (
-                  <span className="badge badge-info badge-sm">
-                    検索中: &quot;{debouncedSearchQuery}&quot;
-                  </span>
-                )}
-                {selectedGameId !== "all" && (
-                  <span className="badge badge-primary badge-sm">
-                    {games.find((g) => g.id === selectedGameId)?.title}
-                  </span>
-                )}
-              </div>
-              <div className="flex gap-2">
-                {(searchQuery || selectedGameId !== "all") && (
-                  <button
-                    onClick={() => {
-                      clearSearch()
-                      setSelectedGameId("all")
-                    }}
-                    className="btn btn-ghost btn-xs"
-                  >
-                    フィルターをクリア
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
+          <button
+            onClick={toggleSortDirection}
+            className="btn btn-ghost btn-sm h-9 px-3"
+            title={
+              sortDirection === "asc"
+                ? "昇順表示中（クリックで降順に）"
+                : "降順表示中（クリックで昇順に）"
+            }
+            aria-label={`並び順を${sortDirection === "asc" ? "降順" : "昇順"}に変更`}
+          >
+            {sortDirection === "asc" ? (
+              <>
+                <FaSortAmountUp className="mr-1" />
+                昇順
+              </>
+            ) : (
+              <>
+                <FaSortAmountDown className="mr-1" />
+                降順
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* メモ件数とクイックアクション */}
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-base-content/70 font-medium">
+            {filteredAndSortedMemos.length}件のメモ
+          </span>
+          {debouncedSearchQuery && (
+            <span className="badge badge-info badge-sm">
+              検索中: &quot;{debouncedSearchQuery}&quot;
+            </span>
+          )}
+          {selectedGameId !== "all" && (
+            <span className="badge badge-primary badge-sm">
+              {games.find((g) => g.id === selectedGameId)?.title}
+            </span>
+          )}
+        </div>
+        <div className="flex gap-2">
+          {(searchQuery || selectedGameId !== "all") && (
+            <button
+              onClick={() => {
+                clearSearch()
+                setSelectedGameId("all")
+              }}
+              className="btn btn-ghost btn-xs"
+            >
+              フィルターをクリア
+            </button>
+          )}
         </div>
       </div>
 
