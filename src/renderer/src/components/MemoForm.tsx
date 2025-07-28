@@ -175,67 +175,74 @@ export default function MemoForm({
   )
 
   // 保存処理
-  const handleSave = useCallback(async () => {
-    // バリデーション
-    if (!saveData.title) {
-      showToast("タイトルを入力してください", "error")
-      return
-    }
-
-    if (!saveData.effectiveGameId) {
-      showToast("ゲームを選択してください", "error")
-      return
-    }
-
-    if (saveData.title.length > 200) {
-      showToast("タイトルは200文字以内で入力してください", "error")
-      return
-    }
-
-    setIsSaving(true)
-    try {
-      let result
-
-      if (mode === "create") {
-        // 新規作成
-        const createData: CreateMemoData = {
-          title: saveData.title,
-          content: saveData.content,
-          gameId: saveData.effectiveGameId
-        }
-
-        result = await window.api.memo.createMemo(createData)
-        if (result.success) {
-          showToast("メモを作成しました", "success")
-          onSaveSuccess(saveData.effectiveGameId, result.data?.id)
-        } else {
-          const errorMessage = result.message || "メモの作成に失敗しました"
-          showToast(`作成エラー: ${errorMessage}`, "error")
-        }
-      } else if (mode === "edit" && memoId) {
-        // 編集
-        const updateData: UpdateMemoData = {
-          title: saveData.title,
-          content: saveData.content
-        }
-
-        result = await window.api.memo.updateMemo(memoId, updateData)
-        if (result.success) {
-          showToast("メモを更新しました", "success")
-          onSaveSuccess(saveData.effectiveGameId, memoId)
-        } else {
-          const errorMessage = result.message || "メモの更新に失敗しました"
-          showToast(`更新エラー: ${errorMessage}`, "error")
-        }
+  const handleSave = useCallback(
+    async (closeAfterSave: boolean = true) => {
+      // バリデーション
+      if (!saveData.title) {
+        showToast("タイトルを入力してください", "error")
+        return
       }
-    } catch (error) {
-      console.error("保存エラー:", error)
-      const errorMessage = error instanceof Error ? error.message : "不明なエラー"
-      showToast(`保存に失敗しました: ${errorMessage}`, "error")
-    } finally {
-      setIsSaving(false)
-    }
-  }, [mode, saveData, memoId, showToast, onSaveSuccess])
+
+      if (!saveData.effectiveGameId) {
+        showToast("ゲームを選択してください", "error")
+        return
+      }
+
+      if (saveData.title.length > 200) {
+        showToast("タイトルは200文字以内で入力してください", "error")
+        return
+      }
+
+      setIsSaving(true)
+      try {
+        let result
+
+        if (mode === "create") {
+          // 新規作成
+          const createData: CreateMemoData = {
+            title: saveData.title,
+            content: saveData.content,
+            gameId: saveData.effectiveGameId
+          }
+
+          result = await window.api.memo.createMemo(createData)
+          if (result.success) {
+            showToast("メモを作成しました", "success")
+            if (closeAfterSave) {
+              onSaveSuccess(saveData.effectiveGameId, result.data?.id)
+            }
+          } else {
+            const errorMessage = result.message || "メモの作成に失敗しました"
+            showToast(`作成エラー: ${errorMessage}`, "error")
+          }
+        } else if (mode === "edit" && memoId) {
+          // 編集
+          const updateData: UpdateMemoData = {
+            title: saveData.title,
+            content: saveData.content
+          }
+
+          result = await window.api.memo.updateMemo(memoId, updateData)
+          if (result.success) {
+            showToast("メモを更新しました", "success")
+            if (closeAfterSave) {
+              onSaveSuccess(saveData.effectiveGameId, memoId)
+            }
+          } else {
+            const errorMessage = result.message || "メモの更新に失敗しました"
+            showToast(`更新エラー: ${errorMessage}`, "error")
+          }
+        }
+      } catch (error) {
+        console.error("保存エラー:", error)
+        const errorMessage = error instanceof Error ? error.message : "不明なエラー"
+        showToast(`保存に失敗しました: ${errorMessage}`, "error")
+      } finally {
+        setIsSaving(false)
+      }
+    },
+    [mode, saveData, memoId, showToast, onSaveSuccess]
+  )
 
   // 戻るボタン処理
   const handleBack = useCallback(() => {
@@ -251,7 +258,8 @@ export default function MemoForm({
     const handleKeyDown = (e: KeyboardEvent): void => {
       if (e.ctrlKey && e.key === "s") {
         e.preventDefault()
-        handleSave()
+        // Ctrl+Sでは編集モードを閉じずに保存のみ実行
+        handleSave(false)
       }
     }
 
@@ -293,7 +301,7 @@ export default function MemoForm({
   }
 
   return (
-    <div className="bg-base-200 px-4 sm:px-6 py-4 min-h-screen">
+    <div className="bg-base-200 px-4 sm:px-6 py-4">
       {/* ヘッダー */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-4 min-w-0 flex-1">
@@ -312,7 +320,7 @@ export default function MemoForm({
         </div>
 
         <button
-          onClick={handleSave}
+          onClick={() => handleSave()}
           disabled={isSaving || !saveData.title || !displayData.effectiveGameId}
           className="btn btn-primary btn-sm sm:btn-md w-full sm:w-auto"
         >
@@ -407,8 +415,7 @@ export default function MemoForm({
             <div className="flex justify-between items-center mb-2">
               <label className="label-text text-lg font-semibold">内容</label>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-base-content/60">{content.length}文字</span>
-                <div className="badge badge-info badge-sm">Markdown対応</div>
+                <span className="text-lm text-base-content/60">{content.length}文字</span>
               </div>
             </div>
 
@@ -416,60 +423,16 @@ export default function MemoForm({
               <MDEditor
                 value={content}
                 onChange={(val) => setContent(val || "")}
-                height={400}
+                height={550}
                 visibleDragbar={false}
                 data-color-mode="light"
                 textareaProps={{
-                  placeholder:
-                    "メモをMarkdownで記入してください...\n\n📝 基本的なMarkdown記法:\n# 見出し1\n## 見出し2\n**太字** *斜体*\n- リスト項目\n1. 番号付きリスト\n> 引用文\n`コード`\n```\nコードブロック\n```\n[リンク](URL)",
+                  placeholder: "メモを記入してください！",
                   disabled: isSaving,
                   style: { fontSize: "14px", lineHeight: "1.6" }
                 }}
               />
             </div>
-          </div>
-
-          {/* ショートカットヒント */}
-          <div className="mt-6 space-y-3">
-            <div className="alert alert-info">
-              <div className="flex items-center gap-2">
-                <span className="text-lg">💡</span>
-                <div>
-                  <p className="font-semibold text-sm">ショートカット</p>
-                  <p className="text-xs opacity-90">Ctrl+S で保存 • プレビューボタンで確認</p>
-                </div>
-              </div>
-            </div>
-
-            <details className="collapse collapse-arrow bg-base-200">
-              <summary className="collapse-title text-sm font-medium">
-                📚 Markdown記法ガイド
-              </summary>
-              <div className="collapse-content text-xs space-y-2">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <p className="font-semibold mb-1">テキスト装飾</p>
-                    <code className="text-xs bg-base-300 px-1 rounded">**太字**</code>
-                    <code className="text-xs bg-base-300 px-1 rounded ml-2">*斜体*</code>
-                  </div>
-                  <div>
-                    <p className="font-semibold mb-1">見出し</p>
-                    <code className="text-xs bg-base-300 px-1 rounded"># 見出し1</code>
-                    <code className="text-xs bg-base-300 px-1 rounded ml-2">## 見出し2</code>
-                  </div>
-                  <div>
-                    <p className="font-semibold mb-1">リスト</p>
-                    <code className="text-xs bg-base-300 px-1 rounded">- 項目</code>
-                    <code className="text-xs bg-base-300 px-1 rounded ml-2">1. 番号</code>
-                  </div>
-                  <div>
-                    <p className="font-semibold mb-1">その他</p>
-                    <code className="text-xs bg-base-300 px-1 rounded">`コード`</code>
-                    <code className="text-xs bg-base-300 px-1 rounded ml-2"> 引用</code>
-                  </div>
-                </div>
-              </div>
-            </details>
           </div>
         </div>
       </div>
