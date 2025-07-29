@@ -11,20 +11,26 @@
 
 import { memo, useCallback } from "react"
 import { CiSearch } from "react-icons/ci"
+import { IoFilterOutline } from "react-icons/io5"
+import { TbSortAscending, TbSortDescending } from "react-icons/tb"
 
-import type { FilterOption, SortOption } from "src/types/menu"
+import type { FilterOption, SortOption, SortDirection } from "src/types/menu"
 
 type GameSearchFilterProps = {
   /** 検索ワード */
   searchWord: string
   /** ソートオプション */
   sort: SortOption
+  /** ソート方向 */
+  sortDirection: SortDirection
   /** フィルタオプション */
   filter: FilterOption
   /** 検索ワード変更ハンドラ */
   onSearchWordChange: (value: string) => void
   /** ソート変更ハンドラ */
   onSortChange: (value: SortOption) => void
+  /** ソート方向変更ハンドラ */
+  onSortDirectionChange: (value: SortDirection) => void
   /** フィルタ変更ハンドラ */
   onFilterChange: (value: FilterOption) => void
 }
@@ -38,9 +44,11 @@ type GameSearchFilterProps = {
 const GameSearchFilter = memo(function GameSearchFilter({
   searchWord,
   sort,
+  sortDirection,
   filter,
   onSearchWordChange,
   onSortChange,
+  onSortDirectionChange,
   onFilterChange
 }: GameSearchFilterProps): React.JSX.Element {
   const handleSearchChange = useCallback(
@@ -64,47 +72,76 @@ const GameSearchFilter = memo(function GameSearchFilter({
     [onFilterChange]
   )
 
+  const handleSortDirectionToggle = useCallback(() => {
+    onSortDirectionChange(sortDirection === "asc" ? "desc" : "asc")
+  }, [sortDirection, onSortDirectionChange])
+
   return (
-    <div className="flex flex-wrap items-center justify-between gap-4 mb-4 pt-1">
-      {/* 検索フィールド */}
-      <label htmlFor="game-search" className="input w-70 left-6 flex items-center">
-        <CiSearch />
-        <input
-          id="game-search"
-          type="search"
-          className="glow ml-2"
-          placeholder="検索"
-          value={searchWord}
-          onChange={handleSearchChange}
-        />
-      </label>
+    <div className="bg-base-200 p-4 rounded-lg mb-4">
+      {/* 検索バー */}
+      <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+        <div className="flex-1">
+          <label htmlFor="game-search" className="input input-bordered flex items-center gap-2">
+            <CiSearch className="w-4 h-4 opacity-70" />
+            <input
+              id="game-search"
+              type="search"
+              className="grow"
+              placeholder="ゲームタイトルやブランド名で検索..."
+              value={searchWord}
+              onChange={handleSearchChange}
+            />
+          </label>
+        </div>
 
-      {/* フィルタ・ソート */}
-      <div className="flex items-center gap-3 px-6">
-        <span className="text-sm leading-tight">ソート順 :</span>
-        <select
-          value={sort}
-          onChange={handleSortChange}
-          className="select select-bordered text-sm w-40 h-9"
-        >
-          <option value="title">タイトル順</option>
-          <option value="lastPlayed">最近プレイした順</option>
-          <option value="lastRegistered">最近登録した順</option>
-          <option value="totalPlayTime">プレイ時間が長い順</option>
-          <option value="publisher">ブランド順</option>
-        </select>
+        {/* コントロール群 */}
+        <div className="flex flex-wrap items-center gap-3">
+          {/* ソート設定 */}
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium opacity-70">並び順</label>
+            <select
+              value={sort}
+              onChange={handleSortChange}
+              className="select select-bordered select-sm w-auto min-w-32"
+              aria-label="ソート順を選択"
+            >
+              <option value="title">タイトル順</option>
+              <option value="lastPlayed">最近プレイ順</option>
+              <option value="lastRegistered">登録順</option>
+              <option value="totalPlayTime">プレイ時間順</option>
+              <option value="publisher">ブランド順</option>
+            </select>
+            <button
+              type="button"
+              onClick={handleSortDirectionToggle}
+              className="btn btn-ghost btn-sm btn-circle"
+              title={sortDirection === "asc" ? "昇順（A→Z, 古→新）" : "降順（Z→A, 新→古）"}
+              aria-label={`${sortDirection === "asc" ? "昇順" : "降順"}で表示中。クリックで切り替え`}
+            >
+              {sortDirection === "asc" ? (
+                <TbSortAscending className="w-4 h-4" />
+              ) : (
+                <TbSortDescending className="w-4 h-4" />
+              )}
+            </button>
+          </div>
 
-        <span className="text-sm leading-tight">プレイ状況 :</span>
-        <select
-          value={filter}
-          onChange={handleFilterChange}
-          className="select select-bordered text-sm w-30 h-9"
-        >
-          <option value="all">すべて</option>
-          <option value="unplayed">未プレイ</option>
-          <option value="playing">プレイ中</option>
-          <option value="played">プレイ済み</option>
-        </select>
+          {/* フィルター設定 */}
+          <div className="flex items-center gap-2">
+            <IoFilterOutline className="w-4 h-4 opacity-70" />
+            <select
+              value={filter}
+              onChange={handleFilterChange}
+              className="select select-bordered select-sm w-auto"
+              aria-label="プレイ状況でフィルター"
+            >
+              <option value="all">すべて</option>
+              <option value="unplayed">未プレイ</option>
+              <option value="playing">プレイ中</option>
+              <option value="played">プレイ済み</option>
+            </select>
+          </div>
+        </div>
       </div>
     </div>
   )

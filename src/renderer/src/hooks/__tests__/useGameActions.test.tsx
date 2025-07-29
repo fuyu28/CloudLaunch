@@ -15,7 +15,7 @@ import { renderHook, act } from "@testing-library/react"
 
 import type { API } from "../../../../preload/preload.d"
 import type { InputGameData, GameType } from "../../../../types/game"
-import type { FilterOption, SortOption } from "../../../../types/menu"
+import type { FilterOption, SortOption, SortDirection } from "../../../../types/menu"
 import type { ApiResult } from "../../../../types/result"
 import { useGameActions } from "../useGameActions"
 import { useLoadingState } from "../useLoadingState"
@@ -51,6 +51,7 @@ describe("useGameActions", () => {
     searchWord: "",
     filter: "all" as FilterOption,
     sort: "title" as SortOption,
+    sortDirection: "desc" as SortDirection,
     onGamesUpdate: jest.fn(),
     onModalClose: jest.fn()
   }
@@ -123,7 +124,7 @@ describe("useGameActions", () => {
 
       expect(mockExecuteWithLoading).toHaveBeenCalled()
       expect(mockGameApi.createGame).toHaveBeenCalledWith(mockGameData)
-      expect(mockGameApi.listGames).toHaveBeenCalledWith("", "all", "title")
+      expect(mockGameApi.listGames).toHaveBeenCalledWith("", "all", "title", "desc")
       expect(mockProps.onGamesUpdate).toHaveBeenCalledWith(mockGames)
       expect(mockProps.onModalClose).toHaveBeenCalled()
       expect(actionResult.success).toBe(true)
