@@ -77,7 +77,7 @@ const GameSearchFilter = memo(function GameSearchFilter({
   }, [sortDirection, onSortDirectionChange])
 
   return (
-    <div className="bg-base-200 p-4 rounded-lg mb-4">
+    <div className="bg-base-100 p-4 rounded-lg mb-4 mx-4 shadow-sm">
       {/* 検索バー */}
       <div className="flex flex-col lg:flex-row lg:items-center gap-4">
         <div className="flex-1">
