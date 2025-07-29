@@ -14,12 +14,14 @@ import {
   DeleteObjectsCommand,
   PutObjectCommand,
   GetObjectCommand,
-  S3Client
+  type S3Client
 } from "@aws-sdk/client-s3"
 
 import { CONFIG } from "../../constants/config"
 import type { Creds } from "../../types/creds"
+import { createS3ClientFromCredentials } from "../s3Client"
 import { logger } from "../utils/logger"
+import { validateObjectKeySecurity } from "../utils/pathSecurity"
 import type { ReadStream } from "fs"
 
 /**
@@ -98,18 +100,6 @@ export async function getAllObjectsWithMetadata(
 }
 
 /**
- * パストラバーサル攻撃対策のためのパス検証
- *
- * @param path 検証対象のパス
- * @throws CloudStorageError 不正なパスの場合
- */
-export function validatePath(path: string): void {
-  if (path.includes("..") || path.startsWith("/")) {
-    throw new CloudStorageError("不正なパスが指定されました", "validatePath")
-  }
-}
-
-/**
  * 指定したプレフィックス配下のすべてのオブジェクトを削除
  *
  * @param s3Client S3クライアント
@@ -124,7 +114,7 @@ export async function deleteObjectsByPrefix(
   prefix: string
 ): Promise<number> {
   // パス検証
-  validatePath(prefix)
+  validateObjectKeySecurity(prefix)
 
   // 削除対象オブジェクトの一覧取得
   const objectsToDelete = await getAllObjectsWithMetadata(
@@ -176,7 +166,7 @@ export async function deleteObjectByKey(
   objectKey: string
 ): Promise<void> {
   // パス検証
-  validatePath(objectKey)
+  validateObjectKeySecurity(objectKey)
 
   // 単一ファイルを削除
   const deleteCommand = new DeleteObjectsCommand({
@@ -209,7 +199,7 @@ export async function uploadObject(
   contentType?: string
 ): Promise<void> {
   // パス検証
-  validatePath(objectKey)
+  validateObjectKeySecurity(objectKey)
 
   const putCommand = new PutObjectCommand({
     Bucket: bucketName,
@@ -237,7 +227,7 @@ export async function downloadObject(
   objectKey: string
 ): Promise<string> {
   // パス検証
-  validatePath(objectKey)
+  validateObjectKeySecurity(objectKey)
 
   const getCommand = new GetObjectCommand({
     Bucket: bucketName,
@@ -269,7 +259,7 @@ export async function objectExists(
 ): Promise<boolean> {
   try {
     // パス検証
-    validatePath(objectKey)
+    validateObjectKeySecurity(objectKey)
 
     const getCommand = new GetObjectCommand({
       Bucket: bucketName,
@@ -299,7 +289,7 @@ export async function downloadObjectStream(
   objectKey: string
 ): Promise<NodeJS.ReadableStream> {
   // パス検証
-  validatePath(objectKey)
+  validateObjectKeySecurity(objectKey)
 
   const getCommand = new GetObjectCommand({
     Bucket: bucketName,
@@ -382,14 +372,7 @@ export async function testConnection(s3Client: S3Client, bucketName: string): Pr
  * @throws Error 接続に失敗した場合
  */
 export async function testConnectionWithCredentials(credentials: Creds): Promise<void> {
-  const s3Client = new S3Client({
-    region: credentials.region,
-    endpoint: credentials.endpoint,
-    credentials: {
-      accessKeyId: credentials.accessKeyId,
-      secretAccessKey: credentials.secretAccessKey
-    }
-  })
-
+  // 統一されたS3Client作成関数を使用
+  const s3Client = createS3ClientFromCredentials(credentials)
   await testConnection(s3Client, credentials.bucketName)
 }

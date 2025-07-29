@@ -21,6 +21,7 @@
  */
 
 import { handleAwsSdkError } from "./awsSdkErrorHandler"
+import { createErrorResult } from "./errorHandler"
 import { logger } from "./logger"
 import { MESSAGES } from "../../constants"
 import type { ApiResult } from "../../types/result"
@@ -63,43 +64,29 @@ export function withErrorHandling<T extends unknown[] = unknown[], R = unknown>(
   handler: IpcHandler<T, R>,
   options: ErrorHandlingOptions = {}
 ): IpcHandler<T, R> {
-  const {
-    errorPrefix = "処理中にエラーが発生しました",
-    disableLogging = false,
-    unknownErrorMessage = "不明なエラーが発生しました"
-  } = options
+  const { errorPrefix = "処理中にエラーが発生しました", disableLogging = false } = options
 
   return async (event: IpcMainInvokeEvent, ...args: T): Promise<ApiResult<R>> => {
     try {
       return await handler(event, ...args)
     } catch (error: unknown) {
-      // エラーログ出力
-      if (!disableLogging) {
-        logger.error(`${errorPrefix}:`, error)
-      }
-
       // AWS SDK エラーの特別処理
       const awsSdkError = handleAwsSdkError(error)
       if (awsSdkError) {
+        if (!disableLogging) {
+          logger.error(`${errorPrefix}: AWS SDKエラー:`, error)
+        }
         return {
           success: false,
           message: `${errorPrefix}: ${awsSdkError.message}`
         }
       }
 
-      // 標準 Error オブジェクトの処理
-      if (error instanceof Error) {
-        return {
-          success: false,
-          message: `${errorPrefix}: ${error.message}`
-        }
-      }
+      // 統一エラーハンドリングを使用
+      const errorResult = createErrorResult(error, errorPrefix)
 
-      // 不明なエラーの処理
-      return {
-        success: false,
-        message: `${errorPrefix}: ${unknownErrorMessage}`
-      }
+      // ログ出力の重複を避けるため、createErrorResultでログが出力されるのでここでは出力しない
+      return errorResult as ApiResult<R>
     }
   }
 }

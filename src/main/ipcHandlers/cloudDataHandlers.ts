@@ -35,9 +35,11 @@ import {
   buildDirectoryTree,
   createFileDetails
 } from "../utils/cloudDataTransformer"
+import { withValidatedCloudStorage } from "../utils/cloudStorageHelper"
 import { validateCredentialsForR2 } from "../utils/credentialValidator"
 import { withFileOperationErrorHandling } from "../utils/ipcErrorHandler"
 import { logger } from "../utils/logger"
+import { validatePathSecurity } from "../utils/pathSecurity"
 
 // 型定義はcloudDataTransformer.tsから再エクスポート
 export type {
@@ -59,33 +61,27 @@ export function registerCloudDataHandlers(): void {
   ipcMain.handle(
     "cloud-data-list",
     withFileOperationErrorHandling(async (): Promise<ApiResult<CloudDataItem[]>> => {
-      // 認証情報の検証とR2クライアントの作成
-      const validationResult = await validateCredentialsForR2()
-      if (!validationResult.success) {
-        return validationResult
-      }
+      return withValidatedCloudStorage(async (credentials, s3Client) => {
+        try {
+          // バケット内の全オブジェクトを取得
+          const allObjects = await getAllObjectsWithMetadata(s3Client, credentials.bucketName)
 
-      const { credentials, s3Client } = validationResult.data!
+          // フォルダごとにグループ化してCloudDataItemに変換
+          const folderMap = groupObjectsByFolder(allObjects)
+          const cloudDataItems = createCloudDataItems(folderMap)
 
-      try {
-        // バケット内の全オブジェクトを取得
-        const allObjects = await getAllObjectsWithMetadata(s3Client, credentials.bucketName)
-
-        // フォルダごとにグループ化してCloudDataItemに変換
-        const folderMap = groupObjectsByFolder(allObjects)
-        const cloudDataItems = createCloudDataItems(folderMap)
-
-        return {
-          success: true,
-          data: cloudDataItems
+          return {
+            success: true,
+            data: cloudDataItems
+          }
+        } catch (error) {
+          logger.error("クラウドデータ一覧取得エラー:", error)
+          return {
+            success: false,
+            message: "クラウドデータの取得に失敗しました"
+          }
         }
-      } catch (error) {
-        logger.error("クラウドデータ一覧取得エラー:", error)
-        return {
-          success: false,
-          message: "クラウドデータの取得に失敗しました"
-        }
-      }
+      })
     })
   )
 
@@ -156,10 +152,12 @@ export function registerCloudDataHandlers(): void {
 
         try {
           // パストラバーサル攻撃対策
-          if (remotePath.includes("..") || remotePath.startsWith("/")) {
+          try {
+            validatePathSecurity(remotePath)
+          } catch (error) {
             return {
               success: false,
-              message: "不正なパスが指定されました"
+              message: error instanceof Error ? error.message : "不正なパスが指定されました"
             }
           }
 
