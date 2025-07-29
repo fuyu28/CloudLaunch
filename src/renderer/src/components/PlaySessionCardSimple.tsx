@@ -83,7 +83,7 @@ const PlaySessionCardSimple = memo(function PlaySessionCardSimple({
   }, [fetchSessions])
 
   return (
-    <div className="card bg-base-100 border-2 border-base-content/10 shadow-sm">
+    <div className="card bg-base-200 rounded-lg shadow-sm">
       <div className="card-body p-4">
         {/* アクションボタン */}
         {!hiddenButtons && (
@@ -114,7 +114,7 @@ const PlaySessionCardSimple = memo(function PlaySessionCardSimple({
           </div>
         ) : (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <div className="stat bg-white/70 backdrop-blur-sm rounded-xl p-3 border border-base-300/30 shadow-sm hover:shadow-md transition-shadow">
+            <div className="stat bg-white rounded-xl p-3 border border-base-300/30 shadow-sm">
               <div className="flex items-center gap-2 mb-1">
                 <FaGamepad className="text-accent text-xs" />
                 <div className="stat-title text-xs font-medium text-base-content/70">
@@ -126,7 +126,7 @@ const PlaySessionCardSimple = memo(function PlaySessionCardSimple({
               </div>
             </div>
 
-            <div className="stat bg-white/70 backdrop-blur-sm rounded-xl p-3 border border-base-300/30 shadow-sm hover:shadow-md transition-shadow">
+            <div className="stat bg-white rounded-xl p-3 border border-base-300/30 shadow-sm">
               <div className="flex items-center gap-2 mb-1">
                 <FaClock className="text-primary text-xs" />
                 <div className="stat-title text-xs font-medium text-base-content/70">総時間</div>
@@ -136,7 +136,7 @@ const PlaySessionCardSimple = memo(function PlaySessionCardSimple({
               </div>
             </div>
 
-            <div className="stat bg-white/70 backdrop-blur-sm rounded-xl p-3 border border-base-300/30 shadow-sm hover:shadow-md transition-shadow">
+            <div className="stat bg-white rounded-xl p-3 border border-base-300/30 shadow-sm">
               <div className="flex items-center gap-2 mb-1">
                 <FaChartLine className="text-secondary text-xs" />
                 <div className="stat-title text-xs font-medium text-base-content/70">平均時間</div>
@@ -146,7 +146,7 @@ const PlaySessionCardSimple = memo(function PlaySessionCardSimple({
               </div>
             </div>
 
-            <div className="stat bg-white/70 backdrop-blur-sm rounded-xl p-3 border border-base-300/30 shadow-sm hover:shadow-md transition-shadow">
+            <div className="stat bg-white rounded-xl p-3 border border-base-300/30 shadow-sm">
               <div className="flex items-center gap-2 mb-1">
                 <FaCalendarWeek className="text-info text-xs" />
                 <div className="stat-title text-xs font-medium text-base-content/70">今週</div>
