@@ -18,12 +18,12 @@ import type { S3Client } from "@aws-sdk/client-s3"
  * クラウドストレージからメモ一覧を取得します
  */
 export async function getCloudMemos(
-  r2Client: S3Client,
+  s3Client: S3Client,
   bucketName: string
 ): Promise<CloudMemoInfo[]> {
   try {
     // 汎用的なオブジェクト取得関数を使用
-    const objects = await getAllObjectsWithMetadata(r2Client, bucketName, "games/")
+    const objects = await getAllObjectsWithMetadata(s3Client, bucketName, "games/")
     const cloudMemos: CloudMemoInfo[] = []
 
     for (const object of objects) {
@@ -63,7 +63,7 @@ export async function getCloudMemos(
  * クラウドストレージからメモをダウンロードします
  */
 export async function downloadMemoFromCloud(
-  r2Client: S3Client,
+  s3Client: S3Client,
   bucketName: string,
   gameTitle: string,
   memoFileName: string
@@ -73,7 +73,7 @@ export async function downloadMemoFromCloud(
     const objectKey = `games/${gameTitle}/memo/${memoFileName}`
 
     // 汎用的なダウンロード関数を使用
-    const content = await downloadObject(r2Client, bucketName, objectKey)
+    const content = await downloadObject(s3Client, bucketName, objectKey)
     return content
   } catch (error) {
     logger.error("メモクラウドダウンロードエラー:", error)
@@ -85,7 +85,7 @@ export async function downloadMemoFromCloud(
  * メモをクラウドストレージに保存します
  */
 export async function uploadMemoToCloud(
-  r2Client: S3Client,
+  s3Client: S3Client,
   bucketName: string,
   memo: {
     id: string
@@ -102,7 +102,7 @@ export async function uploadMemoToCloud(
     const fileContent = generateMemoFileContent(memo.title, memo.content, memo.game.title)
 
     // 汎用的なアップロード関数を使用
-    await uploadObject(r2Client, bucketName, objectKey, fileContent, "text/markdown")
+    await uploadObject(s3Client, bucketName, objectKey, fileContent, "text/markdown")
   } catch (error) {
     logger.error("メモクラウド保存エラー:", error)
     throw error

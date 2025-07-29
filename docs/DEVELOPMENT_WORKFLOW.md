@@ -65,7 +65,7 @@
 
 | 実装内容       | ファイル配置                                           | 説明                     |
 | -------------- | ------------------------------------------------------ | ------------------------ |
-| R2クライアント | `src/main/r2Client.ts`                                 | AWS S3/R2接続設定        |
+| R2クライアント | `src/main/s3Client.ts`                                 | AWS S3/R2接続設定        |
 | アップロード   | `src/main/ipcHandlers/uploadSaveDataFolderHandlers.ts` | フォルダ一括アップロード |
 | ダウンロード   | `src/main/ipcHandlers/downloadHandler.ts`              | クラウドからダウンロード |
 | フォルダ一覧   | `src/main/ipcHandlers/saveDataFolderListHandler.ts`    | リモートフォルダ一覧     |

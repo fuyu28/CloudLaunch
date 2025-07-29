@@ -41,18 +41,18 @@ import type { S3Client } from "@aws-sdk/client-s3"
 /**
  * リモートパス配下のすべてのオブジェクト情報を取得する関数（汎用サービスを使用）
  *
- * @param r2Client S3 クライアント
+ * @param s3Client S3 クライアント
  * @param bucketName バケット名
  * @param remotePath リモートパス（プレフィックス）
  * @returns Promise<Array<{key: string; lastModified: Date}>> オブジェクト情報の配列
  */
 async function getAllObjectKeys(
-  r2Client: S3Client,
+  s3Client: S3Client,
   bucketName: string,
   remotePath: string
 ): Promise<{ key: string; lastModified: Date }[]> {
   const prefix = remotePath.replace(/\/+$/, "") + "/"
-  const objects = await getAllObjectsWithMetadata(r2Client, bucketName, prefix)
+  const objects = await getAllObjectsWithMetadata(s3Client, bucketName, prefix)
 
   return objects.map((obj) => ({
     key: obj.key,
@@ -65,19 +65,19 @@ async function getAllObjectKeys(
  *
  * ストリーミング処理により、メモリ効率的にファイルをダウンロードします。
  *
- * @param r2Client S3 クライアント
+ * @param s3Client S3 クライアント
  * @param bucketName バケット名
  * @param key オブジェクトキー
  * @param outputPath 出力ファイルパス
  * @returns Promise<void>
  */
 async function downloadFile(
-  r2Client: S3Client,
+  s3Client: S3Client,
   bucketName: string,
   key: string,
   outputPath: string
 ): Promise<void> {
-  const bodyStream = await downloadObjectStream(r2Client, bucketName, key)
+  const bodyStream = await downloadObjectStream(s3Client, bucketName, key)
   const fileHandle = await fs.open(outputPath, "w")
 
   await new Promise<void>((resolve, reject) => {
@@ -118,10 +118,10 @@ export function registerDownloadSaveDataHandler(): void {
           return validationResult
         }
 
-        const { credentials, r2Client } = validationResult.data!
+        const { credentials, s3Client } = validationResult.data!
 
         // リモートオブジェクトの一覧取得
-        const allObjects = await getAllObjectKeys(r2Client, credentials.bucketName, remotePath)
+        const allObjects = await getAllObjectKeys(s3Client, credentials.bucketName, remotePath)
         const allKeys = allObjects.map((obj) => obj.key)
 
         // 各ファイルのダウンロード（並列処理で効率化）
@@ -159,7 +159,7 @@ export function registerDownloadSaveDataHandler(): void {
                 await fs.mkdir(dirname(outputPath), { recursive: true })
 
                 // ファイルのダウンロード
-                await downloadFile(r2Client, credentials.bucketName, key, outputPath)
+                await downloadFile(s3Client, credentials.bucketName, key, outputPath)
                 logger.debug(`ダウンロード完了: ${relative(localPath, outputPath)}`)
               } catch (error) {
                 logger.error(`ファイルダウンロードに失敗: ${key}`, error)
@@ -192,7 +192,7 @@ export function registerDownloadSaveDataHandler(): void {
           return { success: false, message: credentialResult.message }
         }
 
-        const { credentials, r2Client } = credentialResult.data!
+        const { credentials, s3Client } = credentialResult.data!
         const bucketName = credentials.bucketName
 
         // データベースからゲーム情報を取得してタイトルを取得
@@ -210,7 +210,7 @@ export function registerDownloadSaveDataHandler(): void {
 
         try {
           // リモートパス配下のオブジェクトを検索
-          const objects = await getAllObjectKeys(r2Client, bucketName, remotePath)
+          const objects = await getAllObjectKeys(s3Client, bucketName, remotePath)
 
           if (objects.length === 0) {
             return { success: true, data: { exists: false } }
@@ -225,7 +225,7 @@ export function registerDownloadSaveDataHandler(): void {
             Key: latestObjectKey
           })
 
-          const headResult = await r2Client.send(headCommand)
+          const headResult = await s3Client.send(headCommand)
 
           // 最新ファイルのサイズを使用（後方互換性のため）
           const totalSize = headResult.ContentLength || 0
@@ -273,7 +273,7 @@ export function registerDownloadSaveDataHandler(): void {
           return { success: false, message: credentialResult.message }
         }
 
-        const { credentials, r2Client } = credentialResult.data!
+        const { credentials, s3Client } = credentialResult.data!
         const bucketName = credentials.bucketName
 
         // データベースからゲーム情報を取得してタイトルを取得
@@ -291,7 +291,7 @@ export function registerDownloadSaveDataHandler(): void {
 
         try {
           // リモートパス配下のオブジェクトを検索
-          const objects = await getAllObjectKeys(r2Client, bucketName, remotePath)
+          const objects = await getAllObjectKeys(s3Client, bucketName, remotePath)
 
           if (objects.length === 0) {
             return {
@@ -323,7 +323,7 @@ export function registerDownloadSaveDataHandler(): void {
                     Key: obj.key
                   })
 
-                  const headResult = await r2Client.send(headCommand)
+                  const headResult = await s3Client.send(headCommand)
 
                   // ファイル名を取得（パスの最後の部分）
                   const fileName = obj.key.split("/").pop() || obj.key

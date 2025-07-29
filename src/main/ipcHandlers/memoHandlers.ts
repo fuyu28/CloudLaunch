@@ -397,7 +397,7 @@ function registerCloudMemoHandlers(): void {
           return validationResult
         }
 
-        const { credentials, r2Client } = validationResult.data!
+        const { credentials, s3Client } = validationResult.data!
 
         // メモ情報を取得
         const memo = await prisma.memo.findUnique({
@@ -415,7 +415,7 @@ function registerCloudMemoHandlers(): void {
           return { success: false, message: "メモが見つかりません" }
         }
 
-        await uploadMemoToCloud(r2Client, credentials.bucketName, memo)
+        await uploadMemoToCloud(s3Client, credentials.bucketName, memo)
 
         return { success: true, data: true }
       } catch (error) {
@@ -438,10 +438,10 @@ function registerCloudMemoHandlers(): void {
           return validationResult
         }
 
-        const { credentials, r2Client } = validationResult.data!
+        const { credentials, s3Client } = validationResult.data!
 
         const content = await downloadMemoFromCloud(
-          r2Client,
+          s3Client,
           credentials.bucketName,
           gameTitle,
           memoFileName
@@ -466,9 +466,9 @@ function registerCloudMemoHandlers(): void {
         return validationResult
       }
 
-      const { credentials, r2Client } = validationResult.data!
+      const { credentials, s3Client } = validationResult.data!
 
-      const cloudMemos = await getCloudMemos(r2Client, credentials.bucketName)
+      const cloudMemos = await getCloudMemos(s3Client, credentials.bucketName)
 
       return { success: true, data: cloudMemos }
     } catch (error) {
@@ -490,10 +490,10 @@ function registerCloudMemoHandlers(): void {
           return validationResult
         }
 
-        const { credentials, r2Client } = validationResult.data!
+        const { credentials, s3Client } = validationResult.data!
 
         // クラウドメモ一覧を取得
-        const allCloudMemos = await getCloudMemos(r2Client, credentials.bucketName)
+        const allCloudMemos = await getCloudMemos(s3Client, credentials.bucketName)
 
         // 特定のゲームのみ同期する場合はフィルタリング
         let cloudMemos = allCloudMemos
@@ -507,7 +507,7 @@ function registerCloudMemoHandlers(): void {
         }
 
         // 同期実行
-        const syncResult = await syncMemos(r2Client, credentials.bucketName, cloudMemos, gameId)
+        const syncResult = await syncMemos(s3Client, credentials.bucketName, cloudMemos, gameId)
 
         return { success: true, data: syncResult }
       } catch (error) {

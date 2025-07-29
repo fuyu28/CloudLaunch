@@ -90,7 +90,7 @@ export function registerUploadSaveDataFolderHandlers(): void {
           return validationResult
         }
 
-        const { credentials, r2Client } = validationResult.data!
+        const { credentials, s3Client } = validationResult.data!
 
         // ファイルパスの取得
         const filePaths = await getFilePathsRecursive(localPath)
@@ -148,7 +148,7 @@ export function registerUploadSaveDataFolderHandlers(): void {
                   )
                 }
 
-                await uploadObject(r2Client, credentials.bucketName, r2Key, fileBody)
+                await uploadObject(s3Client, credentials.bucketName, r2Key, fileBody)
                 logger.debug(`アップロード完了: ${relativePath}`)
               } catch (error) {
                 logger.error(`ファイルアップロードに失敗: ${filePath}`, error)

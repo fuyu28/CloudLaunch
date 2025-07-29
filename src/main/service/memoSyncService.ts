@@ -69,7 +69,7 @@ ${content}
  * ローカルメモをクラウドにアップロードします
  */
 export async function uploadLocalMemo(
-  r2Client: S3Client,
+  s3Client: S3Client,
   bucketName: string,
   localMemo: { id: string; title: string; content: string; game: { title: string } },
   existingCloudMemo?: CloudMemoInfo
@@ -87,7 +87,7 @@ export async function uploadLocalMemo(
       localMemo.game.title
     )
 
-    await uploadObject(r2Client, bucketName, s3Key, fileContent, "text/markdown")
+    await uploadObject(s3Client, bucketName, s3Key, fileContent, "text/markdown")
     return { action: "uploaded", message: `アップロード: ${localMemo.title}` }
   }
 
@@ -105,7 +105,7 @@ export async function uploadLocalMemo(
 
   if (localMemoData.updatedAt > existingCloudMemo.lastModified) {
     // ローカルの方が新しい場合、内容比較してからクラウドを更新
-    const cloudContent = await downloadCloudMemoContent(r2Client, bucketName, existingCloudMemo.key)
+    const cloudContent = await downloadCloudMemoContent(s3Client, bucketName, existingCloudMemo.key)
 
     if (cloudContent) {
       const cloudActualContent = extractMemoContent(cloudContent)
@@ -124,7 +124,7 @@ export async function uploadLocalMemo(
       localMemo.game.title
     )
 
-    await uploadObject(r2Client, bucketName, s3Key, fileContent, "text/markdown")
+    await uploadObject(s3Client, bucketName, s3Key, fileContent, "text/markdown")
     return {
       action: "cloudOverwritten",
       message: `クラウド更新: ${localMemo.title} (ローカル版が新しい)`
@@ -137,7 +137,7 @@ export async function uploadLocalMemo(
     }
   } else {
     // タイムスタンプが同じ場合、ハッシュで内容比較
-    const cloudContent = await downloadCloudMemoContent(r2Client, bucketName, existingCloudMemo.key)
+    const cloudContent = await downloadCloudMemoContent(s3Client, bucketName, existingCloudMemo.key)
 
     if (cloudContent) {
       const cloudActualContent = extractMemoContent(cloudContent)
@@ -155,7 +155,7 @@ export async function uploadLocalMemo(
         localMemo.game.title
       )
 
-      await uploadObject(r2Client, bucketName, s3Key, fileContent, "text/markdown")
+      await uploadObject(s3Client, bucketName, s3Key, fileContent, "text/markdown")
       return {
         action: "cloudOverwritten",
         message: `クラウド更新: ${localMemo.title} (同じタイムスタンプ・内容異なる)`
@@ -170,7 +170,7 @@ export async function uploadLocalMemo(
  * クラウドメモをローカルにダウンロードします
  */
 export async function downloadCloudMemo(
-  r2Client: S3Client,
+  s3Client: S3Client,
   bucketName: string,
   cloudMemo: CloudMemoInfo,
   game: { id: string; title: string }
@@ -179,7 +179,7 @@ export async function downloadCloudMemo(
   message: string
 }> {
   // メモ内容をダウンロード
-  const content = await downloadCloudMemoContent(r2Client, bucketName, cloudMemo.key)
+  const content = await downloadCloudMemoContent(s3Client, bucketName, cloudMemo.key)
 
   if (!content) {
     return { action: "skipped", message: `内容が取得できないためスキップ: ${cloudMemo.memoTitle}` }
@@ -255,7 +255,7 @@ export async function downloadCloudMemo(
       game.title
     )
 
-    await uploadObject(r2Client, bucketName, s3Key, fileContent, "text/markdown")
+    await uploadObject(s3Client, bucketName, s3Key, fileContent, "text/markdown")
     return {
       action: "cloudOverwritten",
       message: `クラウド更新: ${existingMemo.title} (ローカル版が新しい)`
@@ -290,12 +290,12 @@ export async function downloadCloudMemo(
  * クラウドからメモ内容をダウンロードします
  */
 async function downloadCloudMemoContent(
-  r2Client: S3Client,
+  s3Client: S3Client,
   bucketName: string,
   key: string
 ): Promise<string | null> {
   try {
-    return await downloadObject(r2Client, bucketName, key)
+    return await downloadObject(s3Client, bucketName, key)
   } catch (error) {
     logger.error(`クラウドメモダウンロードエラー: ${key}`, error)
     return null
@@ -306,7 +306,7 @@ async function downloadCloudMemoContent(
  * メモ同期を実行します
  */
 export async function syncMemos(
-  r2Client: S3Client,
+  s3Client: S3Client,
   bucketName: string,
   cloudMemos: CloudMemoInfo[],
   gameId?: string
@@ -339,7 +339,7 @@ export async function syncMemos(
             cloudMemo.memoId === localMemo.id && cloudMemo.gameTitle === sanitizedGameTitle
         )
 
-        const result = await uploadLocalMemo(r2Client, bucketName, localMemo, existingCloudMemo)
+        const result = await uploadLocalMemo(s3Client, bucketName, localMemo, existingCloudMemo)
 
         switch (result.action) {
           case "uploaded":
@@ -391,7 +391,7 @@ export async function syncMemos(
           continue
         }
 
-        const result = await downloadCloudMemo(r2Client, bucketName, cloudMemo, game)
+        const result = await downloadCloudMemo(s3Client, bucketName, cloudMemo, game)
 
         switch (result.action) {
           case "created":

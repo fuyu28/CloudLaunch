@@ -50,14 +50,14 @@ export type S3ObjectMetadata = {
 /**
  * リモートパス配下のすべてのオブジェクトキーとメタデータを取得
  *
- * @param r2Client S3クライアント
+ * @param s3Client S3クライアント
  * @param bucketName バケット名
  * @param prefix プレフィックス（オプション）
  * @returns オブジェクトメタデータの配列
  * @throws Error 無限ループ防止リミットに達した場合
  */
 export async function getAllObjectsWithMetadata(
-  r2Client: S3Client,
+  s3Client: S3Client,
   bucketName: string,
   prefix: string = ""
 ): Promise<S3ObjectMetadata[]> {
@@ -73,7 +73,7 @@ export async function getAllObjectsWithMetadata(
       )
     }
 
-    const listResult = await r2Client.send(
+    const listResult = await s3Client.send(
       new ListObjectsV2Command({
         Bucket: bucketName,
         Prefix: prefix,
@@ -112,14 +112,14 @@ export function validatePath(path: string): void {
 /**
  * 指定したプレフィックス配下のすべてのオブジェクトを削除
  *
- * @param r2Client S3クライアント
+ * @param s3Client S3クライアント
  * @param bucketName バケット名
  * @param prefix 削除対象のプレフィックス
  * @returns 削除されたオブジェクト数
  * @throws Error パス検証に失敗した場合、削除に失敗した場合
  */
 export async function deleteObjectsByPrefix(
-  r2Client: S3Client,
+  s3Client: S3Client,
   bucketName: string,
   prefix: string
 ): Promise<number> {
@@ -128,7 +128,7 @@ export async function deleteObjectsByPrefix(
 
   // 削除対象オブジェクトの一覧取得
   const objectsToDelete = await getAllObjectsWithMetadata(
-    r2Client,
+    s3Client,
     bucketName,
     prefix.endsWith("/") ? prefix : prefix + "/"
   )
@@ -152,7 +152,7 @@ export async function deleteObjectsByPrefix(
       }
     })
 
-    deletePromises.push(r2Client.send(deleteCommand))
+    deletePromises.push(s3Client.send(deleteCommand))
   }
 
   // 全てのバッチを並列実行
@@ -165,13 +165,13 @@ export async function deleteObjectsByPrefix(
 /**
  * 指定したオブジェクトキーのファイルを削除
  *
- * @param r2Client S3クライアント
+ * @param s3Client S3クライアント
  * @param bucketName バケット名
  * @param objectKey 削除対象のオブジェクトキー
  * @throws Error パス検証に失敗した場合、削除に失敗した場合
  */
 export async function deleteObjectByKey(
-  r2Client: S3Client,
+  s3Client: S3Client,
   bucketName: string,
   objectKey: string
 ): Promise<void> {
@@ -187,14 +187,14 @@ export async function deleteObjectByKey(
     }
   })
 
-  await r2Client.send(deleteCommand)
+  await s3Client.send(deleteCommand)
   logger.info(`クラウドファイル削除完了: ${objectKey}`)
 }
 
 /**
  * オブジェクトをクラウドストレージにアップロード
  *
- * @param r2Client S3クライアント
+ * @param s3Client S3クライアント
  * @param bucketName バケット名
  * @param objectKey アップロード先のオブジェクトキー
  * @param data アップロードするデータ
@@ -202,7 +202,7 @@ export async function deleteObjectByKey(
  * @throws Error パス検証に失敗した場合、アップロードに失敗した場合
  */
 export async function uploadObject(
-  r2Client: S3Client,
+  s3Client: S3Client,
   bucketName: string,
   objectKey: string,
   data: Buffer | string | ReadStream,
@@ -218,21 +218,21 @@ export async function uploadObject(
     ContentType: contentType || "application/octet-stream"
   })
 
-  await r2Client.send(putCommand)
+  await s3Client.send(putCommand)
   logger.info(`クラウドファイルアップロード完了: ${objectKey}`)
 }
 
 /**
  * オブジェクトをクラウドストレージからダウンロード
  *
- * @param r2Client S3クライアント
+ * @param s3Client S3クライアント
  * @param bucketName バケット名
  * @param objectKey ダウンロードするオブジェクトキー
  * @returns ダウンロードしたデータ
  * @throws Error パス検証に失敗した場合、ダウンロードに失敗した場合
  */
 export async function downloadObject(
-  r2Client: S3Client,
+  s3Client: S3Client,
   bucketName: string,
   objectKey: string
 ): Promise<string> {
@@ -244,7 +244,7 @@ export async function downloadObject(
     Key: objectKey
   })
 
-  const response = await r2Client.send(getCommand)
+  const response = await s3Client.send(getCommand)
   if (!response.Body) {
     throw new CloudStorageError(`オブジェクトが見つかりません: ${objectKey}`, "downloadObject")
   }
@@ -257,13 +257,13 @@ export async function downloadObject(
 /**
  * オブジェクトが存在するかチェック
  *
- * @param r2Client S3クライアント
+ * @param s3Client S3クライアント
  * @param bucketName バケット名
  * @param objectKey チェックするオブジェクトキー
  * @returns オブジェクトが存在する場合true
  */
 export async function objectExists(
-  r2Client: S3Client,
+  s3Client: S3Client,
   bucketName: string,
   objectKey: string
 ): Promise<boolean> {
@@ -276,7 +276,7 @@ export async function objectExists(
       Key: objectKey
     })
 
-    await r2Client.send(getCommand)
+    await s3Client.send(getCommand)
     return true
   } catch {
     // オブジェクトが存在しない場合はfalseを返す
@@ -287,14 +287,14 @@ export async function objectExists(
 /**
  * オブジェクトをクラウドストレージからストリームとしてダウンロード
  *
- * @param r2Client S3クライアント
+ * @param s3Client S3クライアント
  * @param bucketName バケット名
  * @param objectKey ダウンロードするオブジェクトキー
  * @returns ダウンロードストリーム
  * @throws Error パス検証に失敗した場合、ダウンロードに失敗した場合
  */
 export async function downloadObjectStream(
-  r2Client: S3Client,
+  s3Client: S3Client,
   bucketName: string,
   objectKey: string
 ): Promise<NodeJS.ReadableStream> {
@@ -306,7 +306,7 @@ export async function downloadObjectStream(
     Key: objectKey
   })
 
-  const response = await r2Client.send(getCommand)
+  const response = await s3Client.send(getCommand)
   if (!response.Body) {
     throw new CloudStorageError(
       `オブジェクトが見つかりません: ${objectKey}`,
@@ -321,14 +321,14 @@ export async function downloadObjectStream(
 /**
  * 指定したプレフィックス配下のフォルダ一覧を取得
  *
- * @param r2Client S3クライアント
+ * @param s3Client S3クライアント
  * @param bucketName バケット名
  * @param prefix プレフィックス（オプション）
  * @returns フォルダ名の配列
  * @throws Error 取得に失敗した場合
  */
 export async function listFolders(
-  r2Client: S3Client,
+  s3Client: S3Client,
   bucketName: string,
   prefix: string = ""
 ): Promise<string[]> {
@@ -338,7 +338,7 @@ export async function listFolders(
     Delimiter: "/"
   })
 
-  const response = await r2Client.send(listCommand)
+  const response = await s3Client.send(listCommand)
   const folders: string[] = []
 
   if (response.CommonPrefixes) {
@@ -360,18 +360,18 @@ export async function listFolders(
 /**
  * クラウドストレージへの接続テストを実行
  *
- * @param r2Client S3クライアント
+ * @param s3Client S3クライアント
  * @param bucketName バケット名
  * @throws Error 接続に失敗した場合
  */
-export async function testConnection(r2Client: S3Client, bucketName: string): Promise<void> {
+export async function testConnection(s3Client: S3Client, bucketName: string): Promise<void> {
   const testCommand = new ListObjectsV2Command({
     Bucket: bucketName,
     Delimiter: "/",
     MaxKeys: 1
   })
 
-  await r2Client.send(testCommand)
+  await s3Client.send(testCommand)
   logger.info(`接続テスト成功: ${bucketName}`)
 }
 
@@ -382,7 +382,7 @@ export async function testConnection(r2Client: S3Client, bucketName: string): Pr
  * @throws Error 接続に失敗した場合
  */
 export async function testConnectionWithCredentials(credentials: Creds): Promise<void> {
-  const r2Client = new S3Client({
+  const s3Client = new S3Client({
     region: credentials.region,
     endpoint: credentials.endpoint,
     credentials: {
@@ -391,5 +391,5 @@ export async function testConnectionWithCredentials(credentials: Creds): Promise
     }
   })
 
-  await testConnection(r2Client, credentials.bucketName)
+  await testConnection(s3Client, credentials.bucketName)
 }

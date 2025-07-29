@@ -14,7 +14,7 @@
 import { MESSAGES } from "../../constants"
 import type { Creds as Credential } from "../../types/creds"
 import type { ApiResult } from "../../types/result"
-import { createR2Client } from "../r2Client"
+import { creates3Client } from "../s3Client"
 import { getCredential } from "../service/credentialService"
 import type { S3Client } from "@aws-sdk/client-s3"
 
@@ -25,7 +25,7 @@ export type ValidatedCredentialResult = {
   /** 認証情報データ */
   credentials: Credential
   /** 初期化された R2 クライアント */
-  r2Client: S3Client
+  s3Client: S3Client
 }
 
 /**
@@ -64,13 +64,13 @@ export async function validateCredentialsForR2(): Promise<ApiResult<ValidatedCre
     }
 
     // R2 クライアントの作成
-    const r2Client = await createR2Client()
+    const s3Client = await creates3Client()
 
     return {
       success: true,
       data: {
         credentials,
-        r2Client
+        s3Client
       }
     }
   } catch (error) {

@@ -65,11 +65,11 @@ export function registerCloudDataHandlers(): void {
         return validationResult
       }
 
-      const { credentials, r2Client } = validationResult.data!
+      const { credentials, s3Client } = validationResult.data!
 
       try {
         // バケット内の全オブジェクトを取得
-        const allObjects = await getAllObjectsWithMetadata(r2Client, credentials.bucketName)
+        const allObjects = await getAllObjectsWithMetadata(s3Client, credentials.bucketName)
 
         // フォルダごとにグループ化してCloudDataItemに変換
         const folderMap = groupObjectsByFolder(allObjects)
@@ -106,11 +106,11 @@ export function registerCloudDataHandlers(): void {
         return validationResult
       }
 
-      const { credentials, r2Client } = validationResult.data!
+      const { credentials, s3Client } = validationResult.data!
 
       try {
         // プレフィックス配下のオブジェクトを一括削除
-        await deleteObjectsByPrefix(r2Client, credentials.bucketName, remotePath)
+        await deleteObjectsByPrefix(s3Client, credentials.bucketName, remotePath)
 
         return {
           success: true
@@ -152,7 +152,7 @@ export function registerCloudDataHandlers(): void {
           return validationResult
         }
 
-        const { credentials, r2Client } = validationResult.data!
+        const { credentials, s3Client } = validationResult.data!
 
         try {
           // パストラバーサル攻撃対策
@@ -165,7 +165,7 @@ export function registerCloudDataHandlers(): void {
 
           // 指定フォルダ内のオブジェクト一覧取得
           const objects = await getAllObjectsWithMetadata(
-            r2Client,
+            s3Client,
             credentials.bucketName,
             remotePath + "/"
           )
@@ -204,11 +204,11 @@ export function registerCloudDataHandlers(): void {
         return validationResult
       }
 
-      const { credentials, r2Client } = validationResult.data!
+      const { credentials, s3Client } = validationResult.data!
 
       try {
         // バケット内の全オブジェクトを取得
-        const allObjects = await getAllObjectsWithMetadata(r2Client, credentials.bucketName)
+        const allObjects = await getAllObjectsWithMetadata(s3Client, credentials.bucketName)
 
         // ディレクトリツリーを構築
         const directoryTree = buildDirectoryTree(allObjects)
@@ -244,11 +244,11 @@ export function registerCloudDataHandlers(): void {
         return validationResult
       }
 
-      const { credentials, r2Client } = validationResult.data!
+      const { credentials, s3Client } = validationResult.data!
 
       try {
         // 単一オブジェクトを削除
-        await deleteObjectByKey(r2Client, credentials.bucketName, objectKey)
+        await deleteObjectByKey(s3Client, credentials.bucketName, objectKey)
 
         return {
           success: true

@@ -24,7 +24,7 @@
 
 import { ipcMain } from "electron"
 
-import { createR2Client } from "../r2Client"
+import { creates3Client } from "../s3Client"
 import { listFolders } from "../service/cloudStorageService"
 import { getCredential } from "../service/credentialService"
 import { logger } from "../utils/logger"
@@ -57,7 +57,7 @@ export function registerSaveDataFolderListHandler(): void {
    */
   ipcMain.handle("list-remote-save-data-folders", async (): Promise<string[] | undefined> => {
     try {
-      const r2Client = await createR2Client()
+      const s3Client = await creates3Client()
       const credsResult = await getCredential()
       if (!credsResult.success || !credsResult.data) {
         throw new Error(
@@ -65,7 +65,7 @@ export function registerSaveDataFolderListHandler(): void {
         )
       }
       const creds = credsResult.data
-      const folders = await listFolders(r2Client, creds.bucketName)
+      const folders = await listFolders(s3Client, creds.bucketName)
       return folders.length > 0 ? folders : undefined
     } catch (err) {
       logger.error("リモートセーブデータフォルダ一覧取得エラー:", err)
