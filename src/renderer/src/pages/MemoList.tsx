@@ -6,14 +6,10 @@
  */
 
 import { useEffect, useState, useCallback, useMemo } from "react"
-import {
-  FaPlus,
-  FaFolder,
-  FaSearch,
-  FaSortAmountDown,
-  FaSortAmountUp,
-  FaSync
-} from "react-icons/fa"
+import { CiSearch } from "react-icons/ci"
+import { FaPlus, FaFolder, FaSync } from "react-icons/fa"
+import { IoFilterOutline } from "react-icons/io5"
+import { TbSortAscending, TbSortDescending } from "react-icons/tb"
 import { VscChromeClose } from "react-icons/vsc"
 import { Link, useNavigate } from "react-router-dom"
 
@@ -201,77 +197,80 @@ export default function MemoList(): React.JSX.Element {
       </div>
 
       {/* 検索・フィルター・ソート */}
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-        {/* 検索バー */}
-        <label className="input w-96 flex items-center">
-          <FaSearch />
-          <input
-            type="text"
-            className="grow ml-2"
-            placeholder="タイトル、内容、ゲーム名で検索..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          {searchQuery && (
-            <button
-              onClick={clearSearch}
-              className="text-base-content/60 hover:text-base-content"
-              aria-label="検索をクリア"
-            >
-              <VscChromeClose />
-            </button>
-          )}
-        </label>
+      <div className="bg-base-100 p-4 rounded-lg mb-6 shadow-sm">
+        <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+          {/* 検索バー */}
+          <div className="flex-1">
+            <label htmlFor="memo-search" className="input input-bordered flex items-center gap-2">
+              <CiSearch className="w-4 h-4 opacity-70" />
+              <input
+                id="memo-search"
+                type="search"
+                className="grow"
+                placeholder="メモタイトル、内容、ゲーム名で検索..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              {searchQuery && (
+                <button
+                  onClick={clearSearch}
+                  className="text-base-content/60 hover:text-base-content"
+                  aria-label="検索をクリア"
+                >
+                  <VscChromeClose className="w-4 h-4" />
+                </button>
+              )}
+            </label>
+          </div>
 
-        {/* フィルター・ソートグループ */}
-        <div className="flex items-center gap-3 px-6">
-          <span className="text-sm leading-tight">ゲーム:</span>
-          <select
-            value={selectedGameId}
-            onChange={(e) => setSelectedGameId(e.target.value)}
-            className="select select-bordered text-sm w-40 h-9"
-          >
-            <option value="all">すべて</option>
-            {games.map((game) => (
-              <option key={game.id} value={game.id}>
-                {game.title}
-              </option>
-            ))}
-          </select>
+          {/* コントロール群 */}
+          <div className="flex flex-wrap items-center gap-3">
+            {/* ソート設定 */}
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium opacity-70">並び順</label>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as SortOption)}
+                className="select select-bordered select-sm w-auto min-w-24"
+                aria-label="ソート順を選択"
+              >
+                <option value="updatedAt">更新日時</option>
+                <option value="createdAt">作成日時</option>
+                <option value="title">タイトル</option>
+              </select>
+              <button
+                type="button"
+                onClick={toggleSortDirection}
+                className="btn btn-ghost btn-sm btn-circle"
+                title={sortDirection === "asc" ? "昇順（A→Z, 古→新）" : "降順（Z→A, 新→古）"}
+                aria-label={`${sortDirection === "asc" ? "昇順" : "降順"}で表示中。クリックで切り替え`}
+              >
+                {sortDirection === "asc" ? (
+                  <TbSortAscending className="w-4 h-4" />
+                ) : (
+                  <TbSortDescending className="w-4 h-4" />
+                )}
+              </button>
+            </div>
 
-          <span className="text-sm leading-tight">並び順:</span>
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as SortOption)}
-            className="select select-bordered text-sm w-32 h-9"
-          >
-            <option value="updatedAt">更新日時</option>
-            <option value="createdAt">作成日時</option>
-            <option value="title">タイトル</option>
-          </select>
-
-          <button
-            onClick={toggleSortDirection}
-            className="btn btn-ghost btn-sm h-9 px-3"
-            title={
-              sortDirection === "asc"
-                ? "昇順表示中（クリックで降順に）"
-                : "降順表示中（クリックで昇順に）"
-            }
-            aria-label={`並び順を${sortDirection === "asc" ? "降順" : "昇順"}に変更`}
-          >
-            {sortDirection === "asc" ? (
-              <>
-                <FaSortAmountUp className="mr-1" />
-                昇順
-              </>
-            ) : (
-              <>
-                <FaSortAmountDown className="mr-1" />
-                降順
-              </>
-            )}
-          </button>
+            {/* ゲームフィルター */}
+            <div className="flex items-center gap-2">
+              <IoFilterOutline className="w-4 h-4 opacity-70" />
+              <select
+                value={selectedGameId}
+                onChange={(e) => setSelectedGameId(e.target.value)}
+                className="select select-bordered select-sm w-auto min-w-32"
+                aria-label="ゲームでフィルター"
+              >
+                <option value="all">すべてのゲーム</option>
+                {games.map((game) => (
+                  <option key={game.id} value={game.id}>
+                    {game.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
         </div>
       </div>
 
