@@ -15,13 +15,14 @@
  * - credentialServiceを通じたセキュアな認証情報管理
  */
 
-import { S3Client, ListObjectsV2Command } from "@aws-sdk/client-s3"
+import { S3Client } from "@aws-sdk/client-s3"
 import { ipcMain } from "electron"
 import { ZodError } from "zod"
 
 import { credsSchema } from "../../schemas/credentials"
 import type { Creds } from "../../types/creds"
 import type { ApiResult } from "../../types/result"
+import { testConnection } from "../service/cloudStorageService"
 import { getCredential, setCredential } from "../service/credentialService"
 import { handleAwsSdkError } from "../utils/awsSdkErrorHandler"
 
@@ -112,13 +113,7 @@ export function registerCredentialHandlers(): void {
           secretAccessKey: creds.secretAccessKey
         }
       })
-      await r2Client.send(
-        new ListObjectsV2Command({
-          Bucket: creds.bucketName,
-          Delimiter: "/",
-          MaxKeys: 1
-        })
-      )
+      await testConnection(r2Client, creds.bucketName)
       return { success: true }
     } catch (error: unknown) {
       const awsSdkError = handleAwsSdkError(error)

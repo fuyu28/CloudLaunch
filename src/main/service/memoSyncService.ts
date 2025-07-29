@@ -10,10 +10,10 @@
 
 import { createHash } from "crypto"
 
-import { PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3"
-
 import type { MemoSyncResult, CloudMemoInfo } from "../../types/memo"
 import { prisma } from "../db"
+import { uploadObject, downloadObject } from "./cloudStorageService"
+import { CloudPathManager } from "../utils/cloudPathManager"
 import { logger } from "../utils/logger"
 import { memoFileManager } from "../utils/memoFileManager"
 import type { S3Client } from "@aws-sdk/client-s3"
@@ -77,9 +77,7 @@ export async function uploadLocalMemo(
   action: "uploaded" | "cloudOverwritten" | "skipped"
   message: string
 }> {
-  const sanitizedGameTitle = localMemo.game.title.replace(/[<>:"/\\|?*]/g, "_")
-  const sanitizedMemoTitle = localMemo.title.replace(/[<>:"/\\|?*]/g, "_")
-  const s3Key = `games/${sanitizedGameTitle}/memo/${sanitizedMemoTitle}_${localMemo.id}.md`
+  const s3Key = CloudPathManager.buildMemoPath(localMemo.game.title, localMemo.title, localMemo.id)
 
   if (!existingCloudMemo) {
     // 新規アップロード
@@ -89,14 +87,7 @@ export async function uploadLocalMemo(
       localMemo.game.title
     )
 
-    const uploadCommand = new PutObjectCommand({
-      Bucket: bucketName,
-      Key: s3Key,
-      Body: fileContent,
-      ContentType: "text/markdown"
-    })
-
-    await r2Client.send(uploadCommand)
+    await uploadObject(r2Client, bucketName, s3Key, fileContent, "text/markdown")
     return { action: "uploaded", message: `アップロード: ${localMemo.title}` }
   }
 
@@ -133,14 +124,7 @@ export async function uploadLocalMemo(
       localMemo.game.title
     )
 
-    const uploadCommand = new PutObjectCommand({
-      Bucket: bucketName,
-      Key: s3Key,
-      Body: fileContent,
-      ContentType: "text/markdown"
-    })
-
-    await r2Client.send(uploadCommand)
+    await uploadObject(r2Client, bucketName, s3Key, fileContent, "text/markdown")
     return {
       action: "cloudOverwritten",
       message: `クラウド更新: ${localMemo.title} (ローカル版が新しい)`
@@ -171,14 +155,7 @@ export async function uploadLocalMemo(
         localMemo.game.title
       )
 
-      const uploadCommand = new PutObjectCommand({
-        Bucket: bucketName,
-        Key: s3Key,
-        Body: fileContent,
-        ContentType: "text/markdown"
-      })
-
-      await r2Client.send(uploadCommand)
+      await uploadObject(r2Client, bucketName, s3Key, fileContent, "text/markdown")
       return {
         action: "cloudOverwritten",
         message: `クラウド更新: ${localMemo.title} (同じタイムスタンプ・内容異なる)`
@@ -270,9 +247,7 @@ export async function downloadCloudMemo(
     }
   } else if (localUpdatedAt > cloudLastModified) {
     // ローカルの方が新しい場合、クラウドを更新
-    const sanitizedGameTitle = game.title.replace(/[<>:"/\\|?*]/g, "_")
-    const sanitizedMemoTitle = existingMemo.title.replace(/[<>:"/\\|?*]/g, "_")
-    const s3Key = `games/${sanitizedGameTitle}/memo/${sanitizedMemoTitle}_${existingMemo.id}.md`
+    const s3Key = CloudPathManager.buildMemoPath(game.title, existingMemo.title, existingMemo.id)
 
     const fileContent = generateMemoFileContent(
       existingMemo.title,
@@ -280,14 +255,7 @@ export async function downloadCloudMemo(
       game.title
     )
 
-    const uploadCommand = new PutObjectCommand({
-      Bucket: bucketName,
-      Key: s3Key,
-      Body: fileContent,
-      ContentType: "text/markdown"
-    })
-
-    await r2Client.send(uploadCommand)
+    await uploadObject(r2Client, bucketName, s3Key, fileContent, "text/markdown")
     return {
       action: "cloudOverwritten",
       message: `クラウド更新: ${existingMemo.title} (ローカル版が新しい)`
@@ -327,13 +295,7 @@ async function downloadCloudMemoContent(
   key: string
 ): Promise<string | null> {
   try {
-    const downloadCommand = new GetObjectCommand({
-      Bucket: bucketName,
-      Key: key
-    })
-
-    const downloadResponse = await r2Client.send(downloadCommand)
-    return (await downloadResponse.Body?.transformToString()) || null
+    return await downloadObject(r2Client, bucketName, key)
   } catch (error) {
     logger.error(`クラウドメモダウンロードエラー: ${key}`, error)
     return null

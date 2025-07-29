@@ -9,11 +9,18 @@
  * - セキュリティ機能（パス検証、リミット制御）
  */
 
-import { ListObjectsV2Command, DeleteObjectsCommand } from "@aws-sdk/client-s3"
+import {
+  ListObjectsV2Command,
+  DeleteObjectsCommand,
+  PutObjectCommand,
+  GetObjectCommand
+} from "@aws-sdk/client-s3"
 
 import { CONFIG } from "../../constants/config"
+import { createR2Client } from "../r2Client"
 import { logger } from "../utils/logger"
 import type { S3Client } from "@aws-sdk/client-s3"
+import type { ReadStream } from "fs"
 
 /**
  * クラウドストレージサービス専用エラークラス
@@ -182,4 +189,188 @@ export async function deleteObjectByKey(
 
   await r2Client.send(deleteCommand)
   logger.info(`クラウドファイル削除完了: ${objectKey}`)
+}
+
+/**
+ * オブジェクトをクラウドストレージにアップロード
+ *
+ * @param r2Client S3クライアント
+ * @param bucketName バケット名
+ * @param objectKey アップロード先のオブジェクトキー
+ * @param data アップロードするデータ
+ * @param contentType コンテンツタイプ（オプション）
+ * @throws Error パス検証に失敗した場合、アップロードに失敗した場合
+ */
+export async function uploadObject(
+  r2Client: S3Client,
+  bucketName: string,
+  objectKey: string,
+  data: Buffer | string | ReadStream,
+  contentType?: string
+): Promise<void> {
+  // パス検証
+  validatePath(objectKey)
+
+  const putCommand = new PutObjectCommand({
+    Bucket: bucketName,
+    Key: objectKey,
+    Body: data,
+    ContentType: contentType || "application/octet-stream"
+  })
+
+  await r2Client.send(putCommand)
+  logger.info(`クラウドファイルアップロード完了: ${objectKey}`)
+}
+
+/**
+ * オブジェクトをクラウドストレージからダウンロード
+ *
+ * @param r2Client S3クライアント
+ * @param bucketName バケット名
+ * @param objectKey ダウンロードするオブジェクトキー
+ * @returns ダウンロードしたデータ
+ * @throws Error パス検証に失敗した場合、ダウンロードに失敗した場合
+ */
+export async function downloadObject(
+  r2Client: S3Client,
+  bucketName: string,
+  objectKey: string
+): Promise<string> {
+  // パス検証
+  validatePath(objectKey)
+
+  const getCommand = new GetObjectCommand({
+    Bucket: bucketName,
+    Key: objectKey
+  })
+
+  const response = await r2Client.send(getCommand)
+  if (!response.Body) {
+    throw new CloudStorageError(`オブジェクトが見つかりません: ${objectKey}`, "downloadObject")
+  }
+
+  const data = await response.Body.transformToString()
+  logger.info(`クラウドファイルダウンロード完了: ${objectKey}`)
+  return data
+}
+
+/**
+ * オブジェクトが存在するかチェック
+ *
+ * @param r2Client S3クライアント
+ * @param bucketName バケット名
+ * @param objectKey チェックするオブジェクトキー
+ * @returns オブジェクトが存在する場合true
+ */
+export async function objectExists(
+  r2Client: S3Client,
+  bucketName: string,
+  objectKey: string
+): Promise<boolean> {
+  try {
+    // パス検証
+    validatePath(objectKey)
+
+    const getCommand = new GetObjectCommand({
+      Bucket: bucketName,
+      Key: objectKey
+    })
+
+    await r2Client.send(getCommand)
+    return true
+  } catch {
+    // オブジェクトが存在しない場合はfalseを返す
+    return false
+  }
+}
+
+/**
+ * オブジェクトをクラウドストレージからストリームとしてダウンロード
+ *
+ * @param r2Client S3クライアント
+ * @param bucketName バケット名
+ * @param objectKey ダウンロードするオブジェクトキー
+ * @returns ダウンロードストリーム
+ * @throws Error パス検証に失敗した場合、ダウンロードに失敗した場合
+ */
+export async function downloadObjectStream(
+  r2Client: S3Client,
+  bucketName: string,
+  objectKey: string
+): Promise<NodeJS.ReadableStream> {
+  // パス検証
+  validatePath(objectKey)
+
+  const getCommand = new GetObjectCommand({
+    Bucket: bucketName,
+    Key: objectKey
+  })
+
+  const response = await r2Client.send(getCommand)
+  if (!response.Body) {
+    throw new CloudStorageError(
+      `オブジェクトが見つかりません: ${objectKey}`,
+      "downloadObjectStream"
+    )
+  }
+
+  logger.info(`クラウドファイルストリームダウンロード開始: ${objectKey}`)
+  return response.Body as NodeJS.ReadableStream
+}
+
+/**
+ * 指定したプレフィックス配下のフォルダ一覧を取得
+ *
+ * @param r2Client S3クライアント
+ * @param bucketName バケット名
+ * @param prefix プレフィックス（オプション）
+ * @returns フォルダ名の配列
+ * @throws Error 取得に失敗した場合
+ */
+export async function listFolders(
+  r2Client: S3Client,
+  bucketName: string,
+  prefix: string = ""
+): Promise<string[]> {
+  const listCommand = new ListObjectsV2Command({
+    Bucket: bucketName,
+    Prefix: prefix,
+    Delimiter: "/"
+  })
+
+  const response = await r2Client.send(listCommand)
+  const folders: string[] = []
+
+  if (response.CommonPrefixes) {
+    for (const commonPrefix of response.CommonPrefixes) {
+      if (commonPrefix.Prefix) {
+        // プレフィックスから最後の "/" を除去してフォルダ名として使用
+        const folderName = commonPrefix.Prefix.replace(/\/$/, "").split("/").pop()
+        if (folderName) {
+          folders.push(folderName)
+        }
+      }
+    }
+  }
+
+  logger.info(`フォルダ一覧を取得しました: ${folders.length}件`)
+  return folders
+}
+
+/**
+ * クラウドストレージへの接続テストを実行
+ *
+ * @param r2Client S3クライアント
+ * @param bucketName バケット名
+ * @throws Error 接続に失敗した場合
+ */
+export async function testConnection(r2Client: S3Client, bucketName: string): Promise<void> {
+  const testCommand = new ListObjectsV2Command({
+    Bucket: bucketName,
+    Delimiter: "/",
+    MaxKeys: 1
+  })
+
+  await r2Client.send(testCommand)
+  logger.info(`接続テスト成功: ${bucketName}`)
 }

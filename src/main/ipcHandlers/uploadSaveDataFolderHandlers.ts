@@ -27,10 +27,10 @@ import { createReadStream } from "fs"
 import { readdir, readFile, stat } from "fs/promises"
 import { join, relative } from "path"
 
-import { PutObjectCommand } from "@aws-sdk/client-s3"
 import { ipcMain } from "electron"
 
 import type { ApiResult } from "../../types/result"
+import { uploadObject } from "../service/cloudStorageService"
 import { validateCredentialsForR2 } from "../utils/credentialValidator"
 import { withFileOperationErrorHandling } from "../utils/ipcErrorHandler"
 import { logger } from "../utils/logger"
@@ -148,12 +148,7 @@ export function registerUploadSaveDataFolderHandlers(): void {
                   )
                 }
 
-                const cmd = new PutObjectCommand({
-                  Bucket: credentials.bucketName,
-                  Key: r2Key,
-                  Body: fileBody
-                })
-                await r2Client.send(cmd)
+                await uploadObject(r2Client, credentials.bucketName, r2Key, fileBody)
                 logger.debug(`アップロード完了: ${relativePath}`)
               } catch (error) {
                 logger.error(`ファイルアップロードに失敗: ${filePath}`, error)

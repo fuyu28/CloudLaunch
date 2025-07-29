@@ -7,10 +7,10 @@
  * - クラウドメモのアップロード
  */
 
-import { PutObjectCommand, GetObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3"
-
+import { getAllObjectsWithMetadata, uploadObject, downloadObject } from "./cloudStorageService"
 import { generateMemoFileContent } from "./memoSyncService"
 import type { CloudMemoInfo } from "../../types/memo"
+import { CloudPathManager } from "../utils/cloudPathManager"
 import { logger } from "../utils/logger"
 import type { S3Client } from "@aws-sdk/client-s3"
 
@@ -22,50 +22,33 @@ export async function getCloudMemos(
   bucketName: string
 ): Promise<CloudMemoInfo[]> {
   try {
-    const command = new ListObjectsV2Command({
-      Bucket: bucketName,
-      Prefix: "games/",
-      Delimiter: ""
-    })
-
-    const response = await r2Client.send(command)
+    // 汎用的なオブジェクト取得関数を使用
+    const objects = await getAllObjectsWithMetadata(r2Client, bucketName, "games/")
     const cloudMemos: CloudMemoInfo[] = []
 
-    if (response.Contents) {
-      for (const object of response.Contents) {
-        if (!object.Key || !object.Key.includes("/memo/") || !object.Key.endsWith(".md")) {
-          continue
-        }
-
-        // games/[gameTitle]/memo/[memoTitle]_[memoId].md の形式から情報を抽出
-        const keyParts = object.Key.split("/")
-        if (keyParts.length < 4 || keyParts[0] !== "games" || keyParts[2] !== "memo") {
-          continue
-        }
-
-        const gameTitle = keyParts[1]
-        const fileName = keyParts[3]
-        const fileBaseName = fileName.replace(".md", "")
-
-        // ファイル名から memoId を抽出（最後の_以降）
-        const lastUnderscoreIndex = fileBaseName.lastIndexOf("_")
-        if (lastUnderscoreIndex === -1) {
-          continue
-        }
-
-        const memoTitle = fileBaseName.substring(0, lastUnderscoreIndex)
-        const memoId = fileBaseName.substring(lastUnderscoreIndex + 1)
-
-        cloudMemos.push({
-          key: object.Key,
-          fileName,
-          gameTitle,
-          memoTitle,
-          memoId,
-          lastModified: object.LastModified || new Date(),
-          size: object.Size || 0
-        })
+    for (const object of objects) {
+      // メモファイルのみを処理
+      if (!CloudPathManager.isMemoPath(object.key)) {
+        continue
       }
+
+      // CloudPathManagerを使用してメモ情報を抽出
+      const memoInfo = CloudPathManager.extractMemoInfo(object.key)
+      if (!memoInfo) {
+        continue
+      }
+
+      const fileName = object.key.split("/").pop() || ""
+
+      cloudMemos.push({
+        key: object.key,
+        fileName,
+        gameTitle: memoInfo.gameTitle,
+        memoTitle: memoInfo.memoTitle,
+        memoId: memoInfo.memoId,
+        lastModified: object.lastModified,
+        size: object.size
+      })
     }
 
     logger.info(`クラウドメモ一覧を取得しました: ${cloudMemos.length}件`)
@@ -86,24 +69,11 @@ export async function downloadMemoFromCloud(
   memoFileName: string
 ): Promise<string> {
   try {
-    // S3キーを作成
-    const sanitizedGameTitle = gameTitle.replace(/[<>:"/\\|?*]/g, "_")
-    const s3Key = `games/${sanitizedGameTitle}/memo/${memoFileName}`
+    // CloudPathManagerを使用してパスを生成
+    const objectKey = `games/${gameTitle}/memo/${memoFileName}`
 
-    // クラウドからダウンロード
-    const command = new GetObjectCommand({
-      Bucket: bucketName,
-      Key: s3Key
-    })
-
-    const response = await r2Client.send(command)
-    const content = await response.Body?.transformToString()
-
-    if (!content) {
-      throw new Error("メモ内容が取得できませんでした")
-    }
-
-    logger.info(`メモをクラウドからダウンロードしました: ${s3Key}`)
+    // 汎用的なダウンロード関数を使用
+    const content = await downloadObject(r2Client, bucketName, objectKey)
     return content
   } catch (error) {
     logger.error("メモクラウドダウンロードエラー:", error)
@@ -125,25 +95,14 @@ export async function uploadMemoToCloud(
   }
 ): Promise<void> {
   try {
-    // S3キーを作成: games/[ゲームタイトル]/memo/[メモタイトル]_[メモID].md
-    const sanitizedGameTitle = memo.game.title.replace(/[<>:"/\\|?*]/g, "_")
-    const sanitizedMemoTitle = memo.title.replace(/[<>:"/\\|?*]/g, "_")
-    const s3Key = `games/${sanitizedGameTitle}/memo/${sanitizedMemoTitle}_${memo.id}.md`
+    // CloudPathManagerを使用してパスを生成
+    const objectKey = CloudPathManager.buildMemoPath(memo.game.title, memo.title, memo.id)
 
     // メモファイル内容を生成
     const fileContent = generateMemoFileContent(memo.title, memo.content, memo.game.title)
 
-    // クラウドに保存
-    const command = new PutObjectCommand({
-      Bucket: bucketName,
-      Key: s3Key,
-      Body: fileContent,
-      ContentType: "text/markdown"
-    })
-
-    await r2Client.send(command)
-
-    logger.info(`メモをクラウドに保存しました: ${s3Key}`)
+    // 汎用的なアップロード関数を使用
+    await uploadObject(r2Client, bucketName, objectKey, fileContent, "text/markdown")
   } catch (error) {
     logger.error("メモクラウド保存エラー:", error)
     throw error

@@ -27,58 +27,41 @@
 import { promises as fs } from "fs"
 import { join, dirname, relative } from "path"
 
-import { GetObjectCommand, ListObjectsV2Command, HeadObjectCommand } from "@aws-sdk/client-s3"
+import { HeadObjectCommand } from "@aws-sdk/client-s3"
 import { ipcMain } from "electron"
 
 import type { ApiResult } from "../../types/result"
 import { createRemotePath } from "../../utils/stringUtils"
+import { getAllObjectsWithMetadata, downloadObjectStream } from "../service/cloudStorageService"
 import { validateCredentialsForR2 } from "../utils/credentialValidator"
 import { withFileOperationErrorHandling } from "../utils/ipcErrorHandler"
 import { logger } from "../utils/logger"
 import type { S3Client } from "@aws-sdk/client-s3"
 
 /**
- * リモートパス配下のすべてのオブジェクトキーを取得する関数
- *
- * ページネーション対応により、大量のオブジェクトが存在する場合でも
- * すべてのキーを取得できます。
+ * リモートパス配下のすべてのオブジェクト情報を取得する関数（汎用サービスを使用）
  *
  * @param r2Client S3 クライアント
  * @param bucketName バケット名
  * @param remotePath リモートパス（プレフィックス）
- * @returns Promise<string[]> オブジェクトキーの配列
+ * @returns Promise<Array<{key: string; lastModified: Date}>> オブジェクト情報の配列
  */
 async function getAllObjectKeys(
   r2Client: S3Client,
   bucketName: string,
   remotePath: string
 ): Promise<{ key: string; lastModified: Date }[]> {
-  const allObjects: { key: string; lastModified: Date }[] = []
-  let token: string | undefined = undefined
+  const prefix = remotePath.replace(/\/+$/, "") + "/"
+  const objects = await getAllObjectsWithMetadata(r2Client, bucketName, prefix)
 
-  do {
-    const listResult = await r2Client.send(
-      new ListObjectsV2Command({
-        Bucket: bucketName,
-        Prefix: remotePath.replace(/\/+$/, "") + "/",
-        ContinuationToken: token
-      })
-    )
-
-    listResult.Contents?.forEach((obj) => {
-      if (obj.Key && obj.LastModified) {
-        allObjects.push({ key: obj.Key, lastModified: obj.LastModified })
-      }
-    })
-
-    token = listResult.NextContinuationToken
-  } while (token)
-
-  return allObjects
+  return objects.map((obj) => ({
+    key: obj.key,
+    lastModified: obj.lastModified
+  }))
 }
 
 /**
- * 単一ファイルをダウンロードする関数
+ * 単一ファイルをダウンロードする関数（汎用サービスを使用）
  *
  * ストリーミング処理により、メモリ効率的にファイルをダウンロードします。
  *
@@ -94,14 +77,7 @@ async function downloadFile(
   key: string,
   outputPath: string
 ): Promise<void> {
-  const getResult = await r2Client.send(
-    new GetObjectCommand({
-      Bucket: bucketName,
-      Key: key
-    })
-  )
-
-  const bodyStream = getResult.Body as NodeJS.ReadableStream
+  const bodyStream = await downloadObjectStream(r2Client, bucketName, key)
   const fileHandle = await fs.open(outputPath, "w")
 
   await new Promise<void>((resolve, reject) => {
