@@ -18,6 +18,7 @@ import {
   sortDirectionAtom,
   visibleGamesAtom
 } from "../state/home"
+import { autoTrackingAtom } from "../state/settings"
 import type { GameType } from "src/types/game"
 
 export default function Home(): React.ReactElement {
@@ -26,6 +27,7 @@ export default function Home(): React.ReactElement {
   const [sort, setSort] = useAtom(sortAtom)
   const [sortDirection, setSortDirection] = useAtom(sortDirectionAtom)
   const [visibleGames, setVisibleGames] = useAtom(visibleGamesAtom)
+  const [autoTracking] = useAtom(autoTrackingAtom)
   const [isModalOpen, setIsModalOpen] = useState(false)
 
   // 検索語をデバウンス
@@ -113,7 +115,7 @@ export default function Home(): React.ReactElement {
       <FloatingButton
         onClick={() => setIsModalOpen(true)}
         ariaLabel="ゲームを追加"
-        positionClass="bottom-16 right-6"
+        positionClass={autoTracking ? "bottom-16 right-6" : "bottom-6 right-6"}
       >
         <IoIosAdd size={28} />
       </FloatingButton>

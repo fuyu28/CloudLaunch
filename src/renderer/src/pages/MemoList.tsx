@@ -5,6 +5,8 @@
  * サイドメニューからアクセス可能な全メモ閲覧画面です。
  */
 
+import { autoTrackingAtom } from "@renderer/state/settings"
+import { useAtomValue } from "jotai"
 import { useEffect, useState, useCallback, useMemo } from "react"
 import { CiSearch } from "react-icons/ci"
 import { FaPlus, FaFolder, FaSync } from "react-icons/fa"
@@ -40,6 +42,8 @@ export default function MemoList(): React.JSX.Element {
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc")
   const [isLoading, setIsLoading] = useState(true)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
+
+  const autoTracking = useAtomValue(autoTrackingAtom)
 
   // 検索クエリのデバウンス処理
   const debouncedSearchQuery = useDebounce(searchQuery, 300)
@@ -362,7 +366,11 @@ export default function MemoList(): React.JSX.Element {
       )}
 
       {/* フローティング追加ボタン */}
-      <FloatingButton onClick={() => navigate("/memo/create")} ariaLabel="新しいメモを作成">
+      <FloatingButton
+        positionClass={autoTracking ? "bottom-16 right-6" : "bottom-6 right-6"}
+        onClick={() => navigate("/memo/create")}
+        ariaLabel="新しいメモを作成"
+      >
         <FaPlus className="text-lg" />
       </FloatingButton>
 
