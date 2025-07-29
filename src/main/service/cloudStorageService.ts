@@ -13,13 +13,13 @@ import {
   ListObjectsV2Command,
   DeleteObjectsCommand,
   PutObjectCommand,
-  GetObjectCommand
+  GetObjectCommand,
+  S3Client
 } from "@aws-sdk/client-s3"
 
 import { CONFIG } from "../../constants/config"
-import { createR2Client } from "../r2Client"
+import type { Creds } from "../../types/creds"
 import { logger } from "../utils/logger"
-import type { S3Client } from "@aws-sdk/client-s3"
 import type { ReadStream } from "fs"
 
 /**
@@ -373,4 +373,23 @@ export async function testConnection(r2Client: S3Client, bucketName: string): Pr
 
   await r2Client.send(testCommand)
   logger.info(`接続テスト成功: ${bucketName}`)
+}
+
+/**
+ * 認証情報を使用してクラウドストレージへの接続テストを実行
+ *
+ * @param credentials テスト対象の認証情報
+ * @throws Error 接続に失敗した場合
+ */
+export async function testConnectionWithCredentials(credentials: Creds): Promise<void> {
+  const r2Client = new S3Client({
+    region: credentials.region,
+    endpoint: credentials.endpoint,
+    credentials: {
+      accessKeyId: credentials.accessKeyId,
+      secretAccessKey: credentials.secretAccessKey
+    }
+  })
+
+  await testConnection(r2Client, credentials.bucketName)
 }
