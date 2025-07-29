@@ -1,4 +1,4 @@
-export interface AwsSdkError {
+export type AwsSdkError = {
   Code: string
   message: string
 }

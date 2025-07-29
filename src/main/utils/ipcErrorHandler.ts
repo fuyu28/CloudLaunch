@@ -37,7 +37,7 @@ export type IpcHandler<T extends unknown[] = unknown[], R = unknown> = (
 /**
  * エラーハンドリング設定オプション
  */
-export interface ErrorHandlingOptions {
+export type ErrorHandlingOptions = {
   /** カスタムエラーメッセージプレフィックス */
   errorPrefix?: string
   /** ログ出力を無効にする場合は true */

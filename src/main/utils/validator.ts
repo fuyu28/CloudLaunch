@@ -1,7 +1,7 @@
 import { createAppError } from "./errorHandler"
 import { MESSAGES } from "../../constants"
 
-export interface ValidationResult {
+export type ValidationResult = {
   isValid: boolean
   errors: string[]
 }

@@ -25,7 +25,7 @@ export enum PathType {
 /**
  * パス検証の結果
  */
-export interface PathValidationResult {
+export type PathValidationResult = {
   /** 検証が成功したかどうか */
   isValid: boolean
   /** エラーメッセージ（失敗時） */

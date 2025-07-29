@@ -14,7 +14,7 @@ import type { ApiResult } from "../../types/result"
 /**
  * 監視中のゲーム情報
  */
-export interface MonitoringGameStatus {
+export type MonitoringGameStatus = {
   /** ゲームID */
   gameId: string
   /** ゲームタイトル */

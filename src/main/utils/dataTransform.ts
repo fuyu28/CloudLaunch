@@ -60,7 +60,7 @@ export function transformUpload(upload: Upload): UploadWithUndefined {
 /**
  * フロントエンド用のUpload型（null → undefined）
  */
-export interface UploadWithUndefined {
+export type UploadWithUndefined = {
   id: string
   clientId?: string
   comment: string

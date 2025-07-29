@@ -2,7 +2,7 @@
  * 章管理関連の型定義
  */
 
-export interface Chapter {
+export type Chapter = {
   id: string
   name: string
   order: number
@@ -10,7 +10,7 @@ export interface Chapter {
   createdAt: Date
 }
 
-export interface ChapterStats {
+export type ChapterStats = {
   chapterId: string
   chapterName: string
   totalTime: number
@@ -19,17 +19,17 @@ export interface ChapterStats {
   order: number
 }
 
-export interface ChapterCreateInput {
+export type ChapterCreateInput = {
   name: string
   gameId: string
 }
 
-export interface ChapterUpdateInput {
+export type ChapterUpdateInput = {
   name?: string
   order?: number
 }
 
-export interface ChapterWithStats extends Chapter {
+export type ChapterWithStats = Chapter & {
   totalTime: number
   sessionCount: number
   averageTime: number

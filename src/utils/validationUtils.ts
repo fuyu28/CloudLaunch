@@ -12,7 +12,7 @@
 /**
  * バリデーション結果の型定義
  */
-export interface ValidationResult {
+export type ValidationResult = {
   /** 検証が成功したかどうか */
   isValid: boolean
   /** エラーメッセージ（失敗時） */
@@ -22,7 +22,7 @@ export interface ValidationResult {
 /**
  * 複数のフィールドのバリデーションエラー
  */
-export interface ValidationErrors {
+export type ValidationErrors = {
   [fieldName: string]: string | undefined
 }
 

@@ -36,7 +36,7 @@ export function formatDate(date: Date): string {
 /**
  * クラウドディレクトリツリーノードの型定義
  */
-export interface CloudDirectoryNode {
+export type CloudDirectoryNode = {
   name: string
   path: string
   isDirectory: boolean

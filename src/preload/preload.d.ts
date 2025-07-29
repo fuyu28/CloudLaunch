@@ -4,6 +4,7 @@ import type {
   ChapterCreateInput,
   ChapterUpdateInput
 } from "../types/chapter"
+import type { CloudDataItem, CloudFileDetail, CloudDirectoryNode } from "../types/cloud"
 import type { Creds } from "../types/creds"
 import type { AwsSdkError } from "../types/error"
 import type { ValidatePathResult } from "../types/file"
@@ -15,11 +16,11 @@ import type {
   CloudMemoInfo,
   MemoSyncResult
 } from "../types/memo"
-import type { FilterOption, SortOption } from "../types/menu"
+import type { FilterOption, SortOption, SortDirection } from "../types/menu"
 import type { ApiResult } from "../types/result"
 import type { Game } from "@prisma/client"
 
-export interface FileAPI {
+export type FileAPI = {
   selectFile(filters: Electron.FileFilter[]): Promise<ApiResult<string | undefined>>
   selectFolder(): Promise<ApiResult<string | undefined>>
   validatePath(filePath: string, expectType?: string): Promise<ValidatePathResult>
@@ -27,18 +28,18 @@ export interface FileAPI {
   checkDirectoryExists(dirPath: string): Promise<boolean>
 }
 
-export interface SaveDataUploadAPI {
+export type SaveDataUploadAPI = {
   uploadSaveDataFolder(
     localSaveFolderPath: string,
     remoteSaveDataPath: string
   ): Promise<ApiResult<void>>
 }
 
-export interface SaveDataFolderAPI {
+export type SaveDataFolderAPI = {
   listRemoteSaveDataFolders(): Promise<string[] | undefined>
 }
 
-export interface SaveDataDownloadAPI {
+export type SaveDataDownloadAPI = {
   downloadSaveData(
     localSaveFolderPath: string,
     remoteSaveDataPath: string
@@ -60,14 +61,19 @@ export interface SaveDataDownloadAPI {
   >
 }
 
-export interface CredentialAPI {
+export type CredentialAPI = {
   upsertCredential(creds: Creds): Promise<ApiResult<void>>
   getCredential(): Promise<ApiResult<Creds>>
   validateCredential(creds: Creds): Promise<ApiResult<void> & { err?: AwsSdkError }>
 }
 
-export interface DatabaseAPI {
-  listGames(searchWord: string, filter: FilterOption, sort: SortOption): Promise<Game[]>
+export type DatabaseAPI = {
+  listGames(
+    searchWord: string,
+    filter: FilterOption,
+    sort: SortOption,
+    sortDirection?: SortDirection
+  ): Promise<Game[]>
   getGameById(id: string): Promise<Game | undefined>
   createGame(game: InputGameData): Promise<ApiResult<void>>
   updateGame(id: string, game: InputGameData): Promise<ApiResult<void>>
@@ -79,24 +85,24 @@ export interface DatabaseAPI {
   deletePlaySession(sessionId: string): Promise<ApiResult<void>>
 }
 
-export interface LoadImageAPI {
+export type LoadImageAPI = {
   loadImageFromLocal(filePath: string): Promise<ApiResult<string>>
   loadImageFromWeb(url: string): Promise<ApiResult<string>>
 }
 
-export interface LaunchGameAPI {
+export type LaunchGameAPI = {
   launchGame(filePath: string): Promise<ApiResult<void>>
   launchGameFromSteam(url: string, steamPath: string): Promise<ApiResult<void>>
 }
 
-export interface WindowAPI {
+export type WindowAPI = {
   minimize(): Promise<void>
   toggleMaximize(): Promise<void>
   close(): Promise<void>
   openFolder(folderPath: string): Promise<{ success: boolean; message?: string }>
 }
 
-export interface MonitoringGameStatus {
+export type MonitoringGameStatus = {
   gameId: string
   gameTitle: string
   exeName: string
@@ -104,7 +110,7 @@ export interface MonitoringGameStatus {
   playTime: number
 }
 
-export interface ProcessMonitorAPI {
+export type ProcessMonitorAPI = {
   startMonitoring(): Promise<ApiResult>
   stopMonitoring(): Promise<ApiResult>
   addGameToMonitor(gameId: string, gameTitle: string, exePath: string): Promise<ApiResult>
@@ -126,7 +132,7 @@ export interface ProcessMonitorAPI {
   setLinkedProcess(gameId: string, processId: string): Promise<ApiResult>
 }
 
-export interface ChapterAPI {
+export type ChapterAPI = {
   getChapters(gameId: string): Promise<ApiResult<Chapter[]>>
   createChapter(input: ChapterCreateInput): Promise<ApiResult<Chapter>>
   updateChapter(chapterId: string, input: ChapterUpdateInput): Promise<ApiResult<Chapter>>
@@ -140,14 +146,12 @@ export interface ChapterAPI {
   setCurrentChapter(gameId: string, chapterId: string): Promise<ApiResult<void>>
 }
 
-export interface SettingsAPI {
+export type SettingsAPI = {
   updateAutoTracking(enabled: boolean): Promise<ApiResult>
   getAutoTracking(): Promise<ApiResult<boolean>>
 }
 
-// メモ型は src/types/memo.d.ts で定義されており、そちらを使用
-
-export interface MemoAPI {
+export type MemoAPI = {
   getMemosByGameId(gameId: string): Promise<ApiResult<MemoType[]>>
   getMemoById(memoId: string): Promise<ApiResult<MemoType | null>>
   createMemo(memoData: CreateMemoData): Promise<ApiResult<MemoType>>
@@ -163,33 +167,7 @@ export interface MemoAPI {
   syncMemosFromCloud(gameId?: string): Promise<ApiResult<MemoSyncResult>>
 }
 
-export interface CloudDataItem {
-  name: string
-  totalSize: number
-  fileCount: number
-  lastModified: Date
-  remotePath: string
-}
-
-export interface CloudFileDetail {
-  name: string
-  size: number
-  lastModified: Date
-  key: string
-  relativePath: string
-}
-
-export interface CloudDirectoryNode {
-  name: string
-  path: string
-  isDirectory: boolean
-  size: number
-  lastModified: Date
-  children?: CloudDirectoryNode[]
-  objectKey?: string
-}
-
-export interface CloudDataAPI {
+export type CloudDataAPI = {
   listCloudData(): Promise<ApiResult<CloudDataItem[]>>
   deleteCloudData(remotePath: string): Promise<ApiResult>
   getCloudFileDetails(remotePath: string): Promise<ApiResult<CloudFileDetail[]>>
@@ -197,7 +175,7 @@ export interface CloudDataAPI {
   deleteFile(objectKey: string): Promise<ApiResult>
 }
 
-export interface API {
+export type API = {
   file: FileAPI
   window: WindowAPI
   saveData: {
