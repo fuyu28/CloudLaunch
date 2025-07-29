@@ -21,7 +21,7 @@ export * from "./error"
 /**
  * 汎用的なオプション型
  */
-export interface SelectOption<T = string> {
+export type SelectOption<T = string> = {
   /** 表示ラベル */
   label: string
   /** 値 */
@@ -33,7 +33,7 @@ export interface SelectOption<T = string> {
 /**
  * ページネーション情報
  */
-export interface PaginationInfo {
+export type PaginationInfo = {
   /** 現在のページ */
   currentPage: number
   /** 総ページ数 */
@@ -47,7 +47,7 @@ export interface PaginationInfo {
 /**
  * ソート情報
  */
-export interface SortInfo<T extends string = string> {
+export type SortInfo<T extends string = string> = {
   /** ソートフィールド */
   field: T
   /** ソート方向 */
@@ -57,7 +57,7 @@ export interface SortInfo<T extends string = string> {
 /**
  * 検索フィルター
  */
-export interface SearchFilter {
+export type SearchFilter = {
   /** 検索クエリ */
   query?: string
   /** カテゴリ */
@@ -72,7 +72,7 @@ export interface SearchFilter {
 /**
  * ローディング状態
  */
-export interface LoadingState {
+export type LoadingState = {
   /** ローディング中かどうか */
   isLoading: boolean
   /** エラーメッセージ */
@@ -89,7 +89,7 @@ export type AsyncStatus = "idle" | "loading" | "success" | "error"
 /**
  * 非同期操作の状態管理
  */
-export interface AsyncState<T = unknown> {
+export type AsyncState<T = unknown> = {
   /** 現在の状態 */
   status: AsyncStatus
   /** データ */
@@ -101,7 +101,7 @@ export interface AsyncState<T = unknown> {
 /**
  * キーと値のペア（汎用）
  */
-export interface KeyValuePair<K = string, V = unknown> {
+export type KeyValuePair<K = string, V = unknown> = {
   key: K
   value: V
 }
@@ -109,7 +109,7 @@ export interface KeyValuePair<K = string, V = unknown> {
 /**
  * 範囲指定
  */
-export interface Range<T = number> {
+export type Range<T = number> = {
   /** 最小値 */
   min: T
   /** 最大値 */
@@ -119,7 +119,7 @@ export interface Range<T = number> {
 /**
  * 座標情報
  */
-export interface Coordinates {
+export type Coordinates = {
   /** X座標 */
   x: number
   /** Y座標 */
@@ -129,7 +129,7 @@ export interface Coordinates {
 /**
  * サイズ情報
  */
-export interface Size {
+export type Size = {
   /** 幅 */
   width: number
   /** 高さ */

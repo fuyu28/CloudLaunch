@@ -14,7 +14,7 @@ import toast from "react-hot-toast"
 /**
  * トーストオプション
  */
-export interface ToastOptions {
+export type ToastOptions = {
   /** ローディング中のメッセージ */
   loadingMessage?: string
   /** 成功時のメッセージ */
@@ -28,7 +28,7 @@ export interface ToastOptions {
 /**
  * トーストハンドラーの戻り値
  */
-export interface ToastHandler {
+export type ToastHandler = {
   /** ローディングトーストを表示 */
   showLoading: (message?: string) => string | undefined
   /** 成功トーストを表示 */

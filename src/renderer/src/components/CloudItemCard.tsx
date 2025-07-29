@@ -13,7 +13,7 @@ import type { CloudDataItem } from "@renderer/hooks/useCloudData"
 /**
  * クラウドデータアイテムカードのプロパティ
  */
-interface CloudItemCardProps {
+type CloudItemCardProps = {
   item: CloudDataItem
   onDelete: (item: CloudDataItem) => void
   onViewDetails: (item: CloudDataItem) => void
@@ -91,7 +91,7 @@ export function CloudItemCard({
 /**
  * ディレクトリノードカードのプロパティ
  */
-interface DirectoryNodeCardProps {
+type DirectoryNodeCardProps = {
   node: CloudDirectoryNode
   onNavigate?: (directoryName: string) => void
   onDelete: (node: CloudDirectoryNode) => void

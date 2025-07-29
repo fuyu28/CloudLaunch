@@ -24,7 +24,7 @@
 /**
  * 設定フォームフィールドコンポーネントのprops
  */
-export interface SettingsFormFieldProps {
+export type SettingsFormFieldProps = {
   /** ラベルテキスト */
   label: string
   /** 現在の値 */

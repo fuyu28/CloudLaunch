@@ -18,7 +18,7 @@ import { BaseModal } from "./BaseModal"
 /**
  * 注意事項アイテムの型定義
  */
-export interface WarningItem {
+export type WarningItem = {
   text: string
   highlight?: boolean
 }
@@ -26,7 +26,7 @@ export interface WarningItem {
 /**
  * 詳細確認情報の型定義
  */
-export interface ConfirmDetails {
+export type ConfirmDetails = {
   /** メインアイコン */
   icon?: React.ReactNode
   /** サブテキスト（パス、サイズなど） */

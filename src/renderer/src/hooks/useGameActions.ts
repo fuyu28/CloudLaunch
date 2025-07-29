@@ -14,7 +14,7 @@ import { useCallback } from "react"
 import { useLoadingState } from "./useLoadingState"
 import { MESSAGES } from "../../../constants"
 import type { InputGameData, GameType } from "../../../types/game"
-import type { SortOption, FilterOption } from "../../../types/menu"
+import type { SortOption, FilterOption, SortDirection } from "../../../types/menu"
 import type { ApiResult } from "../../../types/result"
 
 /// <reference types="../../../preload/index.d.ts" />
@@ -22,13 +22,15 @@ import type { ApiResult } from "../../../types/result"
 /**
  * ゲーム操作フックのprops
  */
-export interface UseGameActionsProps {
+export type UseGameActionsProps = {
   /** 現在の検索ワード */
   searchWord: string
   /** 現在のフィルター */
   filter: FilterOption
   /** 現在のソート */
   sort: SortOption
+  /** 現在のソート方向 */
+  sortDirection: SortDirection
   /** ゲーム一覧の更新コールバック */
   onGamesUpdate: (games: GameType[]) => void
   /** モーダルクローズのコールバック */
@@ -47,6 +49,7 @@ export function useGameActions({
   searchWord,
   filter,
   sort,
+  sortDirection,
   onGamesUpdate,
   onModalClose
 }: UseGameActionsProps): {
@@ -70,7 +73,7 @@ export function useGameActions({
           }
 
           // ゲーム一覧を再取得
-          const games = await window.api.database.listGames(searchWord, filter, sort)
+          const games = await window.api.database.listGames(searchWord, filter, sort, sortDirection)
           onGamesUpdate(games as GameType[])
           onModalClose()
 
@@ -85,7 +88,7 @@ export function useGameActions({
 
       return result || { success: false, message: MESSAGES.GAME.ADD_FAILED }
     },
-    [searchWord, filter, sort, onGamesUpdate, onModalClose, gameActionLoading]
+    [searchWord, filter, sort, sortDirection, onGamesUpdate, onModalClose, gameActionLoading]
   )
 
   return {

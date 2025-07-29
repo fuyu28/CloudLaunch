@@ -35,7 +35,7 @@ export type ModalSize = "sm" | "md" | "lg" | "xl" | "full"
 /**
  * ベースモーダルコンポーネントのprops
  */
-export interface BaseModalProps {
+export type BaseModalProps = {
   /** モーダルが開いているかどうか */
   isOpen: boolean
   /** モーダルを閉じる際のコールバック */

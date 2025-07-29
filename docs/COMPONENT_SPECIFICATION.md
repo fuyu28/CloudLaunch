@@ -124,27 +124,48 @@ interface GameDetailProps {
 #### レイアウト構造
 
 ```tsx
-<MainLayout>
-  <GameHeader game={game} />
-  <TabNavigation>
-    <TabPanel name="overview">
-      <GameOverview />
-      <PlayStatusBar />
-    </TabPanel>
-    <TabPanel name="sessions">
-      <PlaySessionCard />
-      <PlaySessionManagementModal />
-    </TabPanel>
-    <TabPanel name="chapters">
-      <ChapterDisplayCard />
-      <ChapterBarChart />
-    </TabPanel>
-    <TabPanel name="saves">
-      <SaveDataManager />
-    </TabPanel>
-  </TabNavigation>
-</MainLayout>
+<div className="bg-base-200 px-6 py-4">
+  <button onClick={handleBack} className="btn btn-ghost mb-4">
+    <FaArrowLeftLong />
+    戻る
+  </button>
+
+  {/* 上段：ゲーム情報カード */}
+  <div className="mb-3">
+    <GameInfo
+      game={game}
+      isUpdatingStatus={isUpdatingStatus}
+      isLaunching={isLaunching}
+      onStatusChange={handleStatusChange}
+      onLaunchGame={handleLaunchGame}
+      onEditGame={openEdit}
+      onDeleteGame={openDelete}
+    />
+  </div>
+
+  {/* 中段：プレイ統計（統合コンポーネント） */}
+  <div className="mb-4">
+    <PlayStatistics
+      game={game}
+      refreshKey={refreshKey}
+      onAddPlaySession={handleOpenPlaySessionModal}
+      onOpenProcessManagement={() => setIsProcessModalOpen(true)}
+    />
+  </div>
+
+  {/* 下段：その他の管理機能 */}
+  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <ChapterDisplayCard />
+    <CloudDataCard />
+    <MemoCard />
+  </div>
+</div>
 ```
+
+#### レイアウト変更履歴
+
+- **2024年版**: 4段階レイアウト（ゲーム情報 → プレイセッション → 章別統計 → その他機能）
+- **現在版**: 3段階レイアウト（ゲーム情報 → プレイ統計統合 → その他管理機能）
 
 ### 3. Cloud (`src/renderer/src/pages/Cloud.tsx`)
 
@@ -339,6 +360,157 @@ interface FileSelectButtonProps {
   ファイルを選択
 </FileSelectButton>
 ```
+
+### 5. PlayStatistics (`src/renderer/src/components/PlayStatistics.tsx`)
+
+#### 概要
+
+プレイセッション管理と章別プレイ統計を統合したコンポーネント
+
+#### Props
+
+```typescript
+interface PlayStatisticsProps {
+  /** ゲーム情報 */
+  game: GameType
+  /** 更新キー（データ再取得トリガー） */
+  refreshKey: number
+  /** プレイセッション追加ハンドラ */
+  onAddPlaySession: () => void
+  /** プロセス管理モーダル開く */
+  onOpenProcessManagement: () => void
+}
+```
+
+#### 機能
+
+- プレイセッション統計表示（PlaySessionCardSimple使用）
+- 章別プレイ統計グラフ（ChapterBarChart使用）
+- セッション管理ボタンの統一配置
+- カード形式での明確な境界表示
+
+#### 構造
+
+```tsx
+<div className="card bg-base-100 shadow-xl">
+  <div className="card-body pb-4">
+    <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center gap-3">
+        <div className="w-1 h-6 bg-primary rounded-full"></div>
+        <h2 className="card-title text-xl">プレイ統計</h2>
+      </div>
+      {/* セッション管理ボタン */}
+      <div className="flex gap-2">
+        <button className="btn btn-outline btn-sm">管理</button>
+        <button className="btn btn-primary btn-sm">追加</button>
+      </div>
+    </div>
+
+    <div className="space-y-4">
+      {/* プレイセッション統計 */}
+      <PlaySessionCardSimple hiddenButtons={true} />
+
+      {/* 章別プレイ統計グラフ */}
+      <ChapterBarChart />
+    </div>
+  </div>
+</div>
+```
+
+#### スタイリング特徴
+
+- PlaySessionCardSimple: `border-2 border-accent/30` (アクセント色のoutline)
+- ChapterBarChart: `border-2 border-secondary/30` (セカンダリ色のoutline)
+- 統一されたカードデザインで視覚的な区別を実現
+
+### 6. PlaySessionCardSimple (`src/renderer/src/components/PlaySessionCardSimple.tsx`)
+
+#### 概要
+
+プレイ統計セクション用に簡略化されたプレイセッション表示コンポーネント
+
+#### Props
+
+```typescript
+interface PlaySessionCardSimpleProps {
+  /** ゲームID */
+  gameId: string
+  /** ゲームタイトル */
+  gameTitle: string
+  /** プレイセッション追加のコールバック */
+  onAddSession?: () => void
+  /** セッション更新時のコールバック */
+  onSessionUpdated?: () => void
+  /** プロセス管理を開くコールバック */
+  onProcessManagement?: () => void
+  /** ボタンを非表示にするフラグ */
+  hiddenButtons?: boolean
+}
+```
+
+#### 機能
+
+- プレイセッション統計の4項目表示
+  - 総セッション数
+  - 総プレイ時間
+  - 平均プレイ時間
+  - 今週のプレイ時間
+- 条件付きボタン表示（hiddenButtonsプロパティ）
+- アクセント色のカードoutline
+
+### 7. ChapterBarChart (`src/renderer/src/components/ChapterBarChart.tsx`)
+
+#### 概要
+
+章別プレイ統計を表示する棒グラフコンポーネント（PlayStatistics統合用に更新）
+
+#### Props
+
+```typescript
+interface ChapterBarChartProps {
+  /** ゲームID */
+  gameId: string
+  /** ゲームタイトル */
+  gameTitle: string
+}
+```
+
+#### 機能
+
+- 章別プレイ時間の割合をグラデーション棒グラフで表示
+- 各章の詳細情報（時間・割合）をリスト表示
+- セカンダリ色のカードoutline
+
+#### 構造
+
+```tsx
+<div className="card bg-base-100 border-2 border-secondary/30 shadow-sm">
+  <div className="card-body p-4">
+    {/* 単一の棒グラフ */}
+    <div className="mb-6">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-sm font-medium">総プレイ時間の章別割合</span>
+        <span className="text-sm text-base-content/60">{totalTime}</span>
+      </div>
+      <div className="w-full h-8 rounded-full overflow-hidden bg-base-300" />
+    </div>
+
+    {/* 章別詳細情報 */}
+    <div className="space-y-2">
+      <h4 className="text-sm font-medium text-base-content/80 mb-3">章別詳細</h4>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-32 overflow-y-auto">
+        {/* 章リスト */}
+      </div>
+    </div>
+  </div>
+</div>
+```
+
+#### スタイリング変更点
+
+- **以前**: `shadow-xl` の大きなシャドウ
+- **現在**: `border-2 border-secondary/30 shadow-sm` のoutlineスタイル
+- **パディング**: `card-body` から `card-body p-4` に統一
 
 ## モーダルコンポーネント
 

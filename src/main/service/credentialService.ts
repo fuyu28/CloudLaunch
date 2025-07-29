@@ -20,7 +20,7 @@ import type { Creds } from "../../types/creds"
 import type { ApiResult } from "../../types/result"
 import { logger } from "../utils/logger"
 
-interface StoreSchema {
+type StoreSchema = {
   bucketName: string
   region: string
   endpoint: string

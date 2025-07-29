@@ -22,7 +22,7 @@ import { useMemo } from "react"
 /**
  * 時間フォーマット用のフック
  */
-export interface TimeFormatHook {
+export type TimeFormatHook = {
   /** 詳細な時間フォーマット（例: "1時間30分45秒"） */
   formatDuration: (seconds: number) => string
   /** 短縮時間フォーマット（例: "1:30:45"） */

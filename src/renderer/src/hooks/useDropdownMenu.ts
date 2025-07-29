@@ -7,7 +7,7 @@
 
 import { useEffect, useState } from "react"
 
-interface UseDropdownMenuReturn {
+type UseDropdownMenuReturn = {
   openDropdownId: string | null
   toggleDropdown: (id: string, event: React.MouseEvent) => void
   closeDropdown: () => void

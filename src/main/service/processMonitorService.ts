@@ -37,7 +37,7 @@ const execAsync = promisify(exec)
 /**
  * 監視対象のゲーム情報
  */
-interface MonitoredGame {
+type MonitoredGame = {
   /** ゲームID */
   gameId: string
   /** ゲームタイトル */

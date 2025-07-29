@@ -18,7 +18,7 @@ import type { ApiResult } from "src/types/result"
 /**
  * 画像読み込み状態の型定義
  */
-interface ImageLoadState {
+type ImageLoadState = {
   /** 読み込み済み画像のdata URL */
   imageSrc?: string
   /** 読み込み中フラグ */
@@ -51,9 +51,11 @@ const createNoImageDataUrl = (): string => {
  * @returns 画像読み込み状態
  */
 export const useImageLoader = (src: string): ImageLoadState => {
-  const [imageSrc, setImageSrc] = useState<string | undefined>(undefined)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | undefined>(undefined)
+  const [state, setState] = useState<ImageLoadState>(() => ({
+    imageSrc: undefined,
+    isLoading: true,
+    error: undefined
+  }))
 
   useEffect(() => {
     let mounted = true
@@ -61,14 +63,16 @@ export const useImageLoader = (src: string): ImageLoadState => {
     const loadImage = async (): Promise<void> => {
       if (!mounted) return
 
-      setIsLoading(true)
-      setError(undefined)
+      setState((prev) => ({ ...prev, isLoading: true, error: undefined }))
 
       // 空文字列または未定義の場合はNoImageを表示（トーストなし）
       if (!src || src.trim() === "") {
         if (mounted) {
-          setImageSrc(createNoImageDataUrl())
-          setIsLoading(false)
+          setState({
+            imageSrc: createNoImageDataUrl(),
+            isLoading: false,
+            error: undefined
+          })
         }
         return
       }
@@ -78,7 +82,11 @@ export const useImageLoader = (src: string): ImageLoadState => {
 
         if (mounted) {
           if (result.success && result.data) {
-            setImageSrc(result.data)
+            setState({
+              imageSrc: result.data,
+              isLoading: false,
+              error: undefined
+            })
           } else {
             // 画像読み込み失敗時はNoImageを表示し、エラートーストも表示
             const errorMessage = result.success ? "データが取得できませんでした" : result.message
@@ -86,19 +94,23 @@ export const useImageLoader = (src: string): ImageLoadState => {
             if (errorMessage) {
               toast.error(`画像読み込み失敗: ${errorMessage}`)
             }
-            setImageSrc(createNoImageDataUrl())
-            setError(errorMessage || "画像読み込みに失敗しました")
+            setState({
+              imageSrc: createNoImageDataUrl(),
+              isLoading: false,
+              error: errorMessage || "画像読み込みに失敗しました"
+            })
           }
-          setIsLoading(false)
         }
       } catch (error) {
         if (mounted) {
           console.error("Error loading image:", error)
           const errorMsg = error instanceof Error ? error.message : "不明なエラー"
           toast.error(`画像読み込みエラー: ${errorMsg}`)
-          setImageSrc(createNoImageDataUrl())
-          setError(errorMsg)
-          setIsLoading(false)
+          setState({
+            imageSrc: createNoImageDataUrl(),
+            isLoading: false,
+            error: errorMsg
+          })
         }
       }
     }
@@ -109,7 +121,7 @@ export const useImageLoader = (src: string): ImageLoadState => {
     }
   }, [src])
 
-  return { imageSrc, isLoading, error }
+  return state
 }
 
 /**

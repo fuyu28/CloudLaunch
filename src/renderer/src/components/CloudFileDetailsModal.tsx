@@ -19,7 +19,7 @@ import type { CloudDataItem, CloudFileDetail } from "@renderer/hooks/useCloudDat
 /**
  * ファイル詳細モーダルのプロパティ
  */
-interface CloudFileDetailsModalProps {
+type CloudFileDetailsModalProps = {
   /** モーダルが開いているかどうか */
   isOpen: boolean
   /** モーダルを閉じるコールバック */

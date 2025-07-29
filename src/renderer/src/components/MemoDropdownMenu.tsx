@@ -7,7 +7,7 @@
 
 import { FaEdit, FaTrash, FaEllipsisV, FaSync } from "react-icons/fa"
 
-interface MemoDropdownMenuProps {
+type MemoDropdownMenuProps = {
   /** メモID */
   memoId: string
   /** ドロップダウンが開いているかどうか */

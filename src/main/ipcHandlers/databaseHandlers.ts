@@ -20,7 +20,7 @@ import { ensureDefaultChapter } from "./chapterHandlers"
 import { MESSAGES } from "../../constants"
 import { gameFormSchema } from "../../schemas/game"
 import type { InputGameData, GameType, PlaySessionType } from "../../types/game"
-import type { FilterOption, SortOption } from "../../types/menu"
+import type { FilterOption, SortOption, SortDirection } from "../../types/menu"
 import type { ApiResult } from "../../types/result"
 import { prisma } from "../db"
 import { transformGame, transformGames, transformPlaySessions } from "../utils/dataTransform"
@@ -43,12 +43,12 @@ const filterMap: Record<FilterOption, Prisma.GameWhereInput> = {
   playing: { playStatus: "playing" },
   played: { playStatus: "played" }
 }
-const sortMap: Record<SortOption, { [key: string]: "asc" | "desc" }> = {
-  title: { title: "asc" },
-  lastPlayed: { lastPlayed: "desc" },
-  totalPlayTime: { totalPlayTime: "desc" },
-  publisher: { publisher: "asc" },
-  lastRegistered: { createdAt: "desc" }
+const sortMap: Record<SortOption, string> = {
+  title: "title",
+  lastPlayed: "lastPlayed",
+  totalPlayTime: "totalPlayTime",
+  publisher: "publisher",
+  lastRegistered: "createdAt"
 }
 
 export function registerDatabaseHandlers(): void {
@@ -58,7 +58,8 @@ export function registerDatabaseHandlers(): void {
       _event,
       searchWord: string,
       filter: FilterOption,
-      sort: SortOption
+      sort: SortOption,
+      sortDirection: SortDirection = "desc"
     ): Promise<GameType[]> => {
       try {
         // 文字検索
@@ -72,7 +73,8 @@ export function registerDatabaseHandlers(): void {
         const filterCondition = filterMap[filter]
 
         // ソート順指定
-        const orderBy = sortMap[sort]
+        const sortField = sortMap[sort]
+        const orderBy = { [sortField]: sortDirection }
 
         const games = await prisma.game.findMany({
           where: { AND: [searchCondition, filterCondition] },

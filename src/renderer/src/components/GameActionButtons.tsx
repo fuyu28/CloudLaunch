@@ -26,14 +26,18 @@ import { MdEdit } from "react-icons/md"
 /**
  * ゲーム基本操作ボタンコンポーネントのprops
  */
-export interface GameActionButtonsProps {
+export type GameActionButtonsProps = {
+  /** ゲームID */
+  gameId: string
+  /** セーブデータフォルダパス */
+  saveDataFolderPath?: string
   /** ゲーム起動時のコールバック */
-  onLaunch: () => void
+  onLaunchGame: () => void
   /** ゲーム編集時のコールバック */
-  onEdit: () => void
+  onEditGame: () => void
   /** ゲーム削除時のコールバック */
-  onDelete: () => void
-  /** ゲーム起動中かどうか */
+  onDeleteGame: () => void
+  /** 起動中フラグ */
   isLaunching?: boolean
 }
 
@@ -46,36 +50,30 @@ export interface GameActionButtonsProps {
  * @returns ゲーム基本操作ボタン要素
  */
 export function GameActionButtons({
-  onLaunch,
-  onEdit,
-  onDelete,
-  isLaunching = false
+  onLaunchGame,
+  onEditGame,
+  onDeleteGame,
+  isLaunching
 }: GameActionButtonsProps): React.JSX.Element {
   return (
-    <div className="flex gap-3">
-      <button
-        onClick={onLaunch}
-        disabled={isLaunching}
-        className="btn btn-primary btn-md flex-1 flex max-w-60"
-      >
-        {isLaunching ? (
-          <>
-            <span className="loading loading-spinner loading-sm"></span>
-            起動中…
-          </>
-        ) : (
-          <>
-            <IoIosPlay size={24} />
-            ゲームを起動
-          </>
-        )}
-      </button>
-      <button className="btn btn-outline btn-md flex-1 max-w-60" onClick={onEdit}>
-        <MdEdit /> 編集
-      </button>
-      <button className="btn btn-error btn-md flex-1 max-w-60" onClick={onDelete}>
-        <FaTrash /> 登録を解除
-      </button>
+    <div className="space-y-3">
+      {/* 基本操作ボタン */}
+      <div className="flex gap-3">
+        <button
+          onClick={onLaunchGame}
+          className="btn btn-primary btn-md flex-1"
+          disabled={isLaunching}
+        >
+          <IoIosPlay size={24} />
+          {isLaunching ? "起動中..." : "ゲームを起動"}
+        </button>
+        <button className="btn btn-outline btn-md flex-1" onClick={onEditGame}>
+          <MdEdit /> 編集
+        </button>
+        <button className="btn btn-error btn-md flex-1" onClick={onDeleteGame}>
+          <FaTrash /> 登録を解除
+        </button>
+      </div>
     </div>
   )
 }

@@ -1,15 +1,15 @@
-export interface Schema {
+export type Schema = {
   bucketName: string
   region: string
   endpoint: string
   accessKeyId: string
 }
 
-export interface Creds extends Schema {
+export type Creds = Schema & {
   secretAccessKey: string
 }
 
-export interface CredsContextType {
+export type CredsContextType = {
   isValidCreds: boolean
   creds: Creds | undefined
   setIsValidCreds: (v: boolean) => void

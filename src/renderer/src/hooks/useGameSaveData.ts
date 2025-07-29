@@ -31,7 +31,7 @@ import { createRemotePath } from "../../../utils"
 /**
  * ゲームセーブデータ操作フックの戻り値
  */
-export interface GameSaveDataResult {
+export type GameSaveDataResult = {
   /** セーブデータアップロード関数 */
   uploadSaveData: (game: GameType) => Promise<void>
   /** セーブデータダウンロード関数 */

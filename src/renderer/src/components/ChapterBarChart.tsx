@@ -5,30 +5,49 @@
  * 各章のプレイ時間の割合を視覚的に確認できます。
  */
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo, memo } from "react"
 import { FaChartBar } from "react-icons/fa"
 
 import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
 
 import type { ChapterStats } from "../../../types/chapter"
 
-interface ChapterBarChartProps {
+type ChapterBarChartProps = {
   /** ゲームID */
   gameId: string
   /** ゲームタイトル */
   gameTitle: string
 }
 
-function makeGradient(stats: { totalTime: number }[], colors: string[]): string {
+// グラフ用の色配列を定数化
+const CHART_COLORS = [
+  "#3b82f6", // blue-500
+  "#10b981", // emerald-500
+  "#f59e0b", // amber-500
+  "#ef4444", // red-500
+  "#8b5cf6", // violet-500
+  "#06b6d4", // cyan-500
+  "#84cc16", // lime-500
+  "#f97316", // orange-500
+  "#ec4899", // pink-500
+  "#6b7280" // gray-500
+]
+
+function makeGradient(stats: { totalTime: number }[]): string {
+  if (stats.length === 0) return "transparent"
+
   const total = stats.reduce((sum, s) => sum + s.totalTime, 0)
+  if (total === 0) return "transparent"
+
   let acc = 0
   const stops: string[] = []
 
   stats.forEach((s, idx) => {
-    const pct = total > 0 ? (s.totalTime / total) * 100 : 0
+    const pct = (s.totalTime / total) * 100
     const start = acc
     const end = acc + pct
-    stops.push(`${colors[idx % colors.length]} ${start.toFixed(1)}% ${end.toFixed(1)}%`)
+    const color = CHART_COLORS[idx % CHART_COLORS.length]
+    stops.push(`${color} ${start.toFixed(1)}% ${end.toFixed(1)}%`)
     acc = end
   })
 
@@ -41,10 +60,22 @@ function makeGradient(stats: { totalTime: number }[], colors: string[]): string 
  * @param props - コンポーネントのプロパティ
  * @returns 章別統計グラフコンポーネント
  */
-export default function ChapterBarChart({ gameId }: ChapterBarChartProps): React.JSX.Element {
+const ChapterBarChart = memo(function ChapterBarChart({
+  gameId
+}: ChapterBarChartProps): React.JSX.Element {
   const { formatSmart } = useTimeFormat()
   const [chapterStats, setChapterStats] = useState<ChapterStats[]>([])
   const [isLoading, setIsLoading] = useState(true)
+
+  // グラデーション計算をメモ化
+  const gradientStyle = useMemo(() => {
+    return makeGradient(chapterStats)
+  }, [chapterStats])
+
+  // 合計時間をメモ化
+  const totalTime = useMemo(() => {
+    return chapterStats.reduce((sum, stat) => sum + stat.totalTime, 0)
+  }, [chapterStats])
 
   // 章別統計データを取得
   useEffect(() => {
@@ -75,9 +106,6 @@ export default function ChapterBarChart({ gameId }: ChapterBarChartProps): React
     fetchChapterStats()
   }, [gameId])
 
-  // 総プレイ時間を計算
-  const totalTime = chapterStats.reduce((sum, stat) => sum + stat.totalTime, 0)
-
   const hasData = totalTime > 0
 
   if (isLoading) {
@@ -94,7 +122,7 @@ export default function ChapterBarChart({ gameId }: ChapterBarChartProps): React
 
   if (chapterStats.length === 0) {
     return (
-      <div className="card bg-base-100 shadow-xl">
+      <div className="card bg-base-200 rounded-lg">
         <div className="card-body">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
@@ -111,40 +139,9 @@ export default function ChapterBarChart({ gameId }: ChapterBarChartProps): React
     )
   }
 
-  // 色の配列（章ごとに異なる色を使用）
-  // 多彩な色を使用してセッションバーを見やすく
-  const chapterColors = [
-    "#3B82F6", // Blue 500
-    "#10B981", // Emerald 500
-    "#F59E0B", // Amber 500
-    "#EF4444", // Red 500
-    "#8B5CF6", // Violet 500
-    "#EC4899", // Pink 500
-    "#06B6D4", // Cyan 500
-    "#84CC16", // Lime 500
-    "#F97316", // Orange 500
-    "#6366F1", // Indigo 500
-    "#14B8A6", // Teal 500
-    "#A855F7", // Purple 500
-    "#F43F5E", // Rose 500
-    "#22C55E", // Green 500
-    "#FBBF24", // Yellow 500
-    "#8B5A2B", // Brown 500
-    "#6B7280", // Gray 500
-    "#DC2626", // Red 600
-    "#059669", // Emerald 600
-    "#D97706" // Amber 600
-  ]
-
   return (
-    <div className="card bg-base-100 shadow-xl">
-      <div className="card-body">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <FaChartBar className="text-info" />
-            <h3 className="card-title">章別プレイ統計</h3>
-          </div>
-        </div>
+    <div className="card bg-base-200 rounded-lg shadow-sm">
+      <div className="card-body p-4">
         {/* 単一の棒グラフ */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
@@ -156,7 +153,7 @@ export default function ChapterBarChart({ gameId }: ChapterBarChartProps): React
             style={
               hasData
                 ? {
-                    background: makeGradient(chapterStats, chapterColors)
+                    background: gradientStyle
                   }
                 : {}
             }
@@ -172,7 +169,7 @@ export default function ChapterBarChart({ gameId }: ChapterBarChartProps): React
               .sort((a, b) => a.order - b.order)
               .map((stat, index) => {
                 const percentage = totalTime > 0 ? (stat.totalTime / totalTime) * 100 : 0
-                const color = chapterColors[index % chapterColors.length]
+                const color = CHART_COLORS[index % CHART_COLORS.length]
 
                 return (
                   <div key={stat.chapterId} className="flex items-center gap-2 text-sm">
@@ -191,4 +188,6 @@ export default function ChapterBarChart({ gameId }: ChapterBarChartProps): React
       </div>
     </div>
   )
-}
+})
+
+export default ChapterBarChart

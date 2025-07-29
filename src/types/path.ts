@@ -39,7 +39,7 @@ export enum FilePathType {
 /**
  * パス検証の結果
  */
-export interface PathValidationResult {
+export type PathValidationResult = {
   /** 検証が成功したかどうか */
   isValid: boolean
   /** エラーメッセージ（失敗時） */
@@ -53,7 +53,7 @@ export interface PathValidationResult {
 /**
  * ファイル情報
  */
-export interface FileInfo {
+export type FileInfo = {
   /** ファイルパス */
   path: string
   /** ファイル名（拡張子含む） */
@@ -73,7 +73,7 @@ export interface FileInfo {
 /**
  * パス操作のオプション
  */
-export interface PathOptions {
+export type PathOptions = {
   /** パスの正規化を行うかどうか */
   normalize?: boolean
   /** 相対パスを許可するかどうか */
@@ -85,7 +85,7 @@ export interface PathOptions {
 /**
  * ファイル選択フィルター
  */
-export interface FileFilter {
+export type FileFilter = {
   /** フィルター名 */
   name: string
   /** 許可する拡張子（ドットなし） */
@@ -95,7 +95,7 @@ export interface FileFilter {
 /**
  * S3キー情報
  */
-export interface S3KeyInfo {
+export type S3KeyInfo = {
   /** S3キー */
   key: string
   /** バケット名 */
@@ -109,7 +109,7 @@ export interface S3KeyInfo {
 /**
  * リモートパス設定
  */
-export interface RemotePathConfig {
+export type RemotePathConfig = {
   /** ベースパス */
   basePath: string
   /** ゲーム名テンプレート */

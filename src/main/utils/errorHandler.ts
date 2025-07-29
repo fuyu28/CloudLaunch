@@ -2,7 +2,7 @@ import { logger } from "./logger"
 import { MESSAGES } from "../../constants"
 import type { ApiResult } from "../../types/result"
 
-export interface ErrorInfo {
+export type ErrorInfo = {
   code: string
   message: string
   details?: string

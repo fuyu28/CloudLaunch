@@ -29,7 +29,7 @@ export class CloudDataTransformError extends Error {
 /**
  * クラウドデータアイテムの型定義
  */
-export interface CloudDataItem {
+export type CloudDataItem = {
   /** ゲーム名/フォルダ名 */
   name: string
   /** 総ファイルサイズ（バイト） */
@@ -45,7 +45,7 @@ export interface CloudDataItem {
 /**
  * クラウドファイル詳細情報の型定義
  */
-export interface CloudFileDetail {
+export type CloudFileDetail = {
   /** ファイル名 */
   name: string
   /** ファイルサイズ（バイト） */
@@ -61,7 +61,7 @@ export interface CloudFileDetail {
 /**
  * ディレクトリツリーノードの型定義
  */
-export interface CloudDirectoryNode {
+export type CloudDirectoryNode = {
   /** ノード名 */
   name: string
   /** フルパス */

@@ -9,7 +9,7 @@ import { useNavigate } from "react-router-dom"
 
 import { useToastHandler } from "./useToastHandler"
 
-interface UseMemoOperationsProps {
+type UseMemoOperationsProps = {
   /** ゲームID（MemoCardコンポーネント用、オプション） */
   gameId?: string
   /** メモ削除後のコールバック（メモ一覧更新用、オプション） */
@@ -22,7 +22,7 @@ interface UseMemoOperationsProps {
   onSyncSuccess?: () => void
 }
 
-interface UseMemoOperationsReturn {
+type UseMemoOperationsReturn = {
   handleDeleteMemo: (memoId: string) => Promise<void>
   handleEditMemo: (memoId: string, event: React.MouseEvent) => void
   handleViewMemo: (memoId: string) => void

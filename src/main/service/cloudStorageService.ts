@@ -31,7 +31,7 @@ export class CloudStorageError extends Error {
 /**
  * S3オブジェクトのメタデータ型定義
  */
-export interface S3ObjectMetadata {
+export type S3ObjectMetadata = {
   /** オブジェクトキー */
   key: string
   /** ファイルサイズ（バイト） */

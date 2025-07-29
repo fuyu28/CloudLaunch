@@ -19,7 +19,7 @@ import { DAISYUI_THEMES } from "../constants/themes"
 /**
  * テーマフックの戻り値
  */
-export interface UseThemeResult {
+export type UseThemeResult = {
   /** 現在のテーマ */
   currentTheme: ThemeName
   /** テーマ変更中かどうか */

@@ -8,7 +8,7 @@
 /**
  * メモのデータ型
  */
-export interface MemoType {
+export type MemoType = {
   /** メモID */
   id: string
   /** メモタイトル */
@@ -28,7 +28,7 @@ export interface MemoType {
 /**
  * メモ作成時のデータ型
  */
-export interface CreateMemoData {
+export type CreateMemoData = {
   /** メモタイトル */
   title: string
   /** メモ内容（Markdown形式） */
@@ -40,7 +40,7 @@ export interface CreateMemoData {
 /**
  * メモ更新時のデータ型
  */
-export interface UpdateMemoData {
+export type UpdateMemoData = {
   /** 更新するメモタイトル */
   title: string
   /** 更新するメモ内容（Markdown形式） */
@@ -50,7 +50,7 @@ export interface UpdateMemoData {
 /**
  * メモファイル操作の結果型
  */
-export interface MemoFileOperationResult {
+export type MemoFileOperationResult = {
   /** 操作が成功したかどうか */
   success: boolean
   /** 操作対象のファイルパス */
@@ -62,7 +62,7 @@ export interface MemoFileOperationResult {
 /**
  * メモディレクトリ情報型
  */
-export interface MemoDirectoryInfo {
+export type MemoDirectoryInfo = {
   /** ベースディレクトリパス */
   baseDir: string
   /** ゲーム別ディレクトリパス */
@@ -74,7 +74,7 @@ export interface MemoDirectoryInfo {
 /**
  * クラウドメモ情報型
  */
-export interface CloudMemoInfo {
+export type CloudMemoInfo = {
   /** S3キー */
   key: string
   /** ファイル名 */
@@ -94,7 +94,7 @@ export interface CloudMemoInfo {
 /**
  * メモ同期結果型
  */
-export interface MemoSyncResult {
+export type MemoSyncResult = {
   /** 同期が成功したかどうか */
   success: boolean
   /** アップロードされたメモ数 */

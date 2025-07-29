@@ -32,7 +32,7 @@ import { useZodValidation } from "../hooks/useZodValidation"
 /**
  * 編集用のフォームデータ
  */
-interface EditFormData extends Record<string, unknown> {
+type EditFormData = Record<string, unknown> & {
   sessionName: string
   chapterId: string | null
 }
@@ -45,7 +45,7 @@ type EditFormFields = keyof Pick<EditFormData, "sessionName" | "chapterId">
 /**
  * セッション管理モーダルのProps
  */
-interface PlaySessionManagementModalProps {
+type PlaySessionManagementModalProps = {
   /** モーダルの開閉状態 */
   isOpen: boolean
   /** モーダルを閉じる関数 */

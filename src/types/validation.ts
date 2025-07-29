@@ -11,7 +11,7 @@
 /**
  * 単一のバリデーション結果
  */
-export interface ValidationResult {
+export type ValidationResult = {
   /** バリデーションが成功したかどうか */
   isValid: boolean
   /** エラーメッセージ（失敗時） */
@@ -21,7 +21,7 @@ export interface ValidationResult {
 /**
  * 複数のエラーメッセージを持つバリデーション結果
  */
-export interface ValidationResultMultiple {
+export type ValidationResultMultiple = {
   /** バリデーションが成功したかどうか */
   isValid: boolean
   /** エラーメッセージの配列（失敗時） */
@@ -38,7 +38,7 @@ export type ValidationErrors<T extends string = string> = {
 /**
  * ゲームフォーム専用のバリデーションエラー型
  */
-export interface GameFormValidationErrors {
+export type GameFormValidationErrors = {
   title?: string
   publisher?: string
   exePath?: string
@@ -49,7 +49,7 @@ export interface GameFormValidationErrors {
 /**
  * 設定フォーム専用のバリデーションエラー型
  */
-export interface SettingsFormValidationErrors {
+export type SettingsFormValidationErrors = {
   bucketName?: string
   region?: string
   endpoint?: string
@@ -70,7 +70,7 @@ export type AsyncValidationFunction<T = unknown> = (value: T) => Promise<Validat
 /**
  * フィールドバリデーター型
  */
-export interface FieldValidator<T = string> {
+export type FieldValidator<T = string> = {
   /** フィールド名 */
   field: string
   /** バリデーション関数 */
@@ -82,7 +82,7 @@ export interface FieldValidator<T = string> {
 /**
  * フォームバリデーター型
  */
-export interface FormValidator<T extends Record<string, unknown>> {
+export type FormValidator<T extends Record<string, unknown>> = {
   /** フォームデータ */
   data: T
   /** フィールドバリデーターの配列 */
@@ -92,7 +92,7 @@ export interface FormValidator<T extends Record<string, unknown>> {
 /**
  * バリデーション設定
  */
-export interface ValidationConfig {
+export type ValidationConfig = {
   /** 必須バリデーションのメッセージテンプレート */
   requiredMessage?: string
   /** 最小長バリデーションのメッセージテンプレート */

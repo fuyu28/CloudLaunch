@@ -29,7 +29,7 @@ export type PlayStatus = "unplayed" | "playing" | "played"
 /**
  * プレイステータス選択コンポーネントのprops
  */
-export interface PlayStatusSelectorProps {
+export type PlayStatusSelectorProps = {
   /** 現在のプレイステータス */
   currentStatus: PlayStatus
   /** ステータス変更時のコールバック */

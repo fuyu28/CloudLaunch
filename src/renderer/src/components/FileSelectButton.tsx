@@ -27,7 +27,7 @@ import { MESSAGES } from "../../../constants"
 /**
  * ファイル選択ボタンコンポーネントのprops
  */
-export interface FileSelectButtonProps {
+export type FileSelectButtonProps = {
   /** ラベルテキスト */
   label: string
   /** 現在選択されているファイルパス */

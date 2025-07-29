@@ -10,7 +10,7 @@ import { FaBook, FaChevronLeft, FaChevronRight, FaPlus, FaCog } from "react-icon
 
 import type { Chapter } from "../../../types/chapter"
 
-interface ChapterDisplayCardProps {
+type ChapterDisplayCardProps = {
   /** ゲームID */
   gameId: string
   /** ゲームタイトル */

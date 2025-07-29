@@ -21,7 +21,7 @@ import type { S3Client } from "@aws-sdk/client-s3"
 /**
  * 認証情報検証結果の型定義
  */
-export interface ValidatedCredentialResult {
+export type ValidatedCredentialResult = {
   /** 認証情報データ */
   credentials: Credential
   /** 初期化された R2 クライアント */

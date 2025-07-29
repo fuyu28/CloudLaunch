@@ -7,7 +7,7 @@
 
 import { useNavigate, useSearchParams } from "react-router-dom"
 
-interface UseMemoNavigationReturn {
+type UseMemoNavigationReturn = {
   /** 戻るボタンの処理 */
   handleBack: () => void
   /** 編集保存成功時の処理 */
