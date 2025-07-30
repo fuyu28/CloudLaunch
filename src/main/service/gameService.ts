@@ -14,6 +14,11 @@
 import { type PlayStatus } from "@prisma/client"
 
 import { gameFormSchema } from "../../schemas/game"
+import {
+  sessionIdSchema,
+  sessionNameUpdateSchema,
+  sessionChapterUpdateSchema
+} from "../../schemas/playSession"
 import type { InputGameData, GameType, PlaySessionType } from "../../types/game"
 import type { FilterOption, SortOption, SortDirection } from "../../types/menu"
 import type { ApiResult } from "../../types/result"
@@ -304,9 +309,13 @@ export async function updateSessionChapter(
 ): Promise<ApiResult<boolean>> {
   return withErrorHandling(
     async () => {
+      // 入力データの検証
+      const validatedSessionId = sessionIdSchema.parse(sessionId)
+      const validatedChapterData = sessionChapterUpdateSchema.parse({ chapterId })
+
       await prisma.playSession.update({
-        where: { id: sessionId },
-        data: { chapterId: chapterId }
+        where: { id: validatedSessionId },
+        data: { chapterId: validatedChapterData.chapterId }
       })
 
       logger.info(`セッション章が更新されました: セッションID ${sessionId}, 章ID ${chapterId}`)
@@ -330,9 +339,13 @@ export async function updateSessionName(
 ): Promise<ApiResult<boolean>> {
   return withErrorHandling(
     async () => {
+      // 入力データの検証
+      const validatedSessionId = sessionIdSchema.parse(sessionId)
+      const validatedNameData = sessionNameUpdateSchema.parse({ sessionName })
+
       await prisma.playSession.update({
-        where: { id: sessionId },
-        data: { sessionName: sessionName }
+        where: { id: validatedSessionId },
+        data: { sessionName: validatedNameData.sessionName }
       })
 
       logger.info(`セッション名が更新されました: セッションID ${sessionId}, 名前 ${sessionName}`)
@@ -352,8 +365,11 @@ export async function updateSessionName(
 export async function deletePlaySession(sessionId: string): Promise<ApiResult<boolean>> {
   return withErrorHandling(
     async () => {
+      // 入力データの検証
+      const validatedSessionId = sessionIdSchema.parse(sessionId)
+
       await prisma.playSession.delete({
-        where: { id: sessionId }
+        where: { id: validatedSessionId }
       })
 
       logger.info(`プレイセッションが削除されました: セッションID ${sessionId}`)
