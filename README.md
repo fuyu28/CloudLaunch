@@ -12,7 +12,6 @@
 > **このアプリケーションは現在、活発な開発段階にあります。**
 > まだテストや評価を目的としたプレリリース版を含め、**いかなるリリースも行われていません。**
 > そのため、現時点での利用方法は、ソースコードから直接開発環境を起動する方法のみとなります。
-
 > [!WARNING]
 > 現在、開発およびテストは **Windows環境のみ** で行われています。
 > macOSおよびLinuxでは正常に動作しない可能性が高いです。
@@ -21,17 +20,31 @@
 
 ## ✨ 主な機能 (Features)
 
-- **セーブデータのクラウド同期**:
-  - ゲームのセーブデータフォルダを指定し、S3互換ストレージ（AWS S3, Cloudflare R2など）にアップロード/ダウンロードできます。
-- **ゲーム管理**:
-  - PCにインストールされているゲームをライブラリとして登録・管理できます。
-- **プレイ状況の追跡**:
-  - ゲームのプレイ時間を自動で記録し、総プレイ時間や最終プレイ日時を確認できます。
-  - 「未プレイ」「プレイ中」「プレイ済み」のステータス管理が可能です。
-- **チャプター管理**:
-  - ゲームの章（チャプター）ごとにプレイ時間をグラフで可視化し、進行度を把握できます。
-- **安全な認証情報管理**:
-  - クラウドストレージの認証情報は、OSのセキュアな機構を利用してローカルに安全に保存されます。
+### 🎮 ゲーム管理
+
+- **ゲームライブラリ**: PCにインストールされているゲームを登録・管理
+- **プレイ状況追跡**: 自動プレイ時間計測と「未プレイ」「プレイ中」「プレイ済み」のステータス管理
+- **チャプター管理**: ゲームの章ごとにプレイ時間をグラフで可視化
+- **テーマ切り替え機能**: 設定画面からアプリテーマを自由に変更できる機能 (Daisy UI標準テーマ)
+
+### ☁️ クラウド同期
+
+- **セーブデータ同期**: S3互換ストレージ（AWS S3, Cloudflare R2など）との連携
+- **プレイメモ同期**: Markdown形式メモのクラウドバックアップ・同期
+- **安全な認証**: OSキーチェーンによる認証情報の暗号化保存
+
+### 📝 プレイメモ機能
+
+- **Markdownエディタ**: リアルタイムプレビュー付きメモ作成・編集
+- **ゲーム連携**: ゲームごとにメモを整理・管理
+- **クラウド連携**: メモの自動バックアップと複数デバイス間同期
+- **ファイル管理**: ローカルファイルシステムとの連携
+
+### 📊 プレイ分析
+
+- **詳細統計**: 総プレイ時間、平均プレイ時間、今週のプレイ時間
+- **章別分析**: チャプターごとのプレイ時間可視化
+- **セッション記録**: 個別プレイセッションの詳細追跡
 
 ---
 
@@ -41,13 +54,17 @@
 
 ### 一般機能
 
-- **[ ] プレイメモ機能**: ゲームごとにMarkdown形式でメモを記録・表示する機能。
-- **[ ] スクリーンショット管理機能**: ゲームのスクリーンショットを撮影し、ゲームごとに整理・閲覧する機能。
-- **[ ] テーマ切り替え機能**: 設定画面からDaisyUIのテーマを自由に変更できる機能。
+- **[ ] スクリーンショット管理機能**: ゲームのスクリーンショットを撮影し、ゲームごとに整理・閲覧する機能
 
-### ノベルゲーム向け機能
+### ゲーム連携機能
 
-- **[ ] 批評空間からのデータ取得**: ゲーム登録時に、[批評空間](http://erogamescape.dyndns.org/~ap2/ero/toukei_kaiseki/)からゲーム名、ブランド名、ジャケット画像などのメタデータを自動で取得する機能。
+- **[ ] 批評空間からのデータ取得**: ゲーム登録時に、[批評空間](http://erogamescape.dyndns.org/~ap2/ero/toukei_kaiseki/)からゲーム名、ブランド名、ジャケット画像などのメタデータを自動で取得する機能
+- **[ ] 実績システム**: ゲーム達成度の管理機能
+
+### エクスポート・インポート機能
+
+- **[ ] データエクスポート**: ゲーム情報・統計データのCSV/JSON出力
+- **[ ] バックアップ機能**: 全データの包括的バックアップ・復元
 
 ---
 
@@ -133,25 +150,53 @@ npm run build:linux
 
 ### 技術スタック (Tech Stack)
 
-- **フレームワーク**: [Electron](https://www.electronjs.org/)
-- **UI**: [React](https://reactjs.org/), [TypeScript](https://www.typescriptlang.org/), [Tailwind CSS](https://tailwindcss.com/), [daisyUI](https://daisyui.com/)
-- **状態管理**: [Jotai](https://jotai.org/)
-- **データベース**: [Prisma](https://www.prisma.io/), [SQLite](https://www.sqlite.org/index.html)
-- **クラウド接続**: [AWS SDK for JavaScript v3](https://aws.amazon.com/sdk-for-javascript/)
-- **ビルドツール**: [Electron Vite](https://electron-vite.org/)
-- **パッケージング**: [Electron Builder](https://www.electron.build/)
-- **テスト**: [Vitest](https://vitest.dev/), [Jest](https://jestjs.io/)
+#### フロントエンド
+
+- **フレームワーク**: [Electron](https://www.electronjs.org/) 35.1.5
+- **UI**: [React](https://reactjs.org/) 19.1.0, [TypeScript](https://www.typescriptlang.org/) 5.8.3
+- **スタイリング**: [Tailwind CSS](https://tailwindcss.com/) 4.1.10, [daisyUI](https://daisyui.com/) 5.0.43
+- **状態管理**: [Jotai](https://jotai.org/) 2.12.5
+- **ルーティング**: [React Router](https://reactrouter.com/) 7.6.2
+- **Markdownエディタ**: [React MD Editor](https://uiwjs.github.io/react-md-editor/) 4.0.7
+
+#### バックエンド・データ
+
+- **データベース**: [Prisma](https://www.prisma.io/) 6.11.0, [SQLite](https://www.sqlite.org/index.html) 5.1.7
+- **クラウド接続**: [AWS SDK for JavaScript v3](https://aws.amazon.com/sdk-for-javascript/) 3.828.0
+- **プロセス監視**: [ps-list](https://github.com/sindresorhus/ps-list) 8.1.1
+- **認証情報管理**: [keytar](https://github.com/atom/node-keytar) 7.9.0
+- **設定管理**: [electron-store](https://github.com/sindresorhus/electron-store) 10.1.0
+
+#### 開発・ビルド
+
+- **ビルドツール**: [Electron Vite](https://electron-vite.org/) 3.1.0, [Vite](https://vitejs.dev/) 6.2.6
+- **パッケージング**: [Electron Builder](https://www.electron.build/) 25.1.8
+- **テスト**: [Vitest](https://vitest.dev/) 3.2.4, [Jest](https://jestjs.io/) 30.0.4
+- **コード品質**: [ESLint](https://eslint.org/) 9.24.0, [Prettier](https://prettier.io/) 3.5.3
 
 ### プロジェクト構造 (Project Structure)
 
 ```
 cloudlaunch/
-├── dist/              # ビルド後のパッケージが出力されるディレクトリ
-├── prisma/            # Prismaのスキーマ定義とマイグレーションファイル
-└── src/
-    ├── main/          # Electronのメインプロセス (バックエンドロジック、Node.js API)
-    ├── preload/       # メインプロセスとレンダラープロセスを安全に繋ぐスクリプト
-    └── renderer/      # Electronのレンダラープロセス (UI、Reactアプリケーション)
+├── docs/                    # ドキュメント
+├── prisma/                  # データベース（Prisma + SQLite）
+├── resources/              # 静的リソース（アイコン等）
+├── src/
+│   ├── constants/          # 定数定義
+│   ├── main/               # Electronメインプロセス
+│   │   ├── ipcHandlers/   # IPC通信ハンドラー
+│   │   ├── service/       # ビジネスロジック
+│   │   └── utils/         # ユーティリティ
+│   ├── preload/           # セキュリティブリッジ
+│   ├── renderer/          # React UI
+│   │   └── src/
+│   │       ├── components/ # UIコンポーネント
+│   │       ├── hooks/     # カスタムフック
+│   │       ├── pages/     # ページコンポーネント
+│   │       └── state/     # 状態管理
+│   ├── types/             # TypeScript型定義
+│   └── utils/             # 共通ユーティリティ
+└── dist/                  # ビルド出力
 ```
 
 ---

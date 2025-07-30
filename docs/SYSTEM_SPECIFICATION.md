@@ -39,6 +39,8 @@ Electronベースのゲームランチャーアプリケーション。ゲーム
 - 章別プレイ進捗管理
 - セーブデータのクラウド同期（AWS S3/R2）
 - プレイセッション記録・分析
+- **プレイメモ機能**（Markdown形式でのメモ作成・管理）
+- **メモクラウド同期**（メモのクラウドストレージ連携）
 - オフラインモード対応
 
 ### 対象プラットフォーム
@@ -110,18 +112,24 @@ Renderer Process          Preload Script           Main Process
 | Jotai           | 2.12.5     | 状態管理         |
 | React Hot Toast | 2.5.2      | 通知             |
 | React Icons     | 5.5.0      | アイコン         |
+| React MD Editor | 4.0.7      | Markdownエディタ |
+| React Markdown  | 10.1.0     | Markdown表示     |
 
 ### バックエンド
 
-| 技術     | バージョン | 用途                   |
-| -------- | ---------- | ---------------------- |
-| Electron | 35.1.5     | デスクトップアプリ基盤 |
-| Node.js  | -          | ランタイム             |
-| Prisma   | 6.11.0     | ORM                    |
-| SQLite   | 5.1.7      | データベース           |
-| AWS SDK  | 3.828.0    | S3/R2クライアント      |
-| ps-list  | 8.1.1      | プロセス監視           |
-| keytar   | 7.9.0      | 認証情報管理           |
+| 技術             | バージョン | 用途                   |
+| ---------------- | ---------- | ---------------------- |
+| Electron         | 35.1.5     | デスクトップアプリ基盤 |
+| Node.js          | -          | ランタイム             |
+| Prisma           | 6.11.0     | ORM                    |
+| SQLite           | 5.1.7      | データベース           |
+| AWS SDK          | 3.828.0    | S3/R2クライアント      |
+| ps-list          | 8.1.1      | プロセス監視           |
+| keytar           | 7.9.0      | 認証情報管理           |
+| electron-store   | 10.1.0     | 設定管理               |
+| electron-updater | 6.3.9      | 自動更新               |
+| file-type        | 21.0.0     | ファイル形式判定       |
+| csv-parse        | 6.1.0      | CSVパーサー            |
 
 ### 開発・ビルドツール
 
@@ -152,38 +160,69 @@ cloudlaunch/
 │   ├── constants/                  # 定数定義
 │   │   ├── config.ts
 │   │   ├── messages.ts
-│   │   └── patterns.ts
+│   │   ├── patterns.ts
+│   │   └── index.ts
 │   ├── main/                       # Electron メインプロセス
 │   │   ├── ipcHandlers/           # IPC通信ハンドラー
 │   │   │   ├── chapterHandlers.ts
 │   │   │   ├── cloudDataHandlers.ts
 │   │   │   ├── credentialHandlers.ts
 │   │   │   ├── databaseHandlers.ts
+│   │   │   ├── memoHandlers.ts           # メモ管理
+│   │   │   ├── downloadHandler.ts
+│   │   │   ├── uploadSaveDataFolderHandlers.ts
 │   │   │   └── ...
 │   │   ├── service/               # ビジネスロジック
 │   │   │   ├── credentialService.ts
-│   │   │   └── processMonitorService.ts
+│   │   │   ├── processMonitorService.ts
+│   │   │   ├── memoService.ts            # メモサービス
+│   │   │   ├── cloudMemoService.ts       # クラウドメモサービス
+│   │   │   ├── memoSyncService.ts        # メモ同期サービス
+│   │   │   └── ...
 │   │   ├── utils/                 # ユーティリティ
 │   │   │   ├── errorHandler.ts
 │   │   │   ├── logger.ts
+│   │   │   ├── memoFileManager.ts        # メモファイル管理
+│   │   │   ├── cloudStorageHelper.ts
 │   │   │   └── ...
 │   │   ├── db.ts                  # データベース設定
 │   │   ├── index.ts               # メインエントリーポイント
 │   │   └── registerHandlers.ts    # IPCハンドラー登録
 │   ├── preload/                   # セキュリティブリッジ
 │   │   ├── api/                   # API定義
+│   │   │   ├── memoPreload.ts           # メモAPI
+│   │   │   ├── chapterPreload.ts
+│   │   │   └── ...
 │   │   └── index.ts
 │   ├── renderer/                  # React フロントエンド
 │   │   └── src/
 │   │       ├── components/        # UIコンポーネント
+│   │       │   ├── CloudTreeNode.tsx     # クラウドツリー表示
+│   │       │   ├── CloudItemCard.tsx     # クラウドアイテム
+│   │       │   ├── CloudHeader.tsx       # クラウドヘッダー
+│   │       │   ├── ConfirmModal.tsx      # 確認モーダル
+│   │       │   ├── DynamicImage.tsx      # 動的画像読み込み
+│   │       │   └── ...
 │   │       ├── hooks/            # カスタムフック
+│   │       │   ├── useMemoNavigation.ts  # メモナビゲーション
+│   │       │   ├── useMemoOperations.ts  # メモ操作
+│   │       │   ├── useValidCreds.ts      # 認証情報検証
+│   │       │   └── ...
 │   │       ├── pages/            # ページコンポーネント
+│   │       │   ├── MemoCreate.tsx        # メモ作成
+│   │       │   ├── MemoEditor.tsx        # メモ編集
+│   │       │   ├── MemoList.tsx          # メモ一覧
+│   │       │   ├── MemoView.tsx          # メモ表示
+│   │       │   └── ...
 │   │       ├── state/            # 状態管理
 │   │       └── utils/            # フロントエンドユーティリティ
 │   ├── types/                     # 型定義
 │   │   ├── common.ts
 │   │   ├── game.d.ts
+│   │   ├── memo.d.ts                    # メモ関連型
 │   │   ├── result.d.ts
+│   │   ├── validation.ts               # バリデーション型
+│   │   ├── path.ts                     # パス関連型
 │   │   └── ...
 │   └── utils/                     # 共通ユーティリティ
 ├── package.json
@@ -202,6 +241,44 @@ cloudlaunch/
   - データベースに保存
   - UUID自動生成
 - **出力**: 登録完了通知
+
+### 5. プレイメモ機能
+
+#### メモ作成・編集
+
+- **入力**: タイトル、Markdown形式コンテンツ、ゲームID
+- **処理**:
+  - データベースに保存
+  - ローカルファイルシステムに同期
+  - UUID自動生成
+- **出力**: メモ作成・更新完了通知
+
+#### メモ管理
+
+- **一覧表示**: ゲーム別メモ一覧
+- **検索・フィルタ**: タイトル・内容による検索
+- **ファイル連携**: ローカルファイルとの同期
+- **プレビュー**: Markdownのリアルタイムプレビュー
+
+#### クラウド同期
+
+- **アップロード**: S3/R2ストレージへのメモ保存
+- **ダウンロード**: クラウドからのメモ取得
+- **双方向同期**: ローカル・クラウド間の変更検出と同期
+- **競合解決**: 同時編集時の競合処理
+
+### 6. ファイル管理機能
+
+#### 動的画像読み込み
+
+- **遅延読み込み**: Intersection Observerによる最適化
+- **フォールバック**: エラー時のデフォルト画像表示
+- **キャッシュ**: ロードした画像のメモリキャッシュ
+
+#### ファイル形式検証
+
+- **ファイルタイプ判定**: file-typeライブラリによる検証
+- **セキュリティ**: 不正ファイルの検出・拒否
 
 #### ゲーム編集
 

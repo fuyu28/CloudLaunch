@@ -10,10 +10,11 @@
 6. [プレイセッション管理API](#プレイセッション管理API)
 7. [プロセス監視API](#プロセス監視API)
 8. [クラウド同期API](#クラウド同期API)
-9. [認証情報管理API](#認証情報管理API)
-10. [ファイル操作API](#ファイル操作API)
-11. [設定管理API](#設定管理API)
-12. [エラーハンドリング](#エラーハンドリング)
+9. [メモ管理API](#メモ管理API)
+10. [認証情報管理API](#認証情報管理API)
+11. [ファイル操作API](#ファイル操作API)
+12. [設定管理API](#設定管理API)
+13. [エラーハンドリング](#エラーハンドリング)
 
 ## 概要
 
@@ -93,7 +94,7 @@ interface GameType {
   currentChapter: string | null
 }
 
-type PlayStatus = "UNPLAYED" | "PLAYING" | "COMPLETED"
+type PlayStatus = "unplayed" | "playing" | "played"
 ```
 
 **呼び出し例**:
@@ -530,6 +531,248 @@ interface MonitoringGameStatus {
 - 進行中のセッションがあれば保存
 - 監視対象リストから削除
 
+## メモ管理API
+
+### 1. メモ一覧取得（ゲーム別）
+
+#### `memo:getMemosByGameId`
+
+**説明**: 指定されたゲームのメモ一覧を取得
+
+**パラメータ**: `gameId: string`
+
+**戻り値**: `ApiResult<MemoType[]>`
+
+```typescript
+interface MemoType {
+  id: string
+  title: string
+  content: string
+  gameId: string
+  gameTitle?: string
+  createdAt: Date
+  updatedAt: Date
+}
+```
+
+**呼び出し例**:
+
+```typescript
+const result = await window.api.memo.getMemosByGameId("game-uuid")
+if (result.success) {
+  const memos = result.data // MemoType[]
+}
+```
+
+### 2. メモ取得（ID指定）
+
+#### `memo:getMemoById`
+
+**説明**: 指定されたIDのメモを取得
+
+**パラメータ**: `memoId: string`
+
+**戻り値**: `ApiResult<MemoType | null>`
+
+**呼び出し例**:
+
+```typescript
+const result = await window.api.memo.getMemoById("memo-uuid")
+if (result.success && result.data) {
+  const memo = result.data
+}
+```
+
+### 3. メモ作成
+
+#### `memo:createMemo`
+
+**説明**: 新しいメモを作成
+
+**パラメータ**: `CreateMemoData`
+
+```typescript
+interface CreateMemoData {
+  title: string
+  content: string
+  gameId: string
+}
+```
+
+**戻り値**: `ApiResult<MemoType>`
+
+**バリデーション**:
+
+- `title`: 必須、空文字不可
+- `content`: 必須（空文字は許可）
+- `gameId`: 必須、有効なゲームIDである必要あり
+
+**呼び出し例**:
+
+```typescript
+const memoData: CreateMemoData = {
+  title: "攻略メモ",
+  content: "# 第1章の攻略\n\n- アイテムAを取得\n- NPCと会話",
+  gameId: "game-uuid"
+}
+
+const result = await window.api.memo.createMemo(memoData)
+```
+
+### 4. メモ更新
+
+#### `memo:updateMemo`
+
+**説明**: 既存メモの情報を更新
+
+**パラメータ**:
+
+- `memoId: string`
+- `updateData: UpdateMemoData`
+
+```typescript
+interface UpdateMemoData {
+  title: string
+  content: string
+}
+```
+
+**戻り値**: `ApiResult<MemoType>`
+
+**呼び出し例**:
+
+```typescript
+const result = await window.api.memo.updateMemo("memo-uuid", {
+  title: "更新されたタイトル",
+  content: "更新されたコンテンツ"
+})
+```
+
+### 5. メモ削除
+
+#### `memo:deleteMemo`
+
+**説明**: メモを削除
+
+**パラメータ**: `memoId: string`
+
+**戻り値**: `ApiResult<boolean>`
+
+**呼び出し例**:
+
+```typescript
+const result = await window.api.memo.deleteMemo("memo-uuid")
+```
+
+### 6. 全メモ一覧取得
+
+#### `memo:getAllMemos`
+
+**説明**: 全ゲームのメモ一覧を取得（ゲーム名付き）
+
+**パラメータ**: なし
+
+**戻り値**: `ApiResult<MemoType[]>`
+
+**特徴**:
+
+- ゲームタイトル情報も含む
+- 作成日時順（新しい順）で返却
+
+### 7. メモファイル管理
+
+#### `memo:getMemoFilePath`
+
+**説明**: メモファイルのローカルパスを取得
+
+**パラメータ**: `memoId: string`
+
+**戻り値**: `ApiResult<string>`
+
+#### `memo:getGameMemoDir`
+
+**説明**: ゲームのメモディレクトリパスを取得
+
+**パラメータ**: `gameId: string`
+
+**戻り値**: `ApiResult<string>`
+
+#### `memo:getMemoRootDir`
+
+**説明**: メモルートディレクトリパスを取得
+
+**パラメータ**: なし
+
+**戻り値**: `ApiResult<string>`
+
+### 8. クラウドメモ管理
+
+#### `memo:uploadMemoToCloud`
+
+**説明**: メモをクラウドストレージに保存
+
+**パラメータ**: `memoId: string`
+
+**戻り値**: `ApiResult<boolean>`
+
+**処理内容**:
+
+- メモデータをMarkdown形式でクラウドに保存
+- ファイル名: `{gameTitle}/{memoTitle}_{memoId}.md`
+
+#### `memo:downloadMemoFromCloud`
+
+**説明**: クラウドストレージからメモをダウンロード
+
+**パラメータ**:
+
+- `gameTitle: string`
+- `memoFileName: string`
+
+**戻り値**: `ApiResult<string>`
+
+#### `memo:getCloudMemos`
+
+**説明**: クラウドストレージからメモ一覧を取得
+
+**パラメータ**: なし
+
+**戻り値**: `ApiResult<CloudMemoInfo[]>`
+
+```typescript
+interface CloudMemoInfo {
+  key: string
+  fileName: string
+  gameTitle: string
+  memoTitle: string
+  memoId: string
+  lastModified: Date
+  size: number
+}
+```
+
+#### `memo:syncMemosFromCloud`
+
+**説明**: クラウドストレージからメモを同期
+
+**パラメータ**: `gameId?: string` (特定ゲームのみ同期する場合)
+
+**戻り値**: `ApiResult<MemoSyncResult>`
+
+```typescript
+interface MemoSyncResult {
+  success: boolean
+  uploaded: number
+  localOverwritten: number
+  cloudOverwritten: number
+  created: number
+  updated: number
+  skipped: number
+  error?: string
+  details: string[]
+}
+```
+
 ## クラウド同期API
 
 ### 1. クラウドデータ一覧取得
@@ -842,6 +1085,32 @@ const result = await window.api.file.showOpenDialog({
 
 **戻り値**: `ApiResult`
 
+### 6. ウィンドウ管理
+
+#### `minimize-window`
+
+**説明**: アプリケーションウィンドウを最小化
+
+**パラメータ**: なし
+
+**戻り値**: `ApiResult`
+
+#### `maximize-window`
+
+**説明**: アプリケーションウィンドウを最大化
+
+**パラメータ**: なし
+
+**戻り値**: `ApiResult`
+
+#### `close-window`
+
+**説明**: アプリケーションウィンドウを閉じる
+
+**パラメータ**: なし
+
+**戻り値**: `ApiResult`
+
 ## エラーハンドリング
 
 ### エラー分類
@@ -961,7 +1230,7 @@ const gameData: InputGameData = {
   title: "新しいゲーム",
   publisher: "出版社",
   exePath: fileResult.data[0],
-  playStatus: "UNPLAYED"
+  playStatus: "unplayed"
 }
 
 const createResult = await window.api.game.createGame(gameData)
@@ -969,6 +1238,35 @@ if (createResult.success) {
   toast.success("ゲームが登録されました")
   // UI更新
   refreshGameList()
+}
+```
+
+#### 3. メモ管理フロー
+
+```typescript
+// 1. メモ作成
+const memoData: CreateMemoData = {
+  title: "攻略メモ",
+  content: "# 第1章\n\n重要なポイント",
+  gameId: "game-uuid"
+}
+
+const createResult = await window.api.memo.createMemo(memoData)
+if (createResult.success) {
+  toast.success("メモが作成されました")
+}
+
+// 2. メモをクラウドにアップロード
+const uploadResult = await window.api.memo.uploadMemoToCloud(memoId)
+if (uploadResult.success) {
+  toast.success("メモをクラウドに保存しました")
+}
+
+// 3. クラウドから同期
+const syncResult = await window.api.memo.syncMemosFromCloud(gameId)
+if (syncResult.success) {
+  const result = syncResult.data
+  toast.success(`${result.created}件作成、${result.updated}件更新されました`)
 }
 ```
 

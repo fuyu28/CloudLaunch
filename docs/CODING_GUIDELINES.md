@@ -344,27 +344,89 @@ return { success: false, message: "認証情報が見つかりません" }
 - カテゴリ別に整理（GAME, AUTH, SAVE_DATA, etc.）
 - 一貫性のあるトーン・敬語レベルを維持
 
+## Import順序規約
+
+### 基本ルール
+
+現在のESLint設定に基づく統一されたimport順序を維持：
+
+```typescript
+// 1. Node.js Built-ins
+import { join } from "path"
+
+// 2. External libraries
+import React, { useState, useEffect } from "react"
+import { ipcRenderer } from "electron"
+
+// 3. Internal modules (components優先)
+import { BaseModal } from "@renderer/components/BaseModal"
+import { GameCard } from "@renderer/components/GameCard"
+
+// 4. Internal modules (hooks)
+import { useGameActions } from "@renderer/hooks/useGameActions"
+import { useToastHandler } from "@renderer/hooks/useToastHandler"
+
+// 5. Internal modules (utils)
+import { validatePath } from "@renderer/utils/pathUtils"
+
+// 6. Type imports (最後、グループ内アルファベット順)
+import type { GameType, ApiResult } from "../../types/common"
+import type { CreateMemoData } from "../../types/memo"
+```
+
+### Import順序の自動化
+
+ESLintの`import/order`ルールにより自動的に強制：
+
+- **グループ間**: 必ず空行で区切る
+- **グループ内**: アルファベット順（大文字小文字区別なし）
+- **Type imports**: `import type`を強制使用
+
 ## IPC通信規約
 
 ### ハンドラー命名規約
 
-- 動詞-名詞の形式: `get-game`, `create-session`, `upload-save-data`
-- ケバブケース使用
+- **名前空間:動詞対象**の形式: `memo:createMemo`, `chapter:getChapters`
+- **camelCase**使用（kebab-caseから変更）
 - 明確で説明的な名前
 
 ### ハンドラー実装規約
 
 ```typescript
-export function registerHandlers(): void {
-  ipcMain.handle("handler-name", async (_event, params): Promise<ApiResult> => {
-    try {
-      // メイン処理
-      return { success: true }
-    } catch (error) {
-      console.error(error)
-      return { success: false, message: "エラーメッセージ" }
+export function registerMemoHandlers(): void {
+  ipcMain.handle(
+    "memo:createMemo",
+    async (_event, memoData: CreateMemoData): Promise<ApiResult<MemoType>> => {
+      try {
+        // バリデーション
+        if (!memoData.title?.trim()) {
+          return { success: false, message: "タイトルは必須です" }
+        }
+
+        // メイン処理
+        const memo = await memoService.createMemo(memoData)
+        return { success: true, data: memo }
+      } catch (error) {
+        logger.error("メモ作成エラー:", error)
+        return { success: false, message: "メモの作成に失敗しました" }
+      }
     }
-  })
+  )
+}
+```
+
+### Preload API設計
+
+```typescript
+// preload/api/memoPreload.ts
+export const memoApi = {
+  createMemo: async (memoData: CreateMemoData): Promise<ApiResult<MemoType>> => {
+    return await ipcRenderer.invoke("memo:createMemo", memoData)
+  },
+
+  getMemosByGameId: async (gameId: string): Promise<ApiResult<MemoType[]>> => {
+    return await ipcRenderer.invoke("memo:getMemosByGameId", gameId)
+  }
 }
 ```
 
