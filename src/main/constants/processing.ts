@@ -18,27 +18,9 @@ export const BATCH_SIZES = {
 } as const
 
 /**
- * ストリーミング処理の設定
- */
-export const STREAMING_CONFIG = {
-  /** ストリーミング処理を使用するファイルサイズの閾値（MB） */
-  THRESHOLD_MB: 10
-} as const
-
-/**
  * パス検証の設定
  */
 export const PATH_SECURITY = {
   /** 最大許可オブジェクトキー長（S3の制限に準拠） */
   MAX_OBJECT_KEY_LENGTH: 1024
-} as const
-
-/**
- * リトライ処理の設定
- */
-export const RETRY_CONFIG = {
-  /** デフォルトのリトライ回数 */
-  DEFAULT_ATTEMPTS: 3,
-  /** リトライ間隔（ミリ秒） */
-  DELAY_MS: 1000
 } as const

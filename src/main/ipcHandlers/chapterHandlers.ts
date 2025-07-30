@@ -1,14 +1,17 @@
 /**
  * @fileoverview 章管理関連のIPCハンドラー
  *
- * 章の作成、取得、更新、削除、統計データの取得を処理します。
- * データベースとの通信を行い、章管理機能を提供します。
+ * このハンドラーは、フロントエンドからの章管理リクエストを受け取り、
+ * 章サービスに処理を委譲するIPCハンドラーを提供します。
+ *
+ * 責務：
+ * - IPC通信の受信と基本的な入力検証
+ * - サービス層への処理委譲
+ * - レスポンスの形式変換
  */
 
 import { ipcMain } from "electron"
-import { ZodError } from "zod"
 
-import { chapterCreateSchema, chapterUpdateSchema, chapterIdSchema } from "../../schemas/chapter"
 import type {
   Chapter,
   ChapterStats,
@@ -16,391 +19,96 @@ import type {
   ChapterUpdateInput
 } from "../../types/chapter"
 import type { ApiResult } from "../../types/result"
-import { prisma } from "../db"
-import { logger } from "../utils/logger"
+import * as chapterService from "../service/chapterService"
 
 /**
- * ゲームの章一覧を取得
- *
- * @param gameId - ゲームID
- * @returns 章一覧
- */
-export const getChapters = async (gameId: string): Promise<ApiResult<Chapter[]>> => {
-  try {
-    // ZodスキーマでゲームIDを検証
-    const validatedGameId = chapterIdSchema.parse(gameId)
-
-    if (!validatedGameId) {
-      return { success: false, message: "ゲームIDが指定されていません" }
-    }
-
-    const chapters = await prisma.chapter.findMany({
-      where: { gameId: validatedGameId },
-      orderBy: { order: "asc" }
-    })
-
-    return { success: true, data: chapters }
-  } catch (error) {
-    if (error instanceof ZodError) {
-      return {
-        success: false,
-        message: `入力データが無効です: ${error.issues.map((issue) => issue.message).join(", ")}`
-      }
-    }
-    logger.error("章一覧取得エラー:", error)
-    return { success: false, message: "章一覧の取得に失敗しました" }
-  }
-}
-
-/**
- * 章を作成
- *
- * @param input - 章作成データ
- * @returns 作成された章
- */
-export const createChapter = async (input: ChapterCreateInput): Promise<ApiResult<Chapter>> => {
-  try {
-    // Zodスキーマで入力データを検証
-    const validatedInput = chapterCreateSchema.parse(input)
-
-    // 最大order値を取得
-    const maxOrderChapter = await prisma.chapter.findFirst({
-      where: { gameId: validatedInput.gameId },
-      orderBy: { order: "desc" }
-    })
-
-    const nextOrder = (maxOrderChapter?.order ?? 0) + 1
-
-    const chapter = await prisma.chapter.create({
-      data: {
-        name: validatedInput.name,
-        gameId: validatedInput.gameId,
-        order: validatedInput.order ?? nextOrder
-      }
-    })
-
-    return { success: true, data: chapter }
-  } catch (error) {
-    if (error instanceof ZodError) {
-      return {
-        success: false,
-        message: `入力データが無効です: ${error.issues.map((issue) => issue.message).join(", ")}`
-      }
-    }
-    logger.error("章作成エラー:", error)
-    if (error instanceof Error && error.message.includes("Unique constraint")) {
-      return { success: false, message: "同じ名前の章が既に存在します" }
-    }
-    return { success: false, message: "章の作成に失敗しました" }
-  }
-}
-
-/**
- * 章を更新
- *
- * @param chapterId - 章ID
- * @param input - 更新データ
- * @returns 更新された章
- */
-export const updateChapter = async (
-  chapterId: string,
-  input: ChapterUpdateInput
-): Promise<ApiResult<Chapter>> => {
-  try {
-    // Zodスキーマで入力データを検証
-    const validatedChapterId = chapterIdSchema.parse(chapterId)
-    const validatedInput = chapterUpdateSchema.parse(input)
-
-    if (!validatedChapterId) {
-      return { success: false, message: "章IDが指定されていません" }
-    }
-
-    const existingChapter = await prisma.chapter.findUnique({
-      where: { id: validatedChapterId }
-    })
-
-    if (!existingChapter) {
-      return { success: false, message: "指定された章が見つかりません" }
-    }
-
-    const updateData: Partial<Chapter> = {}
-    if (validatedInput.name !== undefined) {
-      updateData.name = validatedInput.name
-    }
-    if (validatedInput.order !== undefined) {
-      updateData.order = validatedInput.order
-    }
-    // Note: isActive property is not part of the current Chapter model
-    // This can be added when the database schema is updated
-
-    const chapter = await prisma.chapter.update({
-      where: { id: validatedChapterId },
-      data: updateData
-    })
-
-    return { success: true, data: chapter }
-  } catch (error) {
-    if (error instanceof ZodError) {
-      return {
-        success: false,
-        message: `入力データが無効です: ${error.issues.map((issue) => issue.message).join(", ")}`
-      }
-    }
-    logger.error("章更新エラー:", error)
-    if (error instanceof Error && error.message.includes("Unique constraint")) {
-      return { success: false, message: "同じ名前の章が既に存在します" }
-    }
-    return { success: false, message: "章の更新に失敗しました" }
-  }
-}
-
-/**
- * 章を削除
- *
- * @param chapterId - 章ID
- * @returns 削除結果
- */
-export const deleteChapter = async (chapterId: string): Promise<ApiResult<void>> => {
-  try {
-    // Zodスキーマで章IDを検証
-    const validatedChapterId = chapterIdSchema.parse(chapterId)
-
-    if (!validatedChapterId) {
-      return { success: false, message: "章IDが指定されていません" }
-    }
-
-    const existingChapter = await prisma.chapter.findUnique({
-      where: { id: validatedChapterId }
-    })
-
-    if (!existingChapter) {
-      return { success: false, message: "指定された章が見つかりません" }
-    }
-
-    await prisma.chapter.delete({
-      where: { id: validatedChapterId }
-    })
-
-    return { success: true, data: undefined }
-  } catch (error) {
-    if (error instanceof ZodError) {
-      return {
-        success: false,
-        message: `入力データが無効です: ${error.issues.map((issue) => issue.message).join(", ")}`
-      }
-    }
-    logger.error("章削除エラー:", error)
-    return { success: false, message: "章の削除に失敗しました" }
-  }
-}
-
-/**
- * 章の順序を更新（複数章の順序を一括更新）
- *
- * @param gameId - ゲームID
- * @param chapterOrders - 章IDと順序のペア配列
- * @returns 更新結果
- */
-export const updateChapterOrders = async (
-  gameId: string,
-  chapterOrders: Array<{ id: string; order: number }>
-): Promise<ApiResult<void>> => {
-  try {
-    if (!gameId) {
-      return { success: false, message: "ゲームIDが指定されていません" }
-    }
-
-    if (!chapterOrders || chapterOrders.length === 0) {
-      return { success: false, message: "更新する章データが指定されていません" }
-    }
-
-    // トランザクション内で順序を更新
-    await prisma.$transaction(async (tx) => {
-      for (const chapterOrder of chapterOrders) {
-        await tx.chapter.update({
-          where: {
-            id: chapterOrder.id,
-            gameId: gameId // 安全性のためゲームIDも条件に含める
-          },
-          data: { order: chapterOrder.order }
-        })
-      }
-    })
-
-    return { success: true, data: undefined }
-  } catch (error) {
-    logger.error("章順序更新エラー:", error)
-    return { success: false, message: "章順序の更新に失敗しました" }
-  }
-}
-
-/**
- * デフォルトの「デフォルト」を作成または取得
- *
- * @param gameId - ゲームID
- * @returns デフォルト章
- */
-export const ensureDefaultChapter = async (gameId: string): Promise<ApiResult<Chapter>> => {
-  try {
-    if (!gameId) {
-      return { success: false, message: "ゲームIDが指定されていません" }
-    }
-
-    // 既存の章を確認
-    const existingChapters = await prisma.chapter.findMany({
-      where: { gameId },
-      orderBy: { order: "asc" }
-    })
-
-    // 既に章が存在する場合は最初の章を返す
-    if (existingChapters.length > 0) {
-      return { success: true, data: existingChapters[0] }
-    }
-
-    // デフォルト章を作成
-    const defaultChapter = await prisma.chapter.create({
-      data: {
-        name: "デフォルト",
-        gameId: gameId,
-        order: 1
-      }
-    })
-
-    return { success: true, data: defaultChapter }
-  } catch (error) {
-    logger.error("デフォルト章の作成に失敗:", error)
-    return { success: false, message: "デフォルト章の作成に失敗しました" }
-  }
-}
-
-/**
- * ゲームの現在の章を変更
- *
- * @param gameId - ゲームID
- * @param chapterId - 新しい章ID
- * @returns 更新結果
- */
-export const setCurrentChapter = async (
-  gameId: string,
-  chapterId: string
-): Promise<ApiResult<void>> => {
-  try {
-    if (!gameId) {
-      return { success: false, message: "ゲームIDが指定されていません" }
-    }
-
-    if (!chapterId) {
-      return { success: false, message: "章IDが指定されていません" }
-    }
-
-    // 章が存在することを確認
-    const chapter = await prisma.chapter.findFirst({
-      where: { id: chapterId, gameId: gameId }
-    })
-
-    if (!chapter) {
-      return { success: false, message: "指定された章が見つかりません" }
-    }
-
-    // ゲームの現在の章を更新
-    await prisma.game.update({
-      where: { id: gameId },
-      data: { currentChapter: chapterId }
-    })
-
-    return { success: true, data: undefined }
-  } catch (error) {
-    logger.error("現在の章の変更に失敗:", error)
-    return { success: false, message: "現在の章の変更に失敗しました" }
-  }
-}
-
-/**
- * 章別統計データを取得
- *
- * @param gameId - ゲームID
- * @returns 章別統計データ
- */
-export const getChapterStats = async (gameId: string): Promise<ApiResult<ChapterStats[]>> => {
-  try {
-    if (!gameId) {
-      return { success: false, message: "ゲームIDが指定されていません" }
-    }
-
-    // 章とプレイセッションを結合して統計を取得
-    const chapters = await prisma.chapter.findMany({
-      where: { gameId },
-      include: {
-        playSessions: {
-          select: {
-            duration: true
-          }
-        }
-      },
-      orderBy: { order: "asc" }
-    })
-
-    const chapterStats: ChapterStats[] = chapters.map((chapter) => {
-      const totalTime = chapter.playSessions.reduce((sum, session) => sum + session.duration, 0)
-      const sessionCount = chapter.playSessions.length
-      const averageTime = sessionCount > 0 ? totalTime / sessionCount : 0
-
-      return {
-        chapterId: chapter.id,
-        chapterName: chapter.name,
-        totalTime,
-        sessionCount,
-        averageTime,
-        order: chapter.order
-      }
-    })
-
-    return { success: true, data: chapterStats }
-  } catch (error) {
-    logger.error("章別統計取得エラー:", error)
-    return { success: false, message: "章別統計の取得に失敗しました" }
-  }
-}
-
-/**
- * 章管理関連のIPCハンドラーを登録
+ * 章管理関連のIPCハンドラーを登録します
  */
 export const registerChapterHandlers = (): void => {
-  ipcMain.handle("chapter:getChapters", async (_, gameId: string) => {
-    return await getChapters(gameId)
-  })
+  /**
+   * 章一覧を取得します
+   */
+  ipcMain.handle(
+    "chapter:getChapters",
+    async (_, gameId: string): Promise<ApiResult<Chapter[]>> => {
+      return await chapterService.getChapters(gameId)
+    }
+  )
 
-  ipcMain.handle("chapter:createChapter", async (_, input: ChapterCreateInput) => {
-    return await createChapter(input)
-  })
+  /**
+   * 新しい章を作成します
+   */
+  ipcMain.handle(
+    "chapter:createChapter",
+    async (_, input: ChapterCreateInput): Promise<ApiResult<Chapter>> => {
+      return await chapterService.createChapter(input)
+    }
+  )
 
+  /**
+   * 章を更新します
+   */
   ipcMain.handle(
     "chapter:updateChapter",
-    async (_, chapterId: string, input: ChapterUpdateInput) => {
-      return await updateChapter(chapterId, input)
+    async (_, chapterId: string, input: ChapterUpdateInput): Promise<ApiResult<Chapter>> => {
+      return await chapterService.updateChapter(chapterId, input)
     }
   )
 
-  ipcMain.handle("chapter:deleteChapter", async (_, chapterId: string) => {
-    return await deleteChapter(chapterId)
-  })
+  /**
+   * 章を削除します
+   */
+  ipcMain.handle(
+    "chapter:deleteChapter",
+    async (_, chapterId: string): Promise<ApiResult<boolean>> => {
+      return await chapterService.deleteChapter(chapterId)
+    }
+  )
 
+  /**
+   * 章の順序を更新します
+   */
   ipcMain.handle(
     "chapter:updateChapterOrders",
-    async (_, gameId: string, chapterOrders: Array<{ id: string; order: number }>) => {
-      return await updateChapterOrders(gameId, chapterOrders)
+    async (
+      _,
+      gameId: string,
+      chapterOrders: Array<{ id: string; order: number }>
+    ): Promise<ApiResult<boolean>> => {
+      return await chapterService.updateChapterOrders(gameId, chapterOrders)
     }
   )
 
-  ipcMain.handle("chapter:getChapterStats", async (_, gameId: string) => {
-    return await getChapterStats(gameId)
-  })
+  /**
+   * 章統計データを取得します
+   */
+  ipcMain.handle(
+    "chapter:getChapterStats",
+    async (_, gameId: string): Promise<ApiResult<ChapterStats[]>> => {
+      return await chapterService.getChapterStats(gameId)
+    }
+  )
 
-  ipcMain.handle("chapter:ensureDefaultChapter", async (_, gameId: string) => {
-    return await ensureDefaultChapter(gameId)
-  })
+  /**
+   * デフォルト章を作成します
+   */
+  ipcMain.handle(
+    "chapter:ensureDefaultChapter",
+    async (_, gameId: string): Promise<ApiResult<Chapter>> => {
+      return await chapterService.ensureDefaultChapter(gameId)
+    }
+  )
 
-  ipcMain.handle("chapter:setCurrentChapter", async (_, gameId: string, chapterId: string) => {
-    return await setCurrentChapter(gameId, chapterId)
-  })
+  /**
+   * 現在の章を設定します
+   */
+  ipcMain.handle(
+    "chapter:setCurrentChapter",
+    async (_, gameId: string, chapterId: string): Promise<ApiResult<boolean>> => {
+      return await chapterService.setCurrentChapter(gameId, chapterId)
+    }
+  )
 }
+
+// 他のファイルから使用される関数をエクスポート
+export const ensureDefaultChapter = chapterService.ensureDefaultChapter

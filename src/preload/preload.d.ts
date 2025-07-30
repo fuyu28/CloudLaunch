@@ -8,7 +8,7 @@ import type { CloudDataItem, CloudFileDetail, CloudDirectoryNode } from "../type
 import type { Creds } from "../types/creds"
 import type { AwsSdkError } from "../types/error"
 import type { ValidatePathResult } from "../types/file"
-import type { InputGameData, PlaySessionType } from "../types/game"
+import type { InputGameData, PlaySessionType, MonitoringGameStatus } from "../types/game"
 import type {
   MemoType,
   CreateMemoData,
@@ -100,14 +100,6 @@ export type WindowAPI = {
   toggleMaximize(): Promise<void>
   close(): Promise<void>
   openFolder(folderPath: string): Promise<{ success: boolean; message?: string }>
-}
-
-export type MonitoringGameStatus = {
-  gameId: string
-  gameTitle: string
-  exeName: string
-  isPlaying: boolean
-  playTime: number
 }
 
 export type ProcessMonitorAPI = {
