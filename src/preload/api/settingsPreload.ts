@@ -11,10 +11,10 @@ export const settingsPreloadApi = {
    * 自動計測設定を更新
    */
   updateAutoTracking: (enabled: boolean): Promise<ApiResult> =>
-    ipcRenderer.invoke("update-auto-tracking", enabled),
+    ipcRenderer.invoke("settings:updateAutoTracking", enabled),
 
   /**
    * 自動計測設定を取得
    */
-  getAutoTracking: (): Promise<ApiResult<boolean>> => ipcRenderer.invoke("get-auto-tracking")
+  getAutoTracking: (): Promise<ApiResult<boolean>> => ipcRenderer.invoke("settings:getAutoTracking")
 }

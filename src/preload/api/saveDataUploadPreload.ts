@@ -7,5 +7,5 @@ export const saveDataUploadAPI = {
     localSaveFolderPath: string,
     remoteSaveDataPath: string
   ): Promise<ApiResult<void>> =>
-    ipcRenderer.invoke("upload-save-data-folder", localSaveFolderPath, remoteSaveDataPath)
+    ipcRenderer.invoke("cloud:uploadSaveData", localSaveFolderPath, remoteSaveDataPath)
 }

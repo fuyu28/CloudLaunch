@@ -3,14 +3,14 @@ import { ipcMain, shell } from "electron"
 import type { BrowserWindow } from "electron"
 
 export function registerWindowHandler(win: BrowserWindow): void {
-  ipcMain.handle("minimize-window", () => {
+  ipcMain.handle("window:minimize", () => {
     win.minimize()
   })
-  ipcMain.handle("toggle-maximize-window", () => {
+  ipcMain.handle("window:toggleMaximize", () => {
     if (win.isMaximized()) win.unmaximize()
     else win.maximize()
   })
-  ipcMain.handle("close-window", () => {
+  ipcMain.handle("window:close", () => {
     win.close()
   })
 

@@ -16,7 +16,7 @@
 ```
 src/main
 ├── index.ts
-├── r2Client.ts
+├── s3Client.ts
 ├── registerHandlers.ts
 └── ipcHandlers
     ├── fileDialogHandlers.ts
@@ -30,7 +30,7 @@ src/main
 - **処理**: ウィンドウ生成、HTML/URL読み込み、DevToolsショートカット、IPC登録 (`registerHandlers`)。
 - **利用**: アプリ起動シーケンスの定義時。
 
-#### 1.2 `r2Client.ts`
+#### 1.2 `s3Client.ts`
 
 - **役割**: Cloudflare R2 用 `S3Client` の初期化。
 - **処理**: 環境変数読み込み、認証情報設定、インスタンス生成。

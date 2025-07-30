@@ -25,7 +25,7 @@ export function registerProcessMonitorHandlers(): void {
   /**
    * プロセス監視を開始
    */
-  ipcMain.handle("start-process-monitoring", async (): Promise<ApiResult> => {
+  ipcMain.handle("monitor:start", async (): Promise<ApiResult> => {
     try {
       await monitor.startMonitoring()
       return { success: true }
@@ -38,7 +38,7 @@ export function registerProcessMonitorHandlers(): void {
   /**
    * プロセス監視を停止
    */
-  ipcMain.handle("stop-process-monitoring", async (): Promise<ApiResult> => {
+  ipcMain.handle("monitor:stop", async (): Promise<ApiResult> => {
     try {
       monitor.stopMonitoring()
       return { success: true }
@@ -52,7 +52,7 @@ export function registerProcessMonitorHandlers(): void {
    * ゲームを監視対象に追加
    */
   ipcMain.handle(
-    "add-game-to-monitor",
+    "monitor:addGame",
     async (_event, gameId: string, gameTitle: string, exePath: string): Promise<ApiResult> => {
       try {
         monitor.addGame(gameId, gameTitle, exePath)
@@ -67,7 +67,7 @@ export function registerProcessMonitorHandlers(): void {
   /**
    * ゲームを監視対象から削除
    */
-  ipcMain.handle("remove-game-from-monitor", async (_event, gameId: string): Promise<ApiResult> => {
+  ipcMain.handle("monitor:removeGame", async (_event, gameId: string): Promise<ApiResult> => {
     try {
       monitor.removeGame(gameId)
       return { success: true }
@@ -80,7 +80,7 @@ export function registerProcessMonitorHandlers(): void {
   /**
    * 監視状況を取得
    */
-  ipcMain.handle("get-monitoring-status", async () => {
+  ipcMain.handle("monitor:getStatus", async () => {
     try {
       return monitor.getMonitoringStatus()
     } catch (error) {
@@ -92,7 +92,7 @@ export function registerProcessMonitorHandlers(): void {
   /**
    * 監視中かどうかをチェック
    */
-  ipcMain.handle("is-monitoring", async (): Promise<boolean> => {
+  ipcMain.handle("monitor:isActive", async (): Promise<boolean> => {
     try {
       return monitor.isMonitoring()
     } catch (error) {
@@ -105,7 +105,7 @@ export function registerProcessMonitorHandlers(): void {
    * 指定されたゲームのプロセス情報を取得
    */
   ipcMain.handle(
-    "get-game-processes",
+    "process:getByGame",
     async (
       _event,
       gameId: string
@@ -147,7 +147,7 @@ export function registerProcessMonitorHandlers(): void {
   /**
    * プロセス（プレイセッション）を削除
    */
-  ipcMain.handle("delete-process", async (_event, processId: string): Promise<ApiResult> => {
+  ipcMain.handle("process:delete", async (_event, processId: string): Promise<ApiResult> => {
     try {
       const session = await prisma.playSession.findUnique({
         where: { id: processId },
@@ -182,7 +182,7 @@ export function registerProcessMonitorHandlers(): void {
    * 連携先プロセスを設定
    */
   ipcMain.handle(
-    "set-linked-process",
+    "process:setLinked",
     async (_event, gameId: string, processId: string): Promise<ApiResult> => {
       try {
         const session = await prisma.playSession.findUnique({

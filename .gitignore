@@ -7,3 +7,6 @@ out
 .env
 public/test_cover
 dev.db
+.roo
+.serena/cache
+.mcp.json

@@ -65,7 +65,7 @@
 
 | 実装内容       | ファイル配置                                           | 説明                     |
 | -------------- | ------------------------------------------------------ | ------------------------ |
-| R2クライアント | `src/main/r2Client.ts`                                 | AWS S3/R2接続設定        |
+| R2クライアント | `src/main/s3Client.ts`                                 | AWS S3/R2接続設定        |
 | アップロード   | `src/main/ipcHandlers/uploadSaveDataFolderHandlers.ts` | フォルダ一括アップロード |
 | ダウンロード   | `src/main/ipcHandlers/downloadHandler.ts`              | クラウドからダウンロード |
 | フォルダ一覧   | `src/main/ipcHandlers/saveDataFolderListHandler.ts`    | リモートフォルダ一覧     |
@@ -78,6 +78,19 @@
 | ゲーム起動 | `src/main/ipcHandlers/launchGameHandlers.ts` | プロセス起動・セッション管理 |
 | エラー定義 | `src/main/utils/errorHandler.ts`             | アプリケーション固有エラー   |
 | 型定義     | `src/types/game.ts`                          | ゲーム関連の型定義           |
+
+### メモ管理機能
+
+| 実装内容     | ファイル配置                           | 説明                     |
+| ------------ | -------------------------------------- | ------------------------ |
+| メモサービス | `src/main/service/memoService.ts`      | メモCRUD操作             |
+| クラウドメモ | `src/main/service/cloudMemoService.ts` | S3/R2メモ同期            |
+| メモ同期     | `src/main/service/memoSyncService.ts`  | ローカル・クラウド同期   |
+| メモIPC      | `src/main/ipcHandlers/memoHandlers.ts` | メモ関連IPC通信          |
+| ファイル管理 | `src/main/utils/memoFileManager.ts`    | ローカルファイル操作     |
+| 型定義       | `src/types/memo.d.ts`                  | メモ関連型定義           |
+| メモページ   | `src/renderer/src/pages/Memo*.tsx`     | メモ作成・編集・一覧画面 |
+| メモフック   | `src/renderer/src/hooks/useMemo*.ts`   | メモ操作ロジック         |
 
 ### UI コンポーネント・フック
 
@@ -95,16 +108,256 @@
 
 | ファイル                  | 用途           | 含まれる型                             | 新規追加 |
 | ------------------------- | -------------- | -------------------------------------- | -------- |
-| `src/types/result.ts`     | API結果型      | `ApiResult<T>`                         | -        |
-| `src/types/game.ts`       | ゲーム関連     | `InputGameData`, `PlayStatus`          | -        |
-| `src/types/creds.ts`      | 認証情報       | `Creds`, `Schema`                      | -        |
+| `src/types/result.d.ts`   | API結果型      | `ApiResult<T>`                         | -        |
+| `src/types/game.d.ts`     | ゲーム関連     | `InputGameData`, `PlayStatus`          | -        |
+| `src/types/memo.d.ts`     | メモ関連       | `MemoType`, `CreateMemoData`, etc      | ✅ NEW   |
+| `src/types/creds.d.ts`    | 認証情報       | `Creds`, `Schema`                      | -        |
+| `src/types/cloud.d.ts`    | クラウド関連   | `CloudMemoInfo`, `CloudDataItem`       | ✅ NEW   |
 | `src/types/file.ts`       | ファイル操作   | `PathType`, `ValidatePathResult`       | -        |
-| `src/types/menu.ts`       | UI状態         | `FilterOption`, `SortOption`           | -        |
+| `src/types/menu.d.ts`     | UI状態         | `FilterOption`, `SortOption`           | -        |
 | `src/types/validation.ts` | バリデーション | `ValidationResult`, `ValidationErrors` | ✅ NEW   |
 | `src/types/path.ts`       | パス関連       | `PathInfo`, `PathValidation`           | ✅ NEW   |
 | `src/types/common.ts`     | 共通型統一     | `SelectOption`, `LoadingState`, etc    | ✅ NEW   |
 
-## 新機能実装例：セーブデータ比較機能（リファクタリング後）
+## 新機能実装例：メモ管理機能（実装済み）
+
+このセクションでは、実際に実装されたメモ管理機能を例に、新機能開発のワークフローを説明します。
+
+### 1. データベーススキーマ追加 (`prisma/schema.prisma`)
+
+```prisma
+model Memo {
+  id        String   @id @default(uuid())
+  title     String
+  content   String
+  gameId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+}
+```
+
+### 2. 型定義追加 (`src/types/memo.d.ts`)
+
+```typescript
+export type MemoType = {
+  id: string
+  title: string
+  content: string
+  gameId: string
+  gameTitle?: string
+  createdAt: Date
+  updatedAt: Date
+}
+
+export type CreateMemoData = {
+  title: string
+  content: string
+  gameId: string
+}
+
+export type CloudMemoInfo = {
+  key: string
+  fileName: string
+  gameTitle: string
+  memoTitle: string
+  memoId: string
+  lastModified: Date
+  size: number
+}
+```
+
+### 3. サービス層実装 (`src/main/service/memoService.ts`)
+
+```typescript
+export async function createMemo(data: CreateMemoData): Promise<ApiResult<MemoType>> {
+  try {
+    const memo = await prisma.memo.create({
+      data,
+      include: {
+        game: { select: { title: true } }
+      }
+    })
+
+    // ローカルファイルにも保存
+    await memoFileManager.saveMemoToFile(memo)
+
+    return { success: true, data: { ...memo, gameTitle: memo.game.title } }
+  } catch (error) {
+    logger.error("メモ作成エラー:", error)
+    return { success: false, message: "メモの作成に失敗しました" }
+  }
+}
+```
+
+### 4. IPC ハンドラー実装 (`src/main/ipcHandlers/memoHandlers.ts`)
+
+```typescript
+export function registerMemoHandlers(): void {
+  ipcMain.handle(
+    "memo:createMemo",
+    async (_, memoData: CreateMemoData): Promise<ApiResult<MemoType>> => {
+      return await memoService.createMemo(memoData)
+    }
+  )
+
+  ipcMain.handle(
+    "memo:getMemosByGameId",
+    async (_, gameId: string): Promise<ApiResult<MemoType[]>> => {
+      return await memoService.getMemosByGameId(gameId)
+    }
+  )
+
+  // クラウド同期機能
+  ipcMain.handle(
+    "memo:uploadMemoToCloud",
+    async (_, memoId: string): Promise<ApiResult<boolean>> => {
+      return withValidatedCloudStorage(async (credentials, s3Client) => {
+        const memoResult = await memoService.getMemoById(memoId)
+        if (!memoResult.success || !memoResult.data) {
+          return { success: false, message: "メモが見つかりません" }
+        }
+
+        await uploadMemoToCloud(s3Client, credentials.bucketName, memoResult.data)
+        return { success: true, data: true }
+      })
+    }
+  )
+}
+```
+
+### 5. プリロード API実装 (`src/preload/api/memoPreload.ts`)
+
+```typescript
+export const memoApi = {
+  createMemo: async (memoData: CreateMemoData): Promise<ApiResult<MemoType>> => {
+    return await ipcRenderer.invoke("memo:createMemo", memoData)
+  },
+
+  getMemosByGameId: async (gameId: string): Promise<ApiResult<MemoType[]>> => {
+    return await ipcRenderer.invoke("memo:getMemosByGameId", gameId)
+  },
+
+  uploadMemoToCloud: async (memoId: string): Promise<ApiResult<boolean>> => {
+    return await ipcRenderer.invoke("memo:uploadMemoToCloud", memoId)
+  }
+}
+```
+
+### 6. カスタムフック実装 (`src/renderer/src/hooks/useMemoOperations.ts`)
+
+```typescript
+export function useMemoOperations() {
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | undefined>()
+
+  const createMemo = useCallback(async (data: CreateMemoData) => {
+    setIsLoading(true)
+    setError(undefined)
+
+    try {
+      const result = await window.api.memo.createMemo(data)
+      if (!result.success) {
+        setError(result.message)
+      }
+      return result
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  const uploadToCloud = useCallback(async (memoId: string) => {
+    setIsLoading(true)
+    try {
+      return await window.api.memo.uploadMemoToCloud(memoId)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  return { createMemo, uploadToCloud, isLoading, error }
+}
+```
+
+### 7. UIコンポーネント実装 (`src/renderer/src/pages/MemoCreate.tsx`)
+
+```typescript
+export default function MemoCreate() {
+  const { gameId } = useParams<{ gameId: string }>()
+  const [title, setTitle] = useState("")
+  const [content, setContent] = useState("")
+  const { createMemo, isLoading } = useMemoOperations()
+  const navigate = useNavigate()
+
+  const handleSave = async () => {
+    if (!gameId || !title.trim()) return
+
+    const result = await createMemo({
+      title: title.trim(),
+      content,
+      gameId
+    })
+
+    if (result.success) {
+      toast.success("メモを保存しました")
+      navigate(`/game/${gameId}/memo`)
+    }
+  }
+
+  return (
+    <div className="p-6">
+      <div className="mb-4">
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="メモタイトル"
+          className="input input-bordered w-full"
+        />
+      </div>
+
+      <div className="mb-4">
+        <MDEditor
+          value={content}
+          onChange={(val) => setContent(val || "")}
+          preview="edit"
+          height={400}
+        />
+      </div>
+
+      <div className="flex gap-2">
+        <button
+          onClick={handleSave}
+          disabled={isLoading || !title.trim()}
+          className="btn btn-primary"
+        >
+          {isLoading ? "保存中..." : "保存"}
+        </button>
+        <button
+          onClick={() => navigate(-1)}
+          className="btn btn-ghost"
+        >
+          キャンセル
+        </button>
+      </div>
+    </div>
+  )
+}
+```
+
+### 8. メインハンドラー登録 (`src/main/registerHandlers.ts`)
+
+```typescript
+import { registerMemoHandlers } from "./ipcHandlers/memoHandlers"
+
+export function registerAllHandlers(): void {
+  // 既存のハンドラー...
+  registerMemoHandlers() // 追加
+}
+```
+
+## 新機能実装例：セーブデータ比較機能（将来実装予定）
 
 ### 1. 定数定義 (`src/constants/messages.ts`)
 
@@ -249,9 +502,68 @@ app.whenReady().then(() => {
 })
 ```
 
-## コードレビューのポイント（リファクタリング後）
+## 開発・ビルド・テストコマンド
 
-### リファクタリング成果活用チェック
+### 開発環境
+
+```bash
+# 依存関係インストール
+npm install
+
+# データベースセットアップ
+npx prisma generate
+npx prisma migrate dev
+
+# 開発サーバー起動
+npm run dev
+
+# Prisma Studioでデータベース確認
+npx prisma studio
+```
+
+### コード品質チェック
+
+```bash
+# 型チェック
+npm run typecheck
+
+# ESLintによるコード品質チェック
+npm run lint
+npm run lint -- --fix  # 自動修正
+
+# Prettierによるコード整形
+npm run format
+
+# すべての品質チェック実行
+npm run typecheck && npm run lint && npm run format
+```
+
+### テスト
+
+```bash
+# すべてのテスト実行
+npm run test
+
+# Vitestによるユニットテスト
+npm run test:vitest
+
+# カバレッジ付きテスト
+npm run test:coverage
+```
+
+### ビルド
+
+```bash
+# 本番ビルド
+npm run build
+
+# プレビュー実行
+npm run preview
+```
+
+## コードレビューのポイント（現在のプロジェクト基準）
+
+### 基本チェック項目
 
 - [ ] **定数使用**: ハードコーディングされた文字列・数値が `src/constants/` の定数で置き換えられている
 - [ ] **ユーティリティ活用**: 重複処理が `src/utils/` のユーティリティ関数を使用している
@@ -259,6 +571,13 @@ app.whenReady().then(() => {
 - [ ] **責務分離**: コンポーネントが50行以下で単一責任を守っている
 - [ ] **カスタムフック**: 複雑なロジックが専用フックに分離されている
 - [ ] **エラーハンドリング**: 統一されたエラーハンドラーとメッセージ定数を使用している
+
+### ESLint・TypeScript準拠チェック
+
+- [ ] **Import順序**: ESLintのimport/orderルールに従っている
+- [ ] **Type imports**: `import type`を使用している
+- [ ] **型安全性**: `any`の使用が最小限（eslint-disable使用時のみ許可）
+- [ ] **Null/Undefined**: 適切な使い分けができている（明確な状態=null、オプション=undefined）
 
 ### 必須チェック項目
 
@@ -286,17 +605,27 @@ app.whenReady().then(() => {
 - [ ] **再利用性**: 共通処理がユーティリティ関数として抽出されている
 - [ ] **一貫性**: メッセージ・設定値・パターンが定数化されている
 
+### メモ機能固有チェック
+
+- [ ] **Markdownサポート**: 適切なMarkdownエディタ・プレビューが実装されている
+- [ ] **ファイル同期**: ローカルファイルとデータベースが同期されている
+- [ ] **クラウド同期**: S3/R2との同期が適切に実装されている
+- [ ] **ゲーム連携**: メモがゲームと適切に関連付けられている
+
 ## トラブルシューティング
 
 ### よくある問題と解決方法
 
-| 問題                   | 原因             | 解決方法                           |
-| ---------------------- | ---------------- | ---------------------------------- |
-| IPC通信エラー          | ハンドラー未登録 | `registerHandlers()`の呼び出し確認 |
-| 型エラー               | 型定義不整合     | 共有型定義の更新とimport確認       |
-| ビルドエラー           | 依存関係問題     | `npm install`と型定義確認          |
-| 認証エラー             | keytar接続失敗   | OS権限とキーチェーン設定確認       |
-| ファイルアクセスエラー | 権限不足         | ファイルパスと権限確認             |
+| 問題                   | 原因             | 解決方法                              |
+| ---------------------- | ---------------- | ------------------------------------- |
+| IPC通信エラー          | ハンドラー未登録 | `registerAllHandlers()`の呼び出し確認 |
+| 型エラー               | 型定義不整合     | 共有型定義の更新とimport確認          |
+| ビルドエラー           | 依存関係問題     | `npm install`と型定義確認             |
+| 認証エラー             | keytar接続失敗   | OS権限とキーチェーン設定確認          |
+| ファイルアクセスエラー | 権限不足         | ファイルパスと権限確認                |
+| メモファイル同期エラー | パス設定問題     | メモディレクトリ権限・パス確認        |
+| Prismaマイグレーション | スキーマ競合     | `npx prisma migrate reset`で初期化    |
+| MDエディタエラー       | 依存関係問題     | React MD Editorのバージョン確認       |
 
 ### デバッグ手順
 

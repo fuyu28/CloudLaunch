@@ -47,7 +47,7 @@ GameSync is an Electron-based game launcher and save data synchronization applic
 - **Backend**: Electron main process with IPC communication
 - **Database**: SQLite with Prisma ORM
 - **State Management**: Jotai for React state
-- **Cloud Storage**: AWS S3 (via R2Client) for save data backup
+- **Cloud Storage**: AWS S3 (via s3Client) for save data backup
 - **Build System**: electron-vite
 
 ### Project Structure
@@ -74,7 +74,7 @@ src/
 
 - **registerHandlers.ts** - Centralized IPC handler registration
 - **db.ts** - Prisma database client setup
-- **r2Client.ts** - AWS S3 client for save data storage
+- **s3Client.ts** - AWS S3 client for save data storage
 - **ipcHandlers/** - Individual handlers for different features:
   - `databaseHandlers.ts` - ゲーム管理とプレイセッション記録
   - `credentialHandlers.ts` - R2/S3認証情報管理

@@ -111,6 +111,12 @@ enum PlayStatus {
 }
 ```
 
+**注意**: 実際のPrismaスキーマでは以下の値が使用されています：
+
+- `unplayed` (小文字)
+- `playing` (小文字)
+- `played` (小文字)
+
 #### インデックス
 
 ```sql
@@ -231,7 +237,7 @@ CREATE TABLE "Upload" (
 | カラム名  | データ型 | Null許可 | デフォルト値      | 説明                           |
 | --------- | -------- | -------- | ----------------- | ------------------------------ |
 | id        | TEXT     | NO       | uuid()            | アップロードの一意識別子       |
-| clientId  | TEXT     | YES      | NULL              | クライアント識別子（PC識別用） |
+| clientId  | TEXT     | YES      | NULL              | クライアント識別符（PC識別用） |
 | comment   | TEXT     | NO       | -                 | アップロード時のコメント       |
 | createdAt | DATETIME | NO       | CURRENT_TIMESTAMP | アップロード日時               |
 | gameId    | TEXT     | NO       | -                 | 関連ゲームID（外部キー）       |
@@ -242,6 +248,53 @@ CREATE TABLE "Upload" (
 CREATE INDEX "idx_uploads_gameid" ON "Upload"("gameId");
 CREATE INDEX "idx_uploads_created_at" ON "Upload"("createdAt");
 CREATE INDEX "idx_uploads_client_id" ON "Upload"("clientId");
+```
+
+### 5. Memo テーブル
+
+#### 概要
+
+ゲームプレイメモの管理
+
+#### スキーマ
+
+```sql
+CREATE TABLE "Memo" (
+    "id" TEXT NOT NULL PRIMARY KEY DEFAULT (uuid()),
+    "title" TEXT NOT NULL,
+    "content" TEXT NOT NULL,
+    "gameId" TEXT NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
+    FOREIGN KEY ("gameId") REFERENCES "Game"("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+```
+
+#### カラム定義
+
+| カラム名  | データ型 | Null許可 | デフォルト値      | 説明                     |
+| --------- | -------- | -------- | ----------------- | ------------------------ |
+| id        | TEXT     | NO       | uuid()            | メモの一意識別子         |
+| title     | TEXT     | NO       | -                 | メモタイトル             |
+| content   | TEXT     | NO       | -                 | メモ内容（Markdown形式） |
+| gameId    | TEXT     | NO       | -                 | 関連ゲームID（外部キー） |
+| createdAt | DATETIME | NO       | CURRENT_TIMESTAMP | 作成日時                 |
+| updatedAt | DATETIME | NO       | -                 | 更新日時（自動更新）     |
+
+#### 機能
+
+- **Markdown対応**: contentフィールドはMarkdown形式をサポート
+- **自動更新**: updatedAtは@updatedAtディレクティブで自動更新
+- **ファイル連携**: ローカルファイルシステムとの同期機能
+- **クラウド同期**: S3/R2ストレージとの同期対応
+
+#### インデックス
+
+```sql
+CREATE INDEX "idx_memos_gameid" ON "Memo"("gameId");
+CREATE INDEX "idx_memos_title" ON "Memo"("title");
+CREATE INDEX "idx_memos_created_at" ON "Memo"("createdAt");
+CREATE INDEX "idx_memos_updated_at" ON "Memo"("updatedAt");
 ```
 
 ## リレーションシップ
@@ -291,9 +344,19 @@ erDiagram
         string gameId FK
     }
 
+    Memo {
+        string id PK
+        string title
+        string content
+        string gameId FK
+        datetime createdAt
+        datetime updatedAt
+    }
+
     Game ||--o{ PlaySession : "has sessions"
     Game ||--o{ Chapter : "has chapters"
     Game ||--o{ Upload : "has uploads"
+    Game ||--o{ Memo : "has memos"
     Chapter ||--o{ PlaySession : "contains sessions"
     Upload ||--o{ PlaySession : "triggered by session"
 ```
@@ -324,6 +387,12 @@ erDiagram
 
 - **関係**: 1つのアップロードは複数のプレイセッションと関連付け可能
 - **削除動作**: `SET NULL` - アップロード削除時にセッションの`uploadId`をNULLに設定
+
+### 6. Game → Memo (1:N)
+
+- **関係**: 1つのゲームは複数のメモを持つ
+- **削除動作**: `CASCADE` - ゲーム削除時に関連メモも削除
+- **特徴**: メモはゲーム固有で、独立して存在しない
 
 ## インデックス戦略
 
@@ -725,6 +794,11 @@ WHERE g.id IS NULL;
 SELECT ps.* FROM "PlaySession" ps
 LEFT JOIN "Chapter" c ON ps.chapterId = c.id
 WHERE ps.chapterId IS NOT NULL AND c.id IS NULL;
+
+-- 存在しないゲームを参照するメモ
+SELECT m.* FROM "Memo" m
+LEFT JOIN "Game" g ON m.gameId = g.id
+WHERE g.id IS NULL;
 ```
 
 #### 集計値の整合性
@@ -739,6 +813,16 @@ FROM "Game" g
 LEFT JOIN "PlaySession" ps ON g.id = ps.gameId
 GROUP BY g.id
 HAVING g.totalPlayTime != calculated_total;
+
+-- メモの整合性チェック
+SELECT
+  g.id as gameId,
+  g.title,
+  COUNT(m.id) as memo_count
+FROM "Game" g
+LEFT JOIN "Memo" m ON g.id = m.gameId
+GROUP BY g.id, g.title
+ORDER BY memo_count DESC;
 ```
 
 ### 3. データクリーニング

@@ -3,6 +3,7 @@ import { ipcRenderer } from "electron"
 import type { InputGameData, PlaySessionType, GameType } from "../../types/game"
 import type { FilterOption, SortOption, SortDirection } from "../../types/menu"
 import type { ApiResult } from "../../types/result"
+import type { PlayStatus } from "@prisma/client"
 
 export const databaseAPI = {
   listGames: (
@@ -11,26 +12,32 @@ export const databaseAPI = {
     sort: SortOption,
     sortDirection?: SortDirection
   ): Promise<GameType[]> =>
-    ipcRenderer.invoke("list-games", searchWord, filter, sort, sortDirection),
+    ipcRenderer.invoke("game:list", searchWord, filter, sort, sortDirection),
   getGameById: (id: string): Promise<GameType | undefined> =>
-    ipcRenderer.invoke("get-game-by-id", id),
+    ipcRenderer.invoke("game:getById", id),
   createGame: (game: InputGameData): Promise<ApiResult<void>> =>
-    ipcRenderer.invoke("create-game", game),
+    ipcRenderer.invoke("game:create", game),
   updateGame: (id: string, game: InputGameData): Promise<ApiResult<void>> =>
-    ipcRenderer.invoke("update-game", id, game),
-  deleteGame: (id: string): Promise<ApiResult<void>> => ipcRenderer.invoke("delete-game", id),
+    ipcRenderer.invoke("game:update", id, game),
+  deleteGame: (id: string): Promise<ApiResult<void>> => ipcRenderer.invoke("game:delete", id),
+  updatePlayStatus: (
+    gameId: string,
+    playStatus: PlayStatus,
+    clearedAt?: Date
+  ): Promise<ApiResult<GameType>> =>
+    ipcRenderer.invoke("game:updatePlayStatus", gameId, playStatus, clearedAt),
   createSession: (
     duration: number,
     gameId: string,
     sessionName?: string
   ): Promise<ApiResult<void>> =>
-    ipcRenderer.invoke("create-session", duration, gameId, sessionName),
+    ipcRenderer.invoke("session:create", duration, gameId, sessionName),
   getPlaySessions: (gameId: string): Promise<ApiResult<PlaySessionType[]>> =>
-    ipcRenderer.invoke("get-play-sessions", gameId),
+    ipcRenderer.invoke("session:list", gameId),
   updateSessionChapter: (sessionId: string, chapterId: string | null): Promise<ApiResult<void>> =>
-    ipcRenderer.invoke("update-session-chapter", sessionId, chapterId),
+    ipcRenderer.invoke("session:updateChapter", sessionId, chapterId),
   updateSessionName: (sessionId: string, sessionName: string): Promise<ApiResult<void>> =>
-    ipcRenderer.invoke("update-session-name", sessionId, sessionName),
+    ipcRenderer.invoke("session:updateName", sessionId, sessionName),
   deletePlaySession: (sessionId: string): Promise<ApiResult<void>> =>
-    ipcRenderer.invoke("delete-play-session", sessionId)
+    ipcRenderer.invoke("session:delete", sessionId)
 }

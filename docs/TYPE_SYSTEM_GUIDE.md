@@ -28,9 +28,12 @@ src/types/
 ├── validation.ts       # バリデーション関連型
 ├── game.d.ts          # ゲーム関連型
 ├── chapter.d.ts       # 章管理関連型
+├── memo.d.ts          # メモ管理関連型
 ├── creds.d.ts         # 認証情報関連型
+├── cloud.d.ts         # クラウド関連型
 ├── file.ts            # ファイル操作関連型
 ├── path.ts            # パス関連型
+├── env.d.ts           # 環境変数関連型
 └── menu.d.ts          # メニュー関連型
 ```
 
@@ -113,6 +116,105 @@ export interface ChapterStats {
   sessionCount: number
   averageTime: number
   order: number
+}
+
+export interface ChapterStats {
+  chapterId: string
+  chapterName: string
+  totalTime: number
+  sessionCount: number
+  averageTime: number
+  order: number
+}
+```
+
+#### メモ管理関連（memo.d.ts）
+
+```typescript
+export type MemoType = {
+  id: string
+  title: string
+  content: string
+  gameId: string
+  gameTitle?: string
+  createdAt: Date
+  updatedAt: Date
+}
+
+export type CreateMemoData = {
+  title: string
+  content: string
+  gameId: string
+}
+
+export type UpdateMemoData = {
+  title: string
+  content: string
+}
+
+export type CloudMemoInfo = {
+  key: string
+  fileName: string
+  gameTitle: string
+  memoTitle: string
+  memoId: string
+  lastModified: Date
+  size: number
+}
+
+export type MemoSyncResult = {
+  success: boolean
+  uploaded: number
+  localOverwritten: number
+  cloudOverwritten: number
+  created: number
+  updated: number
+  skipped: number
+  error?: string
+  details: string[]
+}
+```
+
+#### バリデーション関連（validation.ts）
+
+```typescript
+export interface ValidationResult {
+  isValid: boolean
+  message?: string
+}
+
+export interface ValidationRule<T = unknown> {
+  validate: (value: T) => ValidationResult
+  message: string
+}
+
+export type ValidationRules<T> = {
+  [K in keyof T]?: ValidationRule<T[K]>[]
+}
+
+export interface FormValidationResult<T> {
+  isValid: boolean
+  errors: Partial<Record<keyof T, string>>
+}
+```
+
+#### パス関連（path.ts）
+
+```typescript
+export type PathType = "exe" | "folder" | "image" | "any"
+
+export interface ValidatePathResult {
+  isValid: boolean
+  exists: boolean
+  isFile: boolean
+  isDirectory: boolean
+  message?: string
+}
+
+export interface PathSecurityOptions {
+  allowedExtensions?: string[]
+  maxDepth?: number
+  preventTraversal?: boolean
 }
 ```
 
@@ -243,6 +345,27 @@ export function useLoadingState(initialLoading = false): {
     options?: ToastOptions
   ) => Promise<T | undefined>
 }
+
+// メモ操作用カスタムフック
+export function useMemoOperations(): {
+  createMemo: (data: CreateMemoData) => Promise<ApiResult<MemoType>>
+  updateMemo: (id: string, data: UpdateMemoData) => Promise<ApiResult<MemoType>>
+  deleteMemo: (id: string) => Promise<ApiResult<boolean>>
+  uploadToCloud: (id: string) => Promise<ApiResult<boolean>>
+  syncFromCloud: (gameId?: string) => Promise<ApiResult<MemoSyncResult>>
+  isLoading: boolean
+  error: string | undefined
+}
+
+// バリデーション用カスタムフック
+export function useZodValidation<T extends Record<string, unknown>>(
+  schema: ZodSchema<T>
+): {
+  validate: (data: T) => FormValidationResult<T>
+  validateField: <K extends keyof T>(field: K, value: T[K]) => ValidationResult
+  errors: Partial<Record<keyof T, string>>
+  isValid: boolean
+}
 ```
 
 ### 2. Propsの型定義
@@ -274,6 +397,24 @@ export const getGames = async (): Promise<ApiResult<GameType[]>> => {
     return { success: false, message: "ゲームの取得に失敗しました" }
   }
 }
+
+// メモ管理IPCハンドラーの型定義
+export const createMemo = async (memoData: CreateMemoData): Promise<ApiResult<MemoType>> => {
+  try {
+    const memo = await prisma.memo.create({
+      data: memoData,
+      include: {
+        game: {
+          select: { title: true }
+        }
+      }
+    })
+    return { success: true, data: { ...memo, gameTitle: memo.game.title } }
+  } catch (error) {
+    logger.error("メモ作成エラー:", error)
+    return { success: false, message: "メモの作成に失敗しました" }
+  }
+}
 ```
 
 ### 2. サービス層の型定義
@@ -288,6 +429,44 @@ export interface MonitoredGame {
   playStartTime?: Date
   accumulatedTime: number
   lastNotFound?: Date
+}
+
+export interface MemoFileOperationResult {
+  success: boolean
+  filePath?: string
+  error?: string
+}
+
+export interface CloudStorageConfig {
+  accessKeyId: string
+  secretAccessKey: string
+  bucketName: string
+  region: string
+  endpoint: string
+}
+```
+
+### 3. ファイル管理の型定義
+
+```typescript
+export interface FileWatcher {
+  watchPath: string
+  onChange: (path: string, event: "add" | "change" | "unlink") => void
+  isActive: boolean
+}
+
+export interface ImageLoadOptions {
+  fallback?: string
+  lazy?: boolean
+  cache?: boolean
+  maxRetries?: number
+}
+
+export interface DynamicImageState {
+  isLoading: boolean
+  hasError: boolean
+  src?: string
+  retryCount: number
 }
 ```
 
@@ -317,7 +496,8 @@ rules: {
   '@typescript-eslint/no-explicit-any': 'error',
   '@typescript-eslint/strict-boolean-expressions': 'warn',
   '@typescript-eslint/prefer-nullish-coalescing': 'error',
-  '@typescript-eslint/prefer-optional-chain': 'error'
+  '@typescript-eslint/prefer-optional-chain': 'error',
+  '@typescript-eslint/consistent-type-imports': ['error', { prefer: 'type-imports' }]
 }
 ```
 
@@ -419,6 +599,27 @@ function getName(user: User | null): string {
 // 良い例
 function getName(user: User | null): string {
   return user?.name ?? "Unknown"
+}
+```
+
+#### Zod統合での型安全性
+
+```typescript
+import { z } from "zod"
+
+// スキーマ定義
+const MemoSchema = z.object({
+  title: z.string().min(1, "タイトルは必須です"),
+  content: z.string(),
+  gameId: z.string().uuid("無効なゲームIDです")
+})
+
+// 型の自動推論
+type MemoInput = z.infer<typeof MemoSchema>
+
+// バリデーション関数
+function validateMemo(data: unknown): data is MemoInput {
+  return MemoSchema.safeParse(data).success
 }
 ```
 

@@ -31,35 +31,38 @@ export function registerSettingsHandlers(): void {
    * @param enabled 自動ゲーム検出を有効にするかどうか
    * @returns ApiResult 更新結果
    */
-  ipcMain.handle("update-auto-tracking", async (_event, enabled: boolean): Promise<ApiResult> => {
-    try {
-      // Zodスキーマで入力を検証
-      const validatedSettings = autoTrackingSettingsSchema.parse({ enabled })
+  ipcMain.handle(
+    "settings:updateAutoTracking",
+    async (_event, enabled: boolean): Promise<ApiResult> => {
+      try {
+        // Zodスキーマで入力を検証
+        const validatedSettings = autoTrackingSettingsSchema.parse({ enabled })
 
-      // electron-storeに設定を保存
-      store.set("autoTracking", validatedSettings.enabled)
+        // electron-storeに設定を保存
+        store.set("autoTracking", validatedSettings.enabled)
 
-      // ProcessMonitorServiceにリアルタイムで設定を反映
-      const processMonitor = ProcessMonitorService.getInstance()
-      processMonitor.updateAutoTracking(enabled)
+        // ProcessMonitorServiceにリアルタイムで設定を反映
+        const processMonitor = ProcessMonitorService.getInstance()
+        processMonitor.updateAutoTracking(enabled)
 
-      logger.info(`自動ゲーム検出設定を更新: ${validatedSettings.enabled ? "有効" : "無効"}`)
+        logger.info(`自動ゲーム検出設定を更新: ${validatedSettings.enabled ? "有効" : "無効"}`)
 
-      return { success: true }
-    } catch (error) {
-      if (error instanceof ZodError) {
+        return { success: true }
+      } catch (error) {
+        if (error instanceof ZodError) {
+          return {
+            success: false,
+            message: `入力データが無効です: ${error.issues.map((issue) => issue.message).join(", ")}`
+          }
+        }
+        logger.error("自動ゲーム検出設定の更新に失敗:", error)
         return {
           success: false,
-          message: `入力データが無効です: ${error.issues.map((issue) => issue.message).join(", ")}`
+          message: "自動ゲーム検出設定の更新に失敗しました"
         }
       }
-      logger.error("自動ゲーム検出設定の更新に失敗:", error)
-      return {
-        success: false,
-        message: "自動ゲーム検出設定の更新に失敗しました"
-      }
     }
-  })
+  )
 
   /**
    * 自動ゲーム検出設定の取得ハンドラー
@@ -68,7 +71,7 @@ export function registerSettingsHandlers(): void {
    *
    * @returns ApiResult<boolean> 現在の設定値
    */
-  ipcMain.handle("get-auto-tracking", async (): Promise<ApiResult<boolean>> => {
+  ipcMain.handle("settings:getAutoTracking", async (): Promise<ApiResult<boolean>> => {
     try {
       const autoTracking = store.get("autoTracking", true) as boolean
       return {

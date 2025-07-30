@@ -22,10 +22,10 @@
  * - パフォーマンス重視でページネーション未対応（第1ページのみ）
  */
 
-import { ListObjectsV2Command } from "@aws-sdk/client-s3"
 import { ipcMain } from "electron"
 
-import { createR2Client } from "../r2Client"
+import { creates3Client } from "../s3Client"
+import { listFolders } from "../service/cloudStorageService"
 import { getCredential } from "../service/credentialService"
 import { logger } from "../utils/logger"
 
@@ -55,9 +55,9 @@ export function registerSaveDataFolderListHandler(): void {
    *
    * @returns Promise<string[] | undefined> フォルダ一覧（成功時）またはundefined（失敗時）
    */
-  ipcMain.handle("list-remote-save-data-folders", async (): Promise<string[] | undefined> => {
+  ipcMain.handle("cloud:listRemoteFolders", async (): Promise<string[] | undefined> => {
     try {
-      const r2Client = await createR2Client()
+      const s3Client = await creates3Client()
       const credsResult = await getCredential()
       if (!credsResult.success || !credsResult.data) {
         throw new Error(
@@ -65,13 +65,8 @@ export function registerSaveDataFolderListHandler(): void {
         )
       }
       const creds = credsResult.data
-      const cmd = new ListObjectsV2Command({
-        Bucket: creds.bucketName,
-        Delimiter: "/"
-      })
-      const res = await r2Client.send(cmd)
-      const dirs = res.CommonPrefixes?.map((cp) => cp.Prefix!.replace(/[\\/]+$/, "")) ?? undefined
-      return dirs
+      const folders = await listFolders(s3Client, creds.bucketName)
+      return folders.length > 0 ? folders : undefined
     } catch (err) {
       logger.error("リモートセーブデータフォルダ一覧取得エラー:", err)
       return undefined

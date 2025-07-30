@@ -24,7 +24,7 @@ export const cloudDataApi = {
    * クラウドデータ一覧を取得
    * @returns Promise<ApiResult<CloudDataItem[]>>
    */
-  listCloudData: (): Promise<ApiResult<CloudDataItem[]>> => ipcRenderer.invoke("cloud-data-list"),
+  listCloudData: (): Promise<ApiResult<CloudDataItem[]>> => ipcRenderer.invoke("cloud:listData"),
 
   /**
    * クラウドデータを削除
@@ -47,7 +47,7 @@ export const cloudDataApi = {
    * @returns Promise<ApiResult<CloudDirectoryNode[]>>
    */
   getDirectoryTree: (): Promise<ApiResult<CloudDirectoryNode[]>> =>
-    ipcRenderer.invoke("cloud-data-get-directory-tree"),
+    ipcRenderer.invoke("cloud:getDirectoryTree"),
 
   /**
    * クラウドファイルを個別削除

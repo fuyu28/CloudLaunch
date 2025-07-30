@@ -45,8 +45,8 @@ graph TD
 **→ [SYSTEM_SPECIFICATION.md](./SYSTEM_SPECIFICATION.md)**
 
 - システム全体のアーキテクチャ
-- 技術スタック
-- 主要機能の概要
+- 技術スタック（**メモ機能対応技術含む**）
+- 主要機能の概要（**プレイメモ機能追加**）
 
 ### 💻 コーディングルールを確認したい
 
@@ -54,6 +54,8 @@ graph TD
 
 - 命名規約
 - ファイル構成規約
+- **Import順序規約（ESLint設定更新済み）**
+- **Markdown記法規約（メモ機能用）**
 - エラーハンドリング規約
 - セキュリティガイドライン
 
@@ -63,6 +65,7 @@ graph TD
 
 - 機能別実装ガイド
 - ファイル配置ガイド
+- **メモ機能実装例（実際の実装済み機能）**
 - 実装例とベストプラクティス
 
 ### 🏗️ 型システムを理解・活用したい
@@ -71,6 +74,8 @@ graph TD
 
 - TypeScript型運用方針
 - 共通型定義
+- **メモ関連型定義（memo.d.ts）**
+- **Zodバリデーション統合**
 - 型安全なコーディングパターン
 
 ### 🔗 API仕様を確認したい
@@ -78,6 +83,7 @@ graph TD
 **→ [API_SPECIFICATION.md](./API_SPECIFICATION.md)**
 
 - IPC通信エンドポイント一覧
+- **メモ管理API（CRUD + クラウド同期）**
 - パラメータ・戻り値詳細
 - エラーハンドリングパターン
 
@@ -86,6 +92,8 @@ graph TD
 **→ [COMPONENT_SPECIFICATION.md](./COMPONENT_SPECIFICATION.md)**
 
 - React コンポーネント設計原則
+- **メモページ・コンポーネント（MemoCreate, MemoEditor等）**
+- **新しいUIコンポーネント（DynamicImage, ConfirmModal等）**
 - 再利用可能コンポーネント仕様
 - カスタムフック・状態管理
 
@@ -94,8 +102,19 @@ graph TD
 **→ [DATABASE_SPECIFICATION.md](./DATABASE_SPECIFICATION.md)**
 
 - テーブル構造・リレーションシップ
+- **Memoテーブル設計（ゲームとの1:N関係）**
 - インデックス戦略
 - パフォーマンス最適化
+
+### 📝 メモ機能を理解・拡張したい 🆕
+
+**→ 複数ドキュメント参照推奨**
+
+- **概要**: [SYSTEM_SPECIFICATION - プレイメモ機能](./SYSTEM_SPECIFICATION.md#5-プレイメモ機能)
+- **実装例**: [DEVELOPMENT_WORKFLOW - メモ機能実装例](./DEVELOPMENT_WORKFLOW.md#新機能実装例メモ管理機能実装済み)
+- **API**: [API_SPECIFICATION - メモ管理API](./API_SPECIFICATION.md#メモ管理API)
+- **DB**: [DATABASE_SPECIFICATION - Memoテーブル](./DATABASE_SPECIFICATION.md#5-memo-テーブル)
+- **UI**: [COMPONENT_SPECIFICATION - メモページ](./COMPONENT_SPECIFICATION.md#4-memolist)
 
 ## 学習・理解の推奨順序
 
@@ -120,15 +139,15 @@ graph TD
 
 ## 各ドキュメントの責務と範囲
 
-| ドキュメント                                            | 主な責務                         | 対象読者                     | 更新頻度                 |
-| ------------------------------------------------------- | -------------------------------- | ---------------------------- | ------------------------ |
-| [SYSTEM_SPECIFICATION](./SYSTEM_SPECIFICATION.md)       | システム全体設計・アーキテクチャ | 全開発者・PM                 | 低（大きな変更時）       |
-| [API_SPECIFICATION](./API_SPECIFICATION.md)             | IPC API詳細仕様                  | フロント・バックエンド開発者 | 中（新API追加時）        |
-| [COMPONENT_SPECIFICATION](./COMPONENT_SPECIFICATION.md) | UI コンポーネント設計            | フロントエンド開発者         | 中（新コンポーネント時） |
-| [DATABASE_SPECIFICATION](./DATABASE_SPECIFICATION.md)   | データベース設計・運用           | バックエンド開発者・DBA      | 低（スキーマ変更時）     |
-| [TYPE_SYSTEM_GUIDE](./TYPE_SYSTEM_GUIDE.md)             | TypeScript 型運用                | 全開発者                     | 低（型戦略変更時）       |
-| [CODING_GUIDELINES](./CODING_GUIDELINES.md)             | コーディング規約                 | 全開発者                     | 低（規約変更時）         |
-| [DEVELOPMENT_WORKFLOW](./DEVELOPMENT_WORKFLOW.md)       | 開発手順・実装ガイド             | 全開発者                     | 高（日常的に参照）       |
+| ドキュメント                                            | 主な責務                         | 対象読者                     | 更新頻度                 | 最終更新   |
+| ------------------------------------------------------- | -------------------------------- | ---------------------------- | ------------------------ | ---------- |
+| [SYSTEM_SPECIFICATION](./SYSTEM_SPECIFICATION.md)       | システム全体設計・アーキテクチャ | 全開発者・PM                 | 低（大きな変更時）       | 2025-01-30 |
+| [API_SPECIFICATION](./API_SPECIFICATION.md)             | IPC API詳細仕様                  | フロント・バックエンド開発者 | 中（新API追加時）        | 2025-01-30 |
+| [COMPONENT_SPECIFICATION](./COMPONENT_SPECIFICATION.md) | UI コンポーネント設計            | フロントエンド開発者         | 中（新コンポーネント時） | 2025-01-30 |
+| [DATABASE_SPECIFICATION](./DATABASE_SPECIFICATION.md)   | データベース設計・運用           | バックエンド開発者・DBA      | 低（スキーマ変更時）     | 2025-01-30 |
+| [TYPE_SYSTEM_GUIDE](./TYPE_SYSTEM_GUIDE.md)             | TypeScript 型運用                | 全開発者                     | 低（型戦略変更時）       | 2025-01-30 |
+| [CODING_GUIDELINES](./CODING_GUIDELINES.md)             | コーディング規約                 | 全開発者                     | 低（規約変更時）         | 2025-01-30 |
+| [DEVELOPMENT_WORKFLOW](./DEVELOPMENT_WORKFLOW.md)       | 開発手順・実装ガイド             | 全開発者                     | 高（日常的に参照）       | 2025-01-30 |
 
 ## ドキュメント保守ルール
 
@@ -152,15 +171,41 @@ graph TD
 
 ## よくある質問とドキュメント対応
 
-| 質問                         | 参照ドキュメント        | セクション             |
-| ---------------------------- | ----------------------- | ---------------------- |
-| どの技術を使っているの？     | SYSTEM_SPECIFICATION    | 技術スタック           |
-| 新しいAPIを追加したい        | DEVELOPMENT_WORKFLOW    | 新機能実装例           |
-| コンポーネントの作り方は？   | COMPONENT_SPECIFICATION | コンポーネント設計原則 |
-| データベースの構造は？       | DATABASE_SPECIFICATION  | テーブル構造           |
-| エラーハンドリングの方法は？ | CODING_GUIDELINES       | エラーハンドリング規約 |
-| 型の使い分けは？             | TYPE_SYSTEM_GUIDE       | 型運用ルール           |
-| ファイルはどこに置く？       | DEVELOPMENT_WORKFLOW    | ファイル配置ガイド     |
+| 質問                           | 参照ドキュメント            | セクション                 |
+| ------------------------------ | --------------------------- | -------------------------- |
+| どの技術を使っているの？       | SYSTEM_SPECIFICATION        | 技術スタック               |
+| **メモ機能はどう実装する？**   | **DEVELOPMENT_WORKFLOW**    | **メモ機能実装例**         |
+| **メモAPIの使い方は？**        | **API_SPECIFICATION**       | **メモ管理API**            |
+| 新しいAPIを追加したい          | DEVELOPMENT_WORKFLOW        | 新機能実装例               |
+| コンポーネントの作り方は？     | COMPONENT_SPECIFICATION     | コンポーネント設計原則     |
+| **Markdownエディタの実装は？** | **COMPONENT_SPECIFICATION** | **MemoCreate, MemoEditor** |
+| データベースの構造は？         | DATABASE_SPECIFICATION      | テーブル構造               |
+| **メモテーブルの設計は？**     | **DATABASE_SPECIFICATION**  | **Memoテーブル**           |
+| エラーハンドリングの方法は？   | CODING_GUIDELINES           | エラーハンドリング規約     |
+| **Import順序のルールは？**     | **CODING_GUIDELINES**       | **Import順序規約**         |
+| 型の使い分けは？               | TYPE_SYSTEM_GUIDE           | 型運用ルール               |
+| **メモ関連の型定義は？**       | **TYPE_SYSTEM_GUIDE**       | **メモ管理関連型**         |
+| ファイルはどこに置く？         | DEVELOPMENT_WORKFLOW        | ファイル配置ガイド         |
+
+## 📋 主要更新履歴（2025-01-30）
+
+### 🆕 新機能追加
+
+- **プレイメモ機能**: Markdown形式でのメモ作成・編集・管理
+- **メモクラウド同期**: S3/R2ストレージとの自動同期
+- **動的画像読み込み**: パフォーマンス最適化された画像表示
+
+### 🔧 技術的改善
+
+- **依存関係更新**: React MD Editor 4.0.7、React Markdown 10.1.0追加
+- **ESLint設定強化**: import順序、type imports強制
+- **型システム拡張**: Zodバリデーション統合
+
+### 📚 ドキュメント更新
+
+- 全ドキュメントでメモ機能関連情報を追加
+- 実装例とベストプラクティスを実際のコードベースに基づいて更新
+- 新しいコンポーネント・API・型定義の詳細仕様を追加
 
 ## ドキュメント改善・追加ルール
 
@@ -171,4 +216,10 @@ graph TD
 3. 対象読者・更新頻度・責務を定義
 4. 関連ドキュメントからのリンクを追加
 
-このドキュメント索引により、CloudLaunchの知識体系を効率的に活用し、プロジェクトの品質と開発効率を継続的に向上させることができます。
+### 保守スケジュール
+
+- **月次**: 実装と乖離がないかチェック
+- **四半期**: 全体的な構造見直し
+- **機能追加時**: 関連ドキュメントの即座更新
+
+このドキュメント索引により、CloudLaunchの知識体系を効率的に活用し、プロジェクトの品質と開発効率を継続的に向上させることができます。特に新しく追加されたメモ機能については、複数のドキュメントを横断的に参照することで、包括的な理解と適切な実装が可能です。
