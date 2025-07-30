@@ -46,7 +46,7 @@ export function registerFileDialogHandlers(): void {
    * @returns ApiResult<string | undefined> 選択結果（選択時はファイルパス、キャンセル時はundefined）
    */
   ipcMain.handle(
-    "select-file",
+    "file:select",
     async (_event, filters: Electron.FileFilter[]): Promise<ApiResult<string | undefined>> => {
       try {
         // Zodスキーマでフィルターを検証
@@ -85,7 +85,7 @@ export function registerFileDialogHandlers(): void {
    *
    * @returns ApiResult<string | undefined> 選択結果（選択時はフォルダパス、キャンセル時はundefined）
    */
-  ipcMain.handle("select-folder", async (): Promise<ApiResult<string | undefined>> => {
+  ipcMain.handle("folder:select", async (): Promise<ApiResult<string | undefined>> => {
     try {
       const { canceled, filePaths } = await dialog.showOpenDialog({
         properties: ["openDirectory"]
@@ -118,7 +118,7 @@ export function registerFileDialogHandlers(): void {
    * @returns ValidatePathResult 検証結果（ok: true/false、type: 検出された種別、errorType: エラー種別）
    */
   ipcMain.handle(
-    "validate-file",
+    "file:validate",
     async (_event, filePath: string, expectType?: string): Promise<ValidatePathResult> => {
       try {
         // Zodスキーマでファイルパスを検証
@@ -150,7 +150,7 @@ export function registerFileDialogHandlers(): void {
    * @param filePath チェックするファイルパス
    * @returns boolean ファイルが存在する場合true
    */
-  ipcMain.handle("check-file-exists", async (_event, filePath: string): Promise<boolean> => {
+  ipcMain.handle("file:exists", async (_event, filePath: string): Promise<boolean> => {
     try {
       // Zodスキーマでファイルパスを検証
       const validationData = fileExistenceSchema.parse({
@@ -191,7 +191,7 @@ export function registerFileDialogHandlers(): void {
    * @param dirPath チェックするディレクトリパス
    * @returns boolean ディレクトリが存在する場合true
    */
-  ipcMain.handle("check-directory-exists", async (_event, dirPath: string): Promise<boolean> => {
+  ipcMain.handle("folder:exists", async (_event, dirPath: string): Promise<boolean> => {
     try {
       if (!dirPath || dirPath.trim() === "") {
         logger.warn(`空のディレクトリパスが渡されました`)

@@ -52,7 +52,7 @@ export function registerCloudDataHandlers(): void {
    * @returns ApiResult<CloudDataItem[]> クラウドデータ一覧
    */
   ipcMain.handle(
-    "cloud-data-list",
+    "cloud:listData",
     withFileOperationErrorHandling(async (): Promise<ApiResult<CloudDataItem[]>> => {
       return withValidatedCloudStorage(async (credentials, s3Client) => {
         return withErrorHandling(async () => {
@@ -131,7 +131,7 @@ export function registerCloudDataHandlers(): void {
    * @returns ApiResult<CloudDirectoryNode[]> ディレクトリツリー
    */
   ipcMain.handle(
-    "cloud-data-get-directory-tree",
+    "cloud:getDirectoryTree",
     withFileOperationErrorHandling(async (): Promise<ApiResult<CloudDirectoryNode[]>> => {
       return withValidatedCloudStorage(async (credentials, s3Client) => {
         return withErrorHandling(async () => {

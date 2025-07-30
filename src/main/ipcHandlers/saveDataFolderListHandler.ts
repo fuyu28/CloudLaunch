@@ -55,7 +55,7 @@ export function registerSaveDataFolderListHandler(): void {
    *
    * @returns Promise<string[] | undefined> フォルダ一覧（成功時）またはundefined（失敗時）
    */
-  ipcMain.handle("list-remote-save-data-folders", async (): Promise<string[] | undefined> => {
+  ipcMain.handle("cloud:listRemoteFolders", async (): Promise<string[] | undefined> => {
     try {
       const s3Client = await creates3Client()
       const credsResult = await getCredential()

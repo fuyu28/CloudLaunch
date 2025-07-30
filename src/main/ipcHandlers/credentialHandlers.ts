@@ -36,7 +36,7 @@ export function registerCredentialHandlers(): void {
    * @param creds 保存する認証情報（endpoint, region, bucketName, accessKeyId, secretAccessKey）
    * @returns ApiResult 保存結果（成功時はsuccess: true、失敗時はエラーメッセージ）
    */
-  ipcMain.handle("upsert-credential", async (_event, creds: Creds): Promise<ApiResult> => {
+  ipcMain.handle("credential:upsert", async (_event, creds: Creds): Promise<ApiResult> => {
     try {
       // Zodスキーマで入力データを検証
       const validatedCreds = credsSchema.parse(creds)
@@ -65,7 +65,7 @@ export function registerCredentialHandlers(): void {
    *
    * @returns ApiResult<Creds> 取得結果（成功時は認証情報、失敗時はエラーメッセージ）
    */
-  ipcMain.handle("get-credential", async (): Promise<ApiResult<Creds>> => {
+  ipcMain.handle("credential:get", async (): Promise<ApiResult<Creds>> => {
     const result = await getCredential()
     return result
   })
@@ -85,7 +85,7 @@ export function registerCredentialHandlers(): void {
    * @param creds 検証する認証情報
    * @returns ApiResult 検証結果（成功時はsuccess: true、失敗時は詳細なエラーメッセージ）
    */
-  ipcMain.handle("validate-credential", async (_event, creds: Creds): Promise<ApiResult> => {
+  ipcMain.handle("credential:validate", async (_event, creds: Creds): Promise<ApiResult> => {
     try {
       // Zodスキーマで入力データを検証
       const validatedCreds = credsSchema.parse(creds)

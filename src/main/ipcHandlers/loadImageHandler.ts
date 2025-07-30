@@ -60,7 +60,7 @@ export function registerLoadImageHandler(): void {
    * @returns ApiResult<string> 読み込み結果（成功時はdata URL、失敗時はエラーメッセージ）
    */
   ipcMain.handle(
-    "load-image-from-local",
+    "image:loadFromLocal",
     async (_event, filePath: string): Promise<ApiResult<string>> => {
       try {
         const buffer = await fs.readFile(filePath)
@@ -96,7 +96,7 @@ export function registerLoadImageHandler(): void {
    * @param url ダウンロードする画像のURL（HTTP/HTTPS）
    * @returns ApiResult<string> ダウンロード結果（成功時はdata URL、失敗時はエラーメッセージ）
    */
-  ipcMain.handle("load-image-from-web", async (_event, url: string): Promise<ApiResult<string>> => {
+  ipcMain.handle("image:loadFromWeb", async (_event, url: string): Promise<ApiResult<string>> => {
     try {
       const res = await fetch(url)
       if (!res.ok) {

@@ -23,7 +23,7 @@ export function registerUploadSaveDataFolderHandlers(): void {
    * セーブデータフォルダ一括アップロードAPI
    */
   ipcMain.handle(
-    "upload-save-data-folder",
+    "cloud:uploadSaveData",
     withFileOperationErrorHandling(
       async (_event, localPath: string, remotePath: string): Promise<ApiResult<boolean>> => {
         return withValidatedCloudStorage(async (credentials, s3Client) => {

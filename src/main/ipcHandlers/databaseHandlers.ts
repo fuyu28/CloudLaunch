@@ -33,7 +33,7 @@ export function registerDatabaseHandlers(): void {
    * ゲーム一覧取得ハンドラー
    */
   ipcMain.handle(
-    "list-games",
+    "game:list",
     async (
       _event,
       searchWord: string,
@@ -49,7 +49,7 @@ export function registerDatabaseHandlers(): void {
   /**
    * ゲーム詳細取得ハンドラー
    */
-  ipcMain.handle("get-game-by-id", async (_event, id: string): Promise<GameType | undefined> => {
+  ipcMain.handle("game:getById", async (_event, id: string): Promise<GameType | undefined> => {
     const result = await gameService.getGameById(id)
     return result.success ? result.data || undefined : undefined
   })
@@ -58,7 +58,7 @@ export function registerDatabaseHandlers(): void {
    * プレイセッション一覧取得ハンドラー
    */
   ipcMain.handle(
-    "get-play-sessions",
+    "session:list",
     async (_event, gameId: string): Promise<ApiResult<PlaySessionType[]>> => {
       return await gameService.getPlaySessions(gameId)
     }
@@ -68,7 +68,7 @@ export function registerDatabaseHandlers(): void {
    * ゲーム作成ハンドラー
    */
   ipcMain.handle(
-    "create-game",
+    "game:create",
     async (_event, game: InputGameData): Promise<ApiResult<GameType>> => {
       return await gameService.createGame(game)
     }
@@ -78,7 +78,7 @@ export function registerDatabaseHandlers(): void {
    * ゲーム更新ハンドラー
    */
   ipcMain.handle(
-    "update-game",
+    "game:update",
     async (_event, id: string, game: InputGameData): Promise<ApiResult<GameType>> => {
       const updateData: GameUpdateData = {
         title: game.title,
@@ -97,7 +97,7 @@ export function registerDatabaseHandlers(): void {
   /**
    * ゲーム削除ハンドラー
    */
-  ipcMain.handle("delete-game", async (_event, gameId: string): Promise<ApiResult<boolean>> => {
+  ipcMain.handle("game:delete", async (_event, gameId: string): Promise<ApiResult<boolean>> => {
     return await gameService.deleteGame(gameId)
   })
 
@@ -105,7 +105,7 @@ export function registerDatabaseHandlers(): void {
    * プレイセッション記録ハンドラー
    */
   ipcMain.handle(
-    "create-session",
+    "session:create",
     async (_event, duration: number, gameId: string): Promise<ApiResult<PlaySessionType>> => {
       return await gameService.recordPlaySession(gameId, {
         playTime: duration,
@@ -118,7 +118,7 @@ export function registerDatabaseHandlers(): void {
    * プレイステータス更新ハンドラー
    */
   ipcMain.handle(
-    "update-play-status",
+    "game:updatePlayStatus",
     async (
       _event,
       gameId: string,
@@ -133,7 +133,7 @@ export function registerDatabaseHandlers(): void {
    * セッション章更新ハンドラー
    */
   ipcMain.handle(
-    "update-session-chapter",
+    "session:updateChapter",
     async (_event, sessionId: string, chapterId: string | null): Promise<ApiResult<boolean>> => {
       return await gameService.updateSessionChapter(sessionId, chapterId)
     }
@@ -143,7 +143,7 @@ export function registerDatabaseHandlers(): void {
    * セッション名更新ハンドラー
    */
   ipcMain.handle(
-    "update-session-name",
+    "session:updateName",
     async (_event, sessionId: string, sessionName: string): Promise<ApiResult<boolean>> => {
       return await gameService.updateSessionName(sessionId, sessionName)
     }
@@ -153,7 +153,7 @@ export function registerDatabaseHandlers(): void {
    * プレイセッション削除ハンドラー
    */
   ipcMain.handle(
-    "delete-play-session",
+    "session:delete",
     async (_event, sessionId: string): Promise<ApiResult<boolean>> => {
       return await gameService.deletePlaySession(sessionId)
     }

@@ -57,7 +57,7 @@ export function registerLaunchGameHandlers(): void {
    * @param filePath 起動する実行ファイルの絶対パス
    * @returns ApiResult 起動結果（成功時はsuccess: true、失敗時は詳細なエラー情報）
    */
-  ipcMain.handle("launch-game", async (_event, filePath: string): Promise<ApiResult> => {
+  ipcMain.handle("game:launch", async (_event, filePath: string): Promise<ApiResult> => {
     try {
       // 1. 存在＆形式チェック
       const res = await validatePathWithType(filePath, PathType.Executable)
@@ -128,7 +128,7 @@ export function registerLaunchGameHandlers(): void {
    * @returns ApiResult 起動結果（成功時はsuccess: true、失敗時は詳細なエラー情報）
    */
   ipcMain.handle(
-    "launch-game-from-steam",
+    "game:launchFromSteam",
     async (_event, url: string, steamPath: string): Promise<ApiResult> => {
       try {
         // 1. URL フォーマット検証 & gameId 抽出

@@ -35,13 +35,13 @@ export const processMonitorAPI = {
    * プロセス監視を開始
    * @returns 処理結果
    */
-  startMonitoring: (): Promise<ApiResult> => ipcRenderer.invoke("start-process-monitoring"),
+  startMonitoring: (): Promise<ApiResult> => ipcRenderer.invoke("monitor:start"),
 
   /**
    * プロセス監視を停止
    * @returns 処理結果
    */
-  stopMonitoring: (): Promise<ApiResult> => ipcRenderer.invoke("stop-process-monitoring"),
+  stopMonitoring: (): Promise<ApiResult> => ipcRenderer.invoke("monitor:stop"),
 
   /**
    * ゲームを監視対象に追加
@@ -51,7 +51,7 @@ export const processMonitorAPI = {
    * @returns 処理結果
    */
   addGameToMonitor: (gameId: string, gameTitle: string, exePath: string): Promise<ApiResult> =>
-    ipcRenderer.invoke("add-game-to-monitor", gameId, gameTitle, exePath),
+    ipcRenderer.invoke("monitor:addGame", gameId, gameTitle, exePath),
 
   /**
    * ゲームを監視対象から削除
@@ -59,20 +59,20 @@ export const processMonitorAPI = {
    * @returns 処理結果
    */
   removeGameFromMonitor: (gameId: string): Promise<ApiResult> =>
-    ipcRenderer.invoke("remove-game-from-monitor", gameId),
+    ipcRenderer.invoke("monitor:removeGame", gameId),
 
   /**
    * 監視状況を取得
    * @returns 監視中のゲーム情報の配列
    */
   getMonitoringStatus: (): Promise<MonitoringGameStatus[]> =>
-    ipcRenderer.invoke("get-monitoring-status"),
+    ipcRenderer.invoke("monitor:getStatus"),
 
   /**
    * 監視中かどうかをチェック
    * @returns 監視中かどうか
    */
-  isMonitoring: (): Promise<boolean> => ipcRenderer.invoke("is-monitoring"),
+  isMonitoring: (): Promise<boolean> => ipcRenderer.invoke("monitor:isActive"),
 
   /**
    * 指定されたゲームのプロセス情報を取得
@@ -91,7 +91,7 @@ export const processMonitorAPI = {
         isLinked: boolean
       }>
     >
-  > => ipcRenderer.invoke("get-game-processes", gameId),
+  > => ipcRenderer.invoke("process:getByGame", gameId),
 
   /**
    * プロセス（プレイセッション）を削除
@@ -99,7 +99,7 @@ export const processMonitorAPI = {
    * @returns 処理結果
    */
   deleteProcess: (processId: string): Promise<ApiResult> =>
-    ipcRenderer.invoke("delete-process", processId),
+    ipcRenderer.invoke("process:delete", processId),
 
   /**
    * 連携先プロセスを設定
@@ -108,5 +108,5 @@ export const processMonitorAPI = {
    * @returns 処理結果
    */
   setLinkedProcess: (gameId: string, processId: string): Promise<ApiResult> =>
-    ipcRenderer.invoke("set-linked-process", gameId, processId)
+    ipcRenderer.invoke("process:setLinked", gameId, processId)
 }

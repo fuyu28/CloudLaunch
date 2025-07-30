@@ -7,12 +7,12 @@ export const saveDataDownloadAPI = {
     localSaveFolderPath: string,
     remoteSaveDataPath: string
   ): Promise<ApiResult<void>> =>
-    ipcRenderer.invoke("download-save-data", localSaveFolderPath, remoteSaveDataPath),
+    ipcRenderer.invoke("cloud:downloadSaveData", localSaveFolderPath, remoteSaveDataPath),
 
   getCloudDataInfo: (
     gameId: string
   ): Promise<ApiResult<{ exists: boolean; uploadedAt?: Date; size?: number; comment?: string }>> =>
-    ipcRenderer.invoke("get-cloud-data-info", gameId),
+    ipcRenderer.invoke("cloud:getDataInfo", gameId),
 
   getCloudFileDetails: (
     gameId: string
@@ -27,5 +27,5 @@ export const saveDataDownloadAPI = {
         key: string
       }>
     }>
-  > => ipcRenderer.invoke("get-cloud-file-details", gameId)
+  > => ipcRenderer.invoke("cloud:getFileDetails", gameId)
 }

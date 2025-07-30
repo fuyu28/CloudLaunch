@@ -23,7 +23,7 @@ export function registerDownloadSaveDataHandler(): void {
    * セーブデータ一括ダウンロードAPI
    */
   ipcMain.handle(
-    "download-save-data",
+    "cloud:downloadSaveData",
     withFileOperationErrorHandling(
       async (_event, localPath: string, remotePath: string): Promise<ApiResult<boolean>> => {
         // 認証情報の検証とR2クライアントの作成
@@ -51,7 +51,7 @@ export function registerDownloadSaveDataHandler(): void {
    * クラウドデータ情報取得ハンドラー
    */
   ipcMain.handle(
-    "get-cloud-data-info",
+    "cloud:getDataInfo",
     withFileOperationErrorHandling(
       async (
         _event,
@@ -78,7 +78,7 @@ export function registerDownloadSaveDataHandler(): void {
    * クラウドファイル詳細情報取得ハンドラー
    */
   ipcMain.handle(
-    "get-cloud-file-details",
+    "cloud:getFileDetails",
     withFileOperationErrorHandling(
       async (
         _event,
