@@ -19,8 +19,6 @@
 import { useMemo, useState, useCallback, useEffect } from "react"
 import { ZodError } from "zod"
 
-import { logger } from "@renderer/utils/logger"
-
 import { gameFormSchema } from "../../../schemas/game"
 import type { InputGameData } from "../../../types/game"
 import {
@@ -28,6 +26,7 @@ import {
   validateImagePath,
   validateSaveFolderPath
 } from "../utils/fileValidation"
+import { logger } from "../utils/logger"
 
 /**
  * バリデーションエラーの型定義

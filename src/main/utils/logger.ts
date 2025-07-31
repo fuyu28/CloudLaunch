@@ -170,8 +170,14 @@ class Logger {
     data?: unknown,
     error?: Error
   ): LogEntry {
+    // 日本標準時（JST）でタイムスタンプを作成
+    const now = new Date()
+    const jstOffset = 9 * 60 // JSTはUTC+9
+    const jstTime = new Date(now.getTime() + jstOffset * 60 * 1000)
+    const timestamp = jstTime.toISOString().replace("Z", "+09:00")
+
     return {
-      timestamp: new Date().toISOString(),
+      timestamp,
       level,
       message,
       data,

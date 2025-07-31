@@ -101,6 +101,25 @@ export default function GeneralSettings(): React.JSX.Element {
     }
   }
 
+  // ログフォルダを開くハンドラー
+  const handleOpenLogsDirectory = async (): Promise<void> => {
+    try {
+      const result = await window.api.file.openLogsDirectory()
+      if (result.success) {
+        toast.success("ログフォルダを開きました")
+      } else {
+        toast.error(result.message || "ログフォルダを開くことができませんでした")
+      }
+    } catch (error) {
+      logger.error("ログフォルダを開くエラー:", {
+        component: "GeneralSettings",
+        function: "handleOpenLogsDirectory",
+        data: error
+      })
+      toast.error("ログフォルダを開くことができませんでした")
+    }
+  }
+
   return (
     <div className="card bg-base-100 shadow-md rounded-lg p-6">
       <h2 className="text-xl font-semibold mb-6">一般設定</h2>
@@ -191,6 +210,31 @@ export default function GeneralSettings(): React.JSX.Element {
                   </div>
                 </label>
               </div>
+            </div>
+          </div>
+
+          {/* ログ・デバッグ */}
+          <div className="bg-base-200 p-4 rounded-lg">
+            <div className="mb-3">
+              <h4 className="font-medium">ログ・デバッグ</h4>
+              <p className="text-sm text-base-content/70">トラブルシューティング用</p>
+            </div>
+            <div className="form-control">
+              <button className="btn btn-outline btn-sm w-fit" onClick={handleOpenLogsDirectory}>
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"
+                  />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 1v6" />
+                </svg>
+                ログフォルダを開く
+              </button>
+              <p className="text-xs text-base-content/50 mt-2">
+                アプリケーションのログファイルが保存されているフォルダを開きます
+              </p>
             </div>
           </div>
         </div>

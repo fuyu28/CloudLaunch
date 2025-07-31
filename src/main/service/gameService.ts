@@ -127,16 +127,21 @@ export async function createGame(gameData: InputGameData): Promise<ApiResult<Gam
       const validatedData = gameFormSchema.parse(gameData)
 
       // トランザクション内でゲーム作成とデフォルトチャプター作成を実行
-      const game = await prisma.$transaction(async (tx) => {
-        const newGame = await tx.game.create({
-          data: validatedData
-        })
+      const game = await prisma.$transaction(
+        async (tx) => {
+          const newGame = await tx.game.create({
+            data: validatedData
+          })
 
-        // デフォルトチャプターを作成
-        await ensureDefaultChapter(newGame.id)
+          // デフォルトチャプターを作成
+          await ensureDefaultChapter(newGame.id)
 
-        return newGame
-      })
+          return newGame
+        },
+        {
+          timeout: 30000 // 30秒タイムアウト
+        }
+      )
 
       logger.info(`ゲームが作成されました: ${game.title}`)
       return transformGame(game)

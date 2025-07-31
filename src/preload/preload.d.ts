@@ -26,6 +26,8 @@ export type FileAPI = {
   validatePath(filePath: string, expectType?: string): Promise<ValidatePathResult>
   checkFileExists(filePath: string): Promise<boolean>
   checkDirectoryExists(dirPath: string): Promise<boolean>
+  openLogsDirectory(): Promise<ApiResult<void>>
+  getLogFilePath(): Promise<ApiResult<string>>
 }
 
 export type SaveDataUploadAPI = {

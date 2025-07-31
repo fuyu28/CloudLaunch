@@ -35,6 +35,26 @@ jest.mock("react-hot-toast", () => {
   }
 })
 
+// ファイル検証のモック - テスト環境では常にtrueを返す
+jest.mock("../../utils/fileValidation", () => ({
+  checkFileExists: jest.fn().mockResolvedValue(true),
+  checkDirectoryExists: jest.fn().mockResolvedValue(true),
+  isUrl: jest.fn().mockReturnValue(false)
+}))
+
+// WindowのAPIモック
+Object.defineProperty(window, "api", {
+  value: {
+    file: {
+      selectFile: jest.fn().mockResolvedValue("selected/file/path"),
+      selectDirectory: jest.fn().mockResolvedValue("selected/directory/path"),
+      checkFileExists: jest.fn().mockResolvedValue(true),
+      checkDirectoryExists: jest.fn().mockResolvedValue(true)
+    }
+  },
+  writable: true
+})
+
 describe("GameModal", () => {
   const mockOnClose = jest.fn()
   const mockOnSubmit = jest.fn()
