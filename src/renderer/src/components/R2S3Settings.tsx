@@ -15,11 +15,9 @@
  * - SettingsFormField コンポーネント
  */
 
-import { useEffect } from "react"
 import { FaCheck, FaSyncAlt, FaTimes } from "react-icons/fa"
 
 import SettingsFormField from "./SettingsFormField"
-import { useConnectionStatus } from "../hooks/useConnectionStatus"
 import { useOfflineMode } from "../hooks/useOfflineMode"
 import { useSettingsFormZod } from "../hooks/useSettingsFormZod"
 import { getOfflineDisabledClasses } from "../utils/offlineUtils"
@@ -32,31 +30,33 @@ import { getOfflineDisabledClasses } from "../utils/offlineUtils"
  * @returns R2/S3設定コンポーネント要素
  */
 export default function R2S3Settings(): React.JSX.Element {
-  const { formData, updateField, canSubmit, isSaving, handleSave, fieldErrors } =
-    useSettingsFormZod()
-  const { status, message, check } = useConnectionStatus()
+  const {
+    formData,
+    updateField,
+    canSubmit,
+    isSaving,
+    handleSave,
+    fieldErrors,
+    testConnection,
+    isTesting,
+    isConnectionSuccessful
+  } = useSettingsFormZod()
   const { isOfflineMode, checkNetworkFeature } = useOfflineMode()
 
-  // 初回マウント時に接続チェック（オフラインモード時は無効）
-  useEffect(() => {
-    if (!isOfflineMode) {
-      check()
-    }
-  }, [check, isOfflineMode])
-
-  // 接続テスト実行
+  // 手動接続テスト実行
   const handleConnectionTest = (): void => {
     if (!checkNetworkFeature("接続テスト")) {
       return
     }
-    check()
+    testConnection()
   }
 
-  // 設定保存
+  // 設定保存（自動で接続テストを含む）
   const handleSaveSettings = (): void => {
     if (!checkNetworkFeature("設定保存")) {
       return
     }
+    // handleSave内で自動的に接続テストが実行される
     handleSave()
   }
 
@@ -71,11 +71,23 @@ export default function R2S3Settings(): React.JSX.Element {
             <span className="text-warning">オフラインモード</span>
           ) : (
             <>
-              {status === "loading" && <FaSyncAlt className="animate-spin text-base-content" />}
-              {status === "success" && <FaCheck className="text-success" />}
-              {status === "error" && <FaTimes className="text-error" />}
+              {(isTesting || isSaving) && <FaSyncAlt className="animate-spin text-base-content" />}
+              {!isTesting && !isSaving && isConnectionSuccessful === true && (
+                <FaCheck className="text-success" />
+              )}
+              {!isTesting && !isSaving && isConnectionSuccessful === false && (
+                <FaTimes className="text-error" />
+              )}
               <span className="text-base-content/80">
-                {status === "loading" ? "接続確認中..." : status === "success" ? "接続OK" : message}
+                {isTesting
+                  ? "接続確認中..."
+                  : isSaving
+                    ? "保存中..."
+                    : isConnectionSuccessful === true
+                      ? "接続テスト成功"
+                      : isConnectionSuccessful === false
+                        ? "接続テスト失敗"
+                        : ""}
               </span>
             </>
           )}
@@ -139,17 +151,18 @@ export default function R2S3Settings(): React.JSX.Element {
           <button
             className="btn btn-outline"
             onClick={handleConnectionTest}
-            disabled={status === "loading"}
+            disabled={isTesting || isSaving || !canSubmit}
           >
-            接続テスト
+            {isTesting ? "テスト中..." : "接続テスト"}
           </button>
         )}
         <button
           className="btn btn-primary"
           onClick={handleSaveSettings}
           disabled={!canSubmit || isSaving || isOfflineMode}
+          title="保存時に自動で接続テストを実行します"
         >
-          保存
+          {isSaving ? "保存中..." : "保存"}
         </button>
       </div>
 
