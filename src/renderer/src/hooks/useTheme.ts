@@ -13,6 +13,8 @@
 import { useState, useEffect, useCallback } from "react"
 import toast from "react-hot-toast"
 
+import { logger } from "@renderer/utils/logger"
+
 import type { ThemeName } from "../constants/themes"
 import { DAISYUI_THEMES } from "../constants/themes"
 
@@ -68,7 +70,11 @@ export function useTheme(): UseThemeResult {
 
       toast.success(`テーマを「${newTheme}」に変更しました`)
     } catch (error) {
-      console.error("テーマの変更に失敗:", error)
+      logger.error("テーマの変更に失敗:", {
+        component: "useTheme",
+        function: "unknown",
+        data: error
+      })
       toast.error("テーマの変更に失敗しました")
     } finally {
       setIsSaving(false)

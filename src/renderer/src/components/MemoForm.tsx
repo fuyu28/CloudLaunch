@@ -12,8 +12,11 @@ import { useNavigate } from "react-router-dom"
 
 import { useToastHandler } from "@renderer/hooks/useToastHandler"
 
+import { logger } from "@renderer/utils/logger"
+
 import type { GameType } from "src/types/game"
 import type { CreateMemoData, UpdateMemoData } from "src/types/memo"
+
 import "@uiw/react-md-editor/markdown-editor.css"
 import "@uiw/react-markdown-preview/markdown.css"
 
@@ -135,7 +138,11 @@ export default function MemoForm({
       await Promise.allSettled(promises)
     } catch (error) {
       if (!controller.signal.aborted) {
-        console.error("データ取得エラー:", error)
+        logger.error("データ取得エラー:", {
+          component: "MemoForm",
+          function: "unknown",
+          data: error
+        })
         showToast("データの取得に失敗しました", "error")
       }
     } finally {
@@ -236,7 +243,7 @@ export default function MemoForm({
           }
         }
       } catch (error) {
-        console.error("保存エラー:", error)
+        logger.error("保存エラー:", { component: "MemoForm", function: "unknown", data: error })
         const errorMessage = error instanceof Error ? error.message : "不明なエラー"
         showToast(`保存に失敗しました: ${errorMessage}`, "error")
       } finally {

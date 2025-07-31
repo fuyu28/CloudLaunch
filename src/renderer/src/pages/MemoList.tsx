@@ -24,6 +24,8 @@ import { useDropdownMenu } from "@renderer/hooks/useDropdownMenu"
 import { useMemoOperations } from "@renderer/hooks/useMemoOperations"
 import { useToastHandler } from "@renderer/hooks/useToastHandler"
 
+import { logger } from "@renderer/utils/logger"
+
 import type { GameType } from "src/types/game"
 import type { MemoType } from "src/types/memo"
 
@@ -135,7 +137,7 @@ export default function MemoList(): React.JSX.Element {
         setGames(transformedGames)
       }
     } catch (error) {
-      console.error("データ取得エラー:", error)
+      logger.error("データ取得エラー:", { component: "MemoList", function: "unknown", data: error })
       showToast("データの取得に失敗しました", "error")
     } finally {
       setIsLoading(false)
@@ -167,7 +169,11 @@ export default function MemoList(): React.JSX.Element {
         showToast("メモフォルダの取得に失敗しました", "error")
       }
     } catch (error) {
-      console.error("フォルダ操作エラー:", error)
+      logger.error("フォルダ操作エラー:", {
+        component: "MemoList",
+        function: "unknown",
+        data: error
+      })
       showToast("フォルダを開けませんでした", "error")
     }
   }, [showToast])

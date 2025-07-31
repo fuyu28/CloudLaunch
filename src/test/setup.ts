@@ -100,6 +100,31 @@ Object.assign(global.window, {
     settings: {
       updateAutoTracking: jest.fn(),
       getAutoTracking: jest.fn()
+    },
+    memo: {
+      getMemosByGameId: jest.fn(),
+      getMemoById: jest.fn(),
+      createMemo: jest.fn(),
+      updateMemo: jest.fn(),
+      deleteMemo: jest.fn(),
+      getMemoFilePath: jest.fn(),
+      getGameMemoDir: jest.fn(),
+      getAllMemos: jest.fn(),
+      getMemoRootDir: jest.fn(),
+      uploadMemoToCloud: jest.fn(),
+      downloadMemoFromCloud: jest.fn(),
+      getCloudMemos: jest.fn(),
+      syncMemosFromCloud: jest.fn()
+    },
+    errorReport: {
+      reportError: jest.fn(),
+      reportLog: jest.fn(),
+      getErrorStats: jest.fn(),
+      resetErrorStats: jest.fn(),
+      getLogPath: jest.fn(),
+      openLogDirectory: jest.fn(),
+      rotateLog: jest.fn(),
+      cleanupLogs: jest.fn()
     }
   }
 })
@@ -203,6 +228,23 @@ Object.defineProperty(globalThis, "import", {
     }
   }
 })
+
+// Mock logger for tests
+jest.mock("../renderer/src/utils/logger", () => ({
+  logger: {
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    logUserAction: jest.fn(),
+    startPerformanceTimer: jest.fn(() => jest.fn())
+  },
+  logHelpers: {
+    log: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn()
+  }
+}))
 
 // Console setup for cleaner test output
 const originalError = console.error

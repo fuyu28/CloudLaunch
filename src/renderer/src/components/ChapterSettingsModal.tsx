@@ -8,6 +8,8 @@
 import { useState, useEffect, useCallback, useMemo } from "react"
 import { FaEdit, FaTrash, FaChevronUp, FaChevronDown, FaTimes, FaSave } from "react-icons/fa"
 
+import { logger } from "@renderer/utils/logger"
+
 import ConfirmModal from "./ConfirmModal"
 import { chapterUpdateSchema } from "../../../schemas/chapter"
 import type { Chapter } from "../../../types/chapter"
@@ -60,11 +62,19 @@ export default function ChapterSettingsModal({
       if (result.success && result.data) {
         setChapters(result.data.sort((a, b) => a.order - b.order))
       } else {
-        console.error("章データの取得に失敗:", result.success ? "データが空です" : result.message)
+        logger.error("章データの取得に失敗:", {
+          component: "ChapterSettingsModal",
+          function: "unknown",
+          data: result.success ? "データが空です" : result.message
+        })
         setChapters([])
       }
     } catch (error) {
-      console.error("章データの取得に失敗:", error)
+      logger.error("章データの取得に失敗:", {
+        component: "ChapterSettingsModal",
+        function: "unknown",
+        data: error
+      })
       setChapters([])
     } finally {
       setIsLoading(false)
@@ -126,10 +136,18 @@ export default function ChapterSettingsModal({
         validation.resetTouched()
         onChaptersUpdated?.()
       } else {
-        console.error("章名の更新に失敗:", result.message)
+        logger.error("章名の更新に失敗:", {
+          component: "ChapterSettingsModal",
+          function: "unknown",
+          data: result.message
+        })
       }
     } catch (error) {
-      console.error("章名の更新に失敗:", error)
+      logger.error("章名の更新に失敗:", {
+        component: "ChapterSettingsModal",
+        function: "unknown",
+        data: error
+      })
     } finally {
       setIsSaving(false)
     }
@@ -159,10 +177,18 @@ export default function ChapterSettingsModal({
         setDeletingChapter(undefined)
         onChaptersUpdated?.()
       } else {
-        console.error("章の削除に失敗:", result.message)
+        logger.error("章の削除に失敗:", {
+          component: "ChapterSettingsModal",
+          function: "unknown",
+          data: result.message
+        })
       }
     } catch (error) {
-      console.error("章の削除に失敗:", error)
+      logger.error("章の削除に失敗:", {
+        component: "ChapterSettingsModal",
+        function: "unknown",
+        data: error
+      })
     } finally {
       setIsSaving(false)
     }
@@ -199,10 +225,18 @@ export default function ChapterSettingsModal({
           setChapters(newChapters)
           onChaptersUpdated?.()
         } else {
-          console.error("章順序の更新に失敗:", result.message)
+          logger.error("章順序の更新に失敗:", {
+            component: "ChapterSettingsModal",
+            function: "unknown",
+            data: result.message
+          })
         }
       } catch (error) {
-        console.error("章順序の更新に失敗:", error)
+        logger.error("章順序の更新に失敗:", {
+          component: "ChapterSettingsModal",
+          function: "unknown",
+          data: error
+        })
       } finally {
         setIsSaving(false)
       }
@@ -241,10 +275,18 @@ export default function ChapterSettingsModal({
           setChapters(newChapters)
           onChaptersUpdated?.()
         } else {
-          console.error("章順序の更新に失敗:", result.message)
+          logger.error("章順序の更新に失敗:", {
+            component: "ChapterSettingsModal",
+            function: "unknown",
+            data: result.message
+          })
         }
       } catch (error) {
-        console.error("章順序の更新に失敗:", error)
+        logger.error("章順序の更新に失敗:", {
+          component: "ChapterSettingsModal",
+          function: "unknown",
+          data: error
+        })
       } finally {
         setIsSaving(false)
       }

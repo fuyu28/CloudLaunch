@@ -16,6 +16,8 @@ import { useMemoNavigation } from "@renderer/hooks/useMemoNavigation"
 import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
 import { useToastHandler } from "@renderer/hooks/useToastHandler"
 
+import { logger } from "@renderer/utils/logger"
+
 import type { MemoType } from "src/types/memo"
 
 export default function MemoView(): React.JSX.Element {
@@ -50,7 +52,7 @@ export default function MemoView(): React.JSX.Element {
         navigate(-1)
       }
     } catch (error) {
-      console.error("メモ取得エラー:", error)
+      logger.error("メモ取得エラー:", { component: "MemoView", function: "unknown", data: error })
       showToast("メモの取得に失敗しました", "error")
       navigate(-1)
     } finally {
@@ -75,7 +77,7 @@ export default function MemoView(): React.JSX.Element {
         showToast(result.message || "メモの削除に失敗しました", "error")
       }
     } catch (error) {
-      console.error("メモ削除エラー:", error)
+      logger.error("メモ削除エラー:", { component: "MemoView", function: "unknown", data: error })
       showToast("メモの削除に失敗しました", "error")
     }
     setShowDeleteModal(false)
@@ -94,7 +96,11 @@ export default function MemoView(): React.JSX.Element {
         showToast("メモファイルの取得に失敗しました", "error")
       }
     } catch (error) {
-      console.error("ファイル操作エラー:", error)
+      logger.error("ファイル操作エラー:", {
+        component: "MemoView",
+        function: "unknown",
+        data: error
+      })
       showToast("ファイルを開けませんでした", "error")
     }
   }, [memo, showToast])

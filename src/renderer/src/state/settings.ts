@@ -17,6 +17,8 @@ import { atom } from "jotai"
 import { atomWithStorage } from "jotai/utils"
 import toast from "react-hot-toast"
 
+import { logger } from "@renderer/utils/logger"
+
 import type { ThemeName } from "../constants/themes"
 import type { SortOption, FilterOption } from "src/types/menu"
 
@@ -78,7 +80,7 @@ export const changeThemeAtom = atom(null, async (_, set, newTheme: ThemeName) =>
 
     return { success: true }
   } catch (error) {
-    console.error("テーマの変更に失敗:", error)
+    logger.error("テーマの変更に失敗:", { component: "settings", function: "unknown", data: error })
     toast.error("テーマの変更に失敗しました")
     return { success: false, error }
   } finally {

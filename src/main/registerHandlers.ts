@@ -3,6 +3,7 @@ import { registerCloudDataHandlers } from "./ipcHandlers/cloudDataHandlers"
 import { registerCredentialHandlers } from "./ipcHandlers/credentialHandlers"
 import { registerDatabaseHandlers } from "./ipcHandlers/databaseHandlers"
 import { registerDownloadSaveDataHandler } from "./ipcHandlers/downloadHandler"
+import { registerErrorReportHandlers } from "./ipcHandlers/errorReportHandlers"
 import { registerFileDialogHandlers } from "./ipcHandlers/fileHandlers"
 import { registerLaunchGameHandlers } from "./ipcHandlers/launchGameHandlers"
 import { registerLoadImageHandler } from "./ipcHandlers/loadImageHandler"
@@ -26,4 +27,5 @@ export function registerAllHandlers(): void {
   registerSaveDataFolderListHandler()
   registerSettingsHandlers()
   registerUploadSaveDataFolderHandlers()
+  registerErrorReportHandlers()
 }

@@ -5,6 +5,8 @@ import { is } from "@electron-toolkit/utils"
 import { PrismaClient } from "@prisma/client"
 import { app } from "electron"
 
+import { logger } from "./utils/logger"
+
 const userDataDir = app.getPath("userData")
 const devDbPath = path.join(process.cwd(), "dev.db")
 const prodDbPath = path.join(userDataDir, "app.db")
@@ -23,7 +25,7 @@ if (!fs.existsSync(is.dev ? devDbPath : prodDbPath)) {
     const bundledDb = path.join(process.resourcesPath, "app.db")
     // → resources/app.asar ではなく、resources/ の直下
     if (!fs.existsSync(bundledDb)) {
-      console.error("Bundled app.db not found at", bundledDb)
+      logger.error("Bundled app.db not found", { bundledDb })
       process.exit(1)
     }
     fs.copyFileSync(bundledDb, prodDbPath)

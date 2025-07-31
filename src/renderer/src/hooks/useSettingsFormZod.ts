@@ -28,6 +28,8 @@ import { useState, useEffect, useMemo, useCallback } from "react"
 import toast from "react-hot-toast"
 import { ZodError } from "zod"
 
+import { logger } from "@renderer/utils/logger"
+
 import { credsSchema } from "../../../schemas/credentials"
 import type { Creds } from "../../../types/creds"
 import type { ApiResult } from "../../../types/result"
@@ -130,7 +132,11 @@ export function useSettingsFormZod(): SettingsFormResult {
           })
         }
       } catch (error) {
-        console.error("初期データの読み込みに失敗しました:", error)
+        logger.error("初期データの読み込みに失敗しました:", {
+          component: "useSettingsFormZod",
+          function: "unknown",
+          data: error
+        })
         toast.error("設定の読み込みに失敗しました")
       } finally {
         setIsLoading(false)
@@ -264,7 +270,11 @@ export function useSettingsFormZod(): SettingsFormResult {
         toast.error(result.message || "設定の保存に失敗しました")
       }
     } catch (error) {
-      console.error("設定保存エラー:", error)
+      logger.error("設定保存エラー:", {
+        component: "useSettingsFormZod",
+        function: "unknown",
+        data: error
+      })
       toast.error("設定の保存中にエラーが発生しました")
     } finally {
       setIsSaving(false)
@@ -290,7 +300,11 @@ export function useSettingsFormZod(): SettingsFormResult {
         toast.error(result.message || "接続テストに失敗しました")
       }
     } catch (error) {
-      console.error("接続テストエラー:", error)
+      logger.error("接続テストエラー:", {
+        component: "useSettingsFormZod",
+        function: "unknown",
+        data: error
+      })
       toast.error("接続テスト中にエラーが発生しました")
     } finally {
       setIsTesting(false)

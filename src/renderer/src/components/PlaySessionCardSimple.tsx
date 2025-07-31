@@ -10,6 +10,8 @@ import { FaPlus, FaCog, FaGamepad, FaClock, FaChartLine, FaCalendarWeek } from "
 
 import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
 
+import { logger } from "@renderer/utils/logger"
+
 import type { PlaySessionType } from "src/types/game"
 
 type PlaySessionCardSimpleProps = {
@@ -72,7 +74,11 @@ const PlaySessionCardSimple = memo(function PlaySessionCardSimple({
         setSessions(result.data)
       }
     } catch (error) {
-      console.error("プレイセッションの取得に失敗:", error)
+      logger.error("プレイセッションの取得に失敗:", {
+        component: "PlaySessionCardSimple",
+        function: "unknown",
+        data: error
+      })
     } finally {
       setIsLoading(false)
     }

@@ -13,6 +13,8 @@
 import { useEffect, useState } from "react"
 import toast from "react-hot-toast"
 
+import { logger } from "@renderer/utils/logger"
+
 import type { ApiResult } from "src/types/result"
 
 /**
@@ -90,7 +92,11 @@ export const useImageLoader = (src: string): ImageLoadState => {
           } else {
             // 画像読み込み失敗時はNoImageを表示し、エラートーストも表示
             const errorMessage = result.success ? "データが取得できませんでした" : result.message
-            console.warn("画像読み込み失敗:", src, errorMessage)
+            logger.warn("画像読み込み失敗:", {
+              component: "useImageLoader",
+              function: "loadImage",
+              data: { src, errorMessage }
+            })
             if (errorMessage) {
               toast.error(`画像読み込み失敗: ${errorMessage}`)
             }
@@ -103,7 +109,11 @@ export const useImageLoader = (src: string): ImageLoadState => {
         }
       } catch (error) {
         if (mounted) {
-          console.error("Error loading image:", error)
+          logger.error("Error loading image:", {
+            component: "useImageLoader",
+            function: "loadImage",
+            error: error instanceof Error ? error : new Error(String(error))
+          })
           const errorMsg = error instanceof Error ? error.message : "不明なエラー"
           toast.error(`画像読み込みエラー: ${errorMsg}`)
           setState({

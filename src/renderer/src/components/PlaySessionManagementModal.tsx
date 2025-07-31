@@ -23,6 +23,8 @@ import { RxCross1 } from "react-icons/rx"
 import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
 import { useToastHandler } from "@renderer/hooks/useToastHandler"
 
+import { logger } from "@renderer/utils/logger"
+
 import ConfirmModal from "./ConfirmModal"
 import { playSessionEditSchema } from "../../../schemas/playSession"
 import type { Chapter } from "../../../types/chapter"
@@ -103,7 +105,11 @@ export default function PlaySessionManagementModal({
         showToast("セッション情報の取得に失敗しました", "error")
       }
     } catch (error) {
-      console.error("セッション情報取得エラー:", error)
+      logger.error("セッション情報取得エラー:", {
+        component: "PlaySessionManagementModal",
+        function: "unknown",
+        data: error
+      })
       showToast("セッション情報の取得に失敗しました", "error")
     } finally {
       setLoading(false)
@@ -121,10 +127,17 @@ export default function PlaySessionManagementModal({
       if (result.success && result.data) {
         setChapters(result.data)
       } else {
-        console.error("章情報の取得に失敗")
+        logger.error("章情報の取得に失敗", {
+          component: "PlaySessionManagementModal",
+          function: "unknown"
+        })
       }
     } catch (error) {
-      console.error("章情報取得エラー:", error)
+      logger.error("章情報取得エラー:", {
+        component: "PlaySessionManagementModal",
+        function: "unknown",
+        data: error
+      })
     }
   }, [gameId])
 
@@ -209,7 +222,11 @@ export default function PlaySessionManagementModal({
       onProcessUpdated?.()
       closeEditModal()
     } catch (error) {
-      console.error("セッション編集エラー:", error)
+      logger.error("セッション編集エラー:", {
+        component: "PlaySessionManagementModal",
+        function: "unknown",
+        data: error
+      })
       showToast("セッションの更新に失敗しました", "error")
     }
   }, [
@@ -238,7 +255,11 @@ export default function PlaySessionManagementModal({
         showToast("セッションの削除に失敗しました", "error")
       }
     } catch (error) {
-      console.error("セッション削除エラー:", error)
+      logger.error("セッション削除エラー:", {
+        component: "PlaySessionManagementModal",
+        function: "unknown",
+        data: error
+      })
       showToast("セッションの削除に失敗しました", "error")
     } finally {
       setIsDeleteModalOpen(false)

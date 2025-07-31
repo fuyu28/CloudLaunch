@@ -21,6 +21,8 @@ import { FaClock, FaGamepad } from "react-icons/fa"
 
 import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
 
+import { logger } from "@renderer/utils/logger"
+
 import type { MonitoringGameStatus } from "../../../types/game"
 
 /**
@@ -48,7 +50,11 @@ export function PlayStatusBar(): React.JSX.Element {
       const status = await window.api.processMonitor.getMonitoringStatus()
       setMonitoringGames(status)
     } catch (error) {
-      console.error("監視状況の取得に失敗しました:", error)
+      logger.error("監視状況の取得に失敗しました:", {
+        component: "PlayStatusBar",
+        function: "unknown",
+        data: error
+      })
     }
   }, [autoTracking])
 

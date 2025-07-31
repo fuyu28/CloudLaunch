@@ -167,6 +167,47 @@ export type CloudDataAPI = {
   deleteFile(objectKey: string): Promise<ApiResult>
 }
 
+export type ErrorReportAPI = {
+  reportError(errorReport: {
+    message: string
+    stack: string
+    componentStack?: string
+    context?: string
+    timestamp: string
+    url?: string
+    userAgent?: string
+  }): Promise<ApiResult>
+  reportLog(logReport: {
+    level: "debug" | "info" | "warn" | "error"
+    message: string
+    component?: string
+    function?: string
+    context?: string
+    data?: unknown
+    timestamp: string
+  }): Promise<ApiResult>
+  getErrorStats(): Promise<
+    ApiResult<{
+      totalErrors: number
+      errorsByCategory: Record<string, number>
+      errorsBySeverity: Record<string, number>
+      lastError?: {
+        code: string
+        message: string
+        context?: string
+        stack?: string
+        timestamp: Date
+        userMessage: string
+      }
+    }>
+  >
+  resetErrorStats(): Promise<ApiResult>
+  getLogPath(): Promise<ApiResult<string>>
+  openLogDirectory(): Promise<ApiResult>
+  rotateLog(): Promise<ApiResult>
+  cleanupLogs(): Promise<ApiResult>
+}
+
 export type API = {
   file: FileAPI
   window: WindowAPI
@@ -184,4 +225,5 @@ export type API = {
   chapter: ChapterAPI
   settings: SettingsAPI
   memo: MemoAPI
+  errorReport: ErrorReportAPI
 }

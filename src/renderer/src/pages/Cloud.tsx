@@ -26,6 +26,8 @@ import {
   type CloudFileDetail
 } from "@renderer/hooks/useCloudData"
 
+import { logger } from "@renderer/utils/logger"
+
 import type { CloudDirectoryNode } from "../../../utils/cloudUtils"
 
 /**
@@ -80,7 +82,11 @@ export default function Cloud(): React.JSX.Element {
    */
   const handleSelectNode = (node: CloudDirectoryNode): void => {
     if (!node.isDirectory) {
-      console.log("ファイルが選択されました:", node.name)
+      logger.debug("ファイルが選択されました:", {
+        component: "Cloud",
+        function: "unknown",
+        data: node.name
+      })
     } else {
       handleToggleExpand(node.path)
     }
@@ -133,7 +139,11 @@ export default function Cloud(): React.JSX.Element {
         setDetailsModal((prev) => ({ ...prev, loading: false }))
       }
     } catch (error) {
-      console.error("ファイル詳細取得エラー:", error)
+      logger.error("ファイル詳細取得エラー:", {
+        component: "Cloud",
+        function: "unknown",
+        data: error
+      })
       import("react-hot-toast").then(({ toast }) => {
         toast.error("ファイル詳細の取得に失敗しました")
       })

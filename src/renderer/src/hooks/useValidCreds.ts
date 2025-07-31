@@ -19,6 +19,8 @@ import { isValidCredsAtom } from "@renderer/state/credentials"
 import { useSetAtom } from "jotai"
 import { useCallback } from "react"
 
+import { logger } from "@renderer/utils/logger"
+
 /**
  * 認証情報検証フック
  *
@@ -47,7 +49,11 @@ export function useValidateCreds(): () => Promise<boolean> {
       const { success, err } = await window.api.credential.validateCredential(result.data)
       setIsValidCreds(success)
       if (!success) {
-        console.error("Credential validation failed:", err?.message ?? "不明なエラー")
+        logger.error("Credential validation failed:", {
+          component: "useValidCreds",
+          function: "unknown",
+          data: err?.message ?? "不明なエラー"
+        })
       }
       return success
     } catch {
