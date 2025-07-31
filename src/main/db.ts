@@ -3,7 +3,7 @@ import path from "path"
 
 import { is } from "@electron-toolkit/utils"
 import { PrismaClient } from "@prisma/client"
-import { Database } from "better-sqlite3"
+import Database from "better-sqlite3"
 import { app } from "electron"
 
 import { checkDatabaseIntegrity } from "./utils/databaseMigration"
