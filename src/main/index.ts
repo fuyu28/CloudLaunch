@@ -19,6 +19,7 @@ function createWindow(): void {
     show: false,
     autoHideMenuBar: true,
     frame: false,
+    title: "cloud_launch",
     titleBarStyle: "hidden",
     ...(process.platform === "linux" ? { icon } : {}),
     webPreferences: {
@@ -51,7 +52,7 @@ function createWindow(): void {
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
   // Set app user model id for windows
-  electronApp.setAppUserModelId("com.electron")
+  electronApp.setAppUserModelId("com.cloudlaunch")
 
   // Setup global error handlers
   setupGlobalErrorHandlers()
