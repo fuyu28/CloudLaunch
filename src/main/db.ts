@@ -56,9 +56,6 @@ const shouldResetDatabase = (): boolean => {
         return true
       }
 
-      logger.info("既存のデータベースは最新形式です", {
-        latestMigration: migrations[0]?.migration_name
-      })
       return false
     } finally {
       db.close()
@@ -171,12 +168,12 @@ if (shouldResetDatabase()) {
 
 // ３) PrismaClient を起動
 const dbUrl = `file:${is.dev ? devDbPath : prodDbPath}`
-logger.info("PrismaClient初期化", {
-  isDev: is.dev,
-  dbUrl,
-  dbPath: is.dev ? devDbPath : prodDbPath,
-  dbExists: fs.existsSync(is.dev ? devDbPath : prodDbPath)
-})
+// logger.info("PrismaClient初期化", {
+//   isDev: is.dev,
+//   dbUrl,
+//   dbPath: is.dev ? devDbPath : prodDbPath,
+//   dbExists: fs.existsSync(is.dev ? devDbPath : prodDbPath)
+// })
 
 export const prisma = new PrismaClient({
   datasources: {
@@ -190,21 +187,17 @@ export const prisma = new PrismaClient({
     maxWait: is.dev ? 5000 : 2000, // 開発環境5秒、本番環境2秒待機
     isolationLevel: "Serializable" // Prismaでサポートされている分離レベル
   },
-  log: is.dev ? ["query", "info", "warn", "error"] : ["warn", "error"]
+  log: is.dev ? ["warn", "error"] : ["warn", "error"]
 })
 
 // データベース接続のテスト
 prisma
   .$connect()
   .then(async () => {
-    logger.info("データベース接続に成功しました")
-
     // データベース整合性チェック
     const isIntegrityOk = await checkDatabaseIntegrity(prisma)
 
-    if (isIntegrityOk) {
-      logger.info("データベース整合性チェックに成功しました")
-    } else {
+    if (!isIntegrityOk) {
       logger.warn(
         "データベース整合性チェックに失敗しました。データベースの初期化が必要な可能性があります"
       )

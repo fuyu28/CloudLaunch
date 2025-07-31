@@ -135,8 +135,6 @@ export class ProcessMonitorService extends EventEmitter {
       return
     }
 
-    logger.info("プロセス監視を開始します")
-
     // 起動時の自動ゲーム検出設定を確認
     const autoTracking = this.store.get("autoTracking", true) as boolean
     logger.info(`自動ゲーム検出: ${autoTracking ? "有効" : "無効"}`)
@@ -169,7 +167,7 @@ export class ProcessMonitorService extends EventEmitter {
     if (this.monitoringInterval) {
       clearInterval(this.monitoringInterval)
       this.monitoringInterval = undefined
-      logger.info("プロセス監視を停止しました")
+      // logger.info("プロセス監視を停止しました")
     }
 
     // 進行中のセッションを保存
