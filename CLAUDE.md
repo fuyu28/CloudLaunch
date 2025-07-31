@@ -1,9 +1,12 @@
 # CLAUDE.md
 
-必ず日本語で出力してください。
-serenaを活用し、効率的に作業を行ってください。
+## 基本のルール
 
-タスクを終了する前に`npx run format`, `npm run typecheck`, `npm run lint`を行ってください。ただし、この操作には時間がかかるため別々で実行することを推奨します。
+必ず日本語で出力してください。
+できる限りserenaを活用し、効率的に作業を行ってください。
+ファイル読み込みについてはtokenの削減、コンテクストの理解を深めるためにserenaを使用してください。
+
+タスクを終了する前に `npm run typecheck`, `npm run lint -- --fix`を行ってください。ただし、この操作には時間がかかるため別々で実行することを推奨します。
 `npm run build`を行う必要はありません。
 また、作成されたテストを`npm run test`,`npm run test:vitest`等のテストコマンドを用いて実行してください。
 その際、エラーが発生していれば修正してください。
@@ -12,6 +15,22 @@ serenaを活用し、効率的に作業を行ってください。
 
 また、anyは極力使用しないでください。しかし、どうしても必要な場合であれば、`// eslint-disable-next-line [エラー名]` を使用して一時的にeslintをオフにしてください。
 そのため、eslintのコンフィグに特定のエラーをオフにすることは絶対にやめてください。
+
+## gitに関するルール
+
+現在のブランチがmainブランチである場合、まず git checkout -b feature/my-task で新しいブランチを作成し、そこに切り替えてください。
+
+その後のすべてのコミットは、必ずこのブランチ上で行ってください。
+
+main（または master）ブランチには一切コミットしないでください。
+
+最終的に PR を作成し、レビューを依頼してください。
+
+依頼内容
+
+src/components/Foo.tsx に新機能を実装してください。
+
+必要なテストも追加して、コミットメッセージは “feat: add Foo component” の形式にしてください。
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -171,5 +190,5 @@ The app uses a structured IPC pattern:
 
 ### Development Commands Reference
 
-- 必須コマンド: `npm run typecheck`, `npm run lint`, `npm run format`
+- 必須コマンド: `npm run typecheck`, `npm run lint -- --fix`
 - データベース操作: `npx prisma migrate dev`, `npx prisma generate`
