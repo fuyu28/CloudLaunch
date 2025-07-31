@@ -10,8 +10,7 @@
 
 import toast from "react-hot-toast"
 
-import { logger } from "@renderer/utils/logger"
-
+import { logger } from "./logger"
 import type { ApiResult } from "../../../types/result"
 
 /**

@@ -75,7 +75,6 @@ app.whenReady().then(() => {
   setTimeout(async () => {
     const monitor = ProcessMonitorService.getInstance()
     await monitor.startMonitoring()
-    logger.info("アプリケーション起動時にプロセス監視を開始しました")
   }, 2000) // 2秒後に開始（UIの初期化を待つ）
 
   app.on("activate", function () {

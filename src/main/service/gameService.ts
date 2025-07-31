@@ -23,7 +23,6 @@ import type { InputGameData, GameType, PlaySessionType } from "../../types/game"
 import type { FilterOption, SortOption, SortDirection } from "../../types/menu"
 import type { ApiResult } from "../../types/result"
 import { prisma } from "../db"
-import { ensureDefaultChapter } from "./chapterService"
 import { withErrorHandling } from "../utils/commonErrorHandlers"
 import { transformGame, transformGames, transformPlaySessions } from "../utils/dataTransform"
 import { logger } from "../utils/logger"
@@ -127,18 +126,41 @@ export async function createGame(gameData: InputGameData): Promise<ApiResult<Gam
       const validatedData = gameFormSchema.parse(gameData)
 
       // トランザクション内でゲーム作成とデフォルトチャプター作成を実行
-      const game = await prisma.$transaction(async (tx) => {
-        const newGame = await tx.game.create({
-          data: validatedData
-        })
+      const game = await prisma.$transaction(
+        async (tx) => {
+          const newGame = await tx.game.create({
+            data: validatedData
+          })
 
-        // デフォルトチャプターを作成
-        await ensureDefaultChapter(newGame.id)
+          // デフォルトチャプターの存在確認と作成を一括実行
+          const existingChapter = await tx.chapter.findFirst({
+            where: { gameId: newGame.id }
+          })
 
-        return newGame
+          if (!existingChapter) {
+            await tx.chapter.create({
+              data: {
+                gameId: newGame.id,
+                name: "第1章",
+                order: 1
+              }
+            })
+          }
+
+          return newGame
+        },
+        {
+          timeout: 8000, // さらに短縮して8秒
+          maxWait: 1500 // 1.5秒待機
+        }
+      )
+
+      logger.info(`ゲームが作成されました: ${game.title}`, {
+        gameId: game.id,
+        performance: {
+          context: "game-creation"
+        }
       })
-
-      logger.info(`ゲームが作成されました: ${game.title}`)
       return transformGame(game)
     },
     "ゲーム作成",

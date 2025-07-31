@@ -111,54 +111,55 @@ const PlaySessionCardSimple = memo(function PlaySessionCardSimple({
           </div>
         )}
 
-        {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <div className="flex flex-col items-center gap-2">
-              <span className="loading loading-spinner loading-md text-primary"></span>
-              <span className="text-xs text-base-content/60">読み込み中...</span>
-            </div>
-          </div>
-        ) : (
+        {!isLoading && (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <div className="stat bg-white rounded-xl p-3 border border-base-300/30 shadow-sm">
-              <div className="flex items-center gap-2 mb-1">
-                <FaGamepad className="text-accent text-xs" />
-                <div className="stat-title text-xs font-medium text-base-content/70">
-                  総セッション
+            {/* 総セッション */}
+            <div className="card bg-white rounded-xl shadow-sm">
+              <div className="card-body p-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <FaGamepad className="text-accent text-xs" />
+                  <div className="text-xs font-medium text-base-content/70">総セッション</div>
+                </div>
+                <div className="text-base font-bold text-base-content">{stats.totalSessions}</div>
+              </div>
+            </div>
+
+            {/* 総時間 */}
+            <div className="card bg-white rounded-xl shadow-sm">
+              <div className="card-body p-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <FaClock className="text-primary text-xs" />
+                  <div className="text-xs font-medium text-base-content/70">総時間</div>
+                </div>
+                <div className="text-base font-bold text-base-content">
+                  {formatSmart(stats.totalTime)}
                 </div>
               </div>
-              <div className="stat-value text-base font-bold text-base-content">
-                {stats.totalSessions}
+            </div>
+
+            {/* 平均時間 */}
+            <div className="card bg-white rounded-xl shadow-sm">
+              <div className="card-body p-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <FaChartLine className="text-secondary text-xs" />
+                  <div className="text-xs font-medium text-base-content/70">平均時間</div>
+                </div>
+                <div className="text-base font-bold text-base-content">
+                  {formatSmart(stats.averageTime)}
+                </div>
               </div>
             </div>
 
-            <div className="stat bg-white rounded-xl p-3 border border-base-300/30 shadow-sm">
-              <div className="flex items-center gap-2 mb-1">
-                <FaClock className="text-primary text-xs" />
-                <div className="stat-title text-xs font-medium text-base-content/70">総時間</div>
-              </div>
-              <div className="stat-value text-base font-bold text-base-content">
-                {formatSmart(stats.totalTime)}
-              </div>
-            </div>
-
-            <div className="stat bg-white rounded-xl p-3 border border-base-300/30 shadow-sm">
-              <div className="flex items-center gap-2 mb-1">
-                <FaChartLine className="text-secondary text-xs" />
-                <div className="stat-title text-xs font-medium text-base-content/70">平均時間</div>
-              </div>
-              <div className="stat-value text-base font-bold text-base-content">
-                {formatSmart(stats.averageTime)}
-              </div>
-            </div>
-
-            <div className="stat bg-white rounded-xl p-3 border border-base-300/30 shadow-sm">
-              <div className="flex items-center gap-2 mb-1">
-                <FaCalendarWeek className="text-info text-xs" />
-                <div className="stat-title text-xs font-medium text-base-content/70">今週</div>
-              </div>
-              <div className="stat-value text-base font-bold text-base-content">
-                {formatSmart(stats.thisWeekTime)}
+            {/* 今週 */}
+            <div className="card bg-white rounded-xl shadow-sm">
+              <div className="card-body p-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <FaCalendarWeek className="text-info text-xs" />
+                  <div className="text-xs font-medium text-base-content/70">今週</div>
+                </div>
+                <div className="text-base font-bold text-base-content">
+                  {formatSmart(stats.thisWeekTime)}
+                </div>
               </div>
             </div>
           </div>

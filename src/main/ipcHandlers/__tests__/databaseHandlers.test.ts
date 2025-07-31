@@ -85,7 +85,7 @@ describe("databaseHandlers", () => {
     it("検索なし、フィルタなし、ソートなしでゲーム一覧を取得できる", async () => {
       mockPrisma.game.findMany.mockResolvedValue(mockGames)
 
-      const result = await mockHandlers["list-games"](
+      const result = await mockHandlers["game:list"](
         {},
         "", // searchWord
         "all" as FilterOption,
@@ -93,10 +93,8 @@ describe("databaseHandlers", () => {
       )
 
       expect(mockPrisma.game.findMany).toHaveBeenCalledWith({
-        where: {
-          AND: [{}, {}]
-        },
-        orderBy: { title: "asc" }
+        where: {},
+        orderBy: { title: "desc" }
       })
       expect(result).toEqual(mockGames)
     })
@@ -104,7 +102,7 @@ describe("databaseHandlers", () => {
     it("検索ワードでゲームを検索できる", async () => {
       mockPrisma.game.findMany.mockResolvedValue([mockGames[0]])
 
-      const result = await mockHandlers["list-games"](
+      const result = await mockHandlers["game:list"](
         {},
         "テストゲーム1",
         "all" as FilterOption,
@@ -113,17 +111,12 @@ describe("databaseHandlers", () => {
 
       expect(mockPrisma.game.findMany).toHaveBeenCalledWith({
         where: {
-          AND: [
-            {
-              OR: [
-                { title: { contains: "テストゲーム1" } },
-                { publisher: { contains: "テストゲーム1" } }
-              ]
-            },
-            {}
+          OR: [
+            { title: { contains: "テストゲーム1" } },
+            { publisher: { contains: "テストゲーム1" } }
           ]
         },
-        orderBy: { title: "asc" }
+        orderBy: { title: "desc" }
       })
       expect(result).toEqual([mockGames[0]])
     })
@@ -131,25 +124,23 @@ describe("databaseHandlers", () => {
     it("プレイステータスでフィルタできる", async () => {
       mockPrisma.game.findMany.mockResolvedValue([mockGames[0]])
 
-      await mockHandlers["list-games"]({}, "", "unplayed" as FilterOption, "title" as SortOption)
+      await mockHandlers["game:list"]({}, "", "unplayed" as FilterOption, "title" as SortOption)
 
       expect(mockPrisma.game.findMany).toHaveBeenCalledWith({
         where: {
-          AND: [{}, { playStatus: "unplayed" }]
+          playStatus: "unplayed"
         },
-        orderBy: { title: "asc" }
+        orderBy: { title: "desc" }
       })
     })
 
     it("最近プレイした順でソートできる", async () => {
       mockPrisma.game.findMany.mockResolvedValue(mockGames)
 
-      await mockHandlers["list-games"]({}, "", "all" as FilterOption, "lastPlayed" as SortOption)
+      await mockHandlers["game:list"]({}, "", "all" as FilterOption, "lastPlayed" as SortOption)
 
       expect(mockPrisma.game.findMany).toHaveBeenCalledWith({
-        where: {
-          AND: [{}, {}]
-        },
+        where: {},
         orderBy: { lastPlayed: "desc" }
       })
     })
@@ -158,14 +149,19 @@ describe("databaseHandlers", () => {
       const logSpy = jest.spyOn(logger, "error").mockImplementation(() => {})
       mockPrisma.game.findMany.mockImplementationOnce(() => Promise.reject(new Error("DB Error")))
 
-      const result = await mockHandlers["list-games"](
+      const result = await mockHandlers["game:list"](
         {},
         "",
         "all" as FilterOption,
         "title" as SortOption
       )
 
-      expect(logSpy).toHaveBeenCalledWith("ゲーム一覧取得エラー:", expect.any(Error))
+      expect(logSpy).toHaveBeenCalledWith(
+        "エラーハンドリング: ゲーム一覧取得",
+        expect.objectContaining({
+          error: expect.any(Error)
+        })
+      )
       expect(result).toEqual([])
       logSpy.mockRestore()
     })

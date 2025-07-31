@@ -1,4 +1,18 @@
-import { logger } from "@renderer/utils/logger"
+// テスト環境でloggerが利用できない場合のフォールバック
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let logger: any
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  logger = require("@renderer/utils/logger").logger
+} catch {
+  // テスト環境でloggerが使用できない場合のモック
+  logger = {
+    error: () => {},
+    warn: () => {},
+    info: () => {},
+    debug: () => {}
+  }
+}
 
 /**
  * @fileoverview ファイルパス検証ユーティリティ

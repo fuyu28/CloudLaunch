@@ -244,7 +244,12 @@ describe("useGameActions", () => {
         await result.current.createGameAndRefreshList(mockGameData)
       })
 
-      expect(mockGameApi.listGames).toHaveBeenCalledWith("test search", "playing", "lastPlayed")
+      expect(mockGameApi.listGames).toHaveBeenCalledWith(
+        "test search",
+        "playing",
+        "lastPlayed",
+        "desc"
+      )
     })
   })
 

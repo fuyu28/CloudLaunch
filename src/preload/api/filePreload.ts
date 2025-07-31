@@ -12,5 +12,7 @@ export const fileAPI = {
   checkFileExists: (filePath: string): Promise<boolean> =>
     ipcRenderer.invoke("file:exists", filePath),
   checkDirectoryExists: (dirPath: string): Promise<boolean> =>
-    ipcRenderer.invoke("folder:exists", dirPath)
+    ipcRenderer.invoke("folder:exists", dirPath),
+  openLogsDirectory: (): Promise<ApiResult<void>> => ipcRenderer.invoke("logs:open-directory"),
+  getLogFilePath: (): Promise<ApiResult<string>> => ipcRenderer.invoke("logs:get-path")
 }

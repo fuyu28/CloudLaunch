@@ -20,7 +20,7 @@
 
 import * as fs from "fs"
 
-import { ipcMain, dialog } from "electron"
+import { ipcMain, dialog, shell } from "electron"
 import { ZodError } from "zod"
 
 import { MESSAGES } from "../../constants"
@@ -211,6 +211,63 @@ export function registerFileDialogHandlers(): void {
     } catch (error) {
       logger.error(`ディレクトリ存在チェックエラー: "${dirPath}"`, error)
       return false
+    }
+  })
+
+  /**
+   * ログディレクトリを開くAPI
+   *
+   * アプリケーションのログディレクトリをシステムのファイルエクスプローラーで開きます。
+   * ユーザーがログファイルを確認できるようにします。
+   *
+   * @returns ApiResult<void> 操作結果
+   */
+  ipcMain.handle("logs:open-directory", async (): Promise<ApiResult<void>> => {
+    try {
+      const logDirectory = logger.getLogDirectoryPath()
+
+      // ログディレクトリが存在することを確認
+      if (!fs.existsSync(logDirectory)) {
+        logger.warn("ログディレクトリが存在しません", { logDirectory })
+        return {
+          success: false,
+          message: "ログディレクトリが見つかりませんでした"
+        }
+      }
+
+      // システムのファイルエクスプローラーでディレクトリを開く
+      await shell.openPath(logDirectory)
+
+      logger.info("ログディレクトリを開きました", { logDirectory })
+      return { success: true }
+    } catch (error) {
+      logger.error("ログディレクトリを開くことに失敗しました", error)
+      const message = error instanceof Error ? error.message : "不明なエラー"
+      return {
+        success: false,
+        message: `ログディレクトリを開くことができませんでした: ${message}`
+      }
+    }
+  })
+
+  /**
+   * ログファイルパスを取得するAPI
+   *
+   * 現在のログファイルの絶対パスを取得します。
+   *
+   * @returns ApiResult<string> ログファイルパス
+   */
+  ipcMain.handle("logs:get-path", async (): Promise<ApiResult<string>> => {
+    try {
+      const logFilePath = logger.getLogFilePath()
+      return { success: true, data: logFilePath }
+    } catch (error) {
+      logger.error("ログファイルパスの取得に失敗しました", error)
+      const message = error instanceof Error ? error.message : "不明なエラー"
+      return {
+        success: false,
+        message: `ログファイルパスを取得できませんでした: ${message}`
+      }
     }
   })
 }

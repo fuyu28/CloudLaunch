@@ -13,11 +13,14 @@ files:
   # 3) 画像や静的ファイルなどランタイムで使う resources/
   - "resources/**/*"
 
+  # 4) Prismaマイグレーションファイル（本番環境マイグレーション用）
+  - "prisma/migrations/**/*"
+
   # ──────────────── それ以外は除外 ────────────────
   # ソースコード一式
   - "!src/**/*"
-  # Prisma スキーマ／マイグレーション（out/app.db を extraResources で同梱するため）
-  - "!prisma/**/*"
+  # Prisma スキーマファイル（マイグレーションは含める）
+  - "!prisma/schema.prisma"
   # ドキュメント／設定ファイル
   - "!docs/**/*"
   - "!*.md"

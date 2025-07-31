@@ -13,7 +13,8 @@ docs/
 ├── COMPONENT_SPECIFICATION.md # フロントエンドコンポーネント仕様
 ├── DATABASE_SPECIFICATION.md  # データベース設計仕様
 ├── CODING_GUIDELINES.md       # コーディング規約・ベストプラクティス
-└── DEVELOPMENT_WORKFLOW.md    # 開発ワークフロー・実装ガイド
+├── DEVELOPMENT_WORKFLOW.md    # 開発ワークフロー・実装ガイド
+└── CLOUDFLARE_R2_SETUP_GUIDE.md # Cloudflare R2セットアップガイド
 ```
 
 ## ドキュメント間の関係
@@ -106,6 +107,14 @@ graph TD
 - インデックス戦略
 - パフォーマンス最適化
 
+### ☁️ クラウドストレージを設定したい 🆕
+
+**→ [CLOUDFLARE_R2_SETUP_GUIDE.md](./CLOUDFLARE_R2_SETUP_GUIDE.md)**
+
+- Cloudflare R2のバケット作成手順
+- APIトークンの発行方法
+- アプリケーションへの認証情報設定ガイド
+
 ### 📝 メモ機能を理解・拡張したい 🆕
 
 **→ 複数ドキュメント参照推奨**
@@ -186,6 +195,7 @@ graph TD
 | 型の使い分けは？               | TYPE_SYSTEM_GUIDE           | 型運用ルール               |
 | **メモ関連の型定義は？**       | **TYPE_SYSTEM_GUIDE**       | **メモ管理関連型**         |
 | ファイルはどこに置く？         | DEVELOPMENT_WORKFLOW        | ファイル配置ガイド         |
+| **Cloudflare R2の設定方法は？** | **CLOUDFLARE_R2_SETUP_GUIDE** | **-**                      |
 
 ## 📋 主要更新履歴（2025-01-30）
 

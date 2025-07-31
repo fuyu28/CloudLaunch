@@ -189,5 +189,5 @@ export function registerErrorReportHandlers(): void {
     }
   })
 
-  logger.info("エラー報告IPCハンドラーを登録しました")
+  // logger.info("エラー報告IPCハンドラーを登録しました")
 }
