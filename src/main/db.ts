@@ -186,8 +186,8 @@ export const prisma = new PrismaClient({
   },
   // プロダクション環境でのトランザクション設定を最適化
   transactionOptions: {
-    timeout: 30000, // 30秒タイムアウト
-    maxWait: 5000, // 最大5秒待機
+    timeout: is.dev ? 30000 : 10000, // 開発環境30秒、本番環境10秒
+    maxWait: is.dev ? 5000 : 2000, // 開発環境5秒、本番環境2秒待機
     isolationLevel: "Serializable" // Prismaでサポートされている分離レベル
   },
   log: is.dev ? ["query", "info", "warn", "error"] : ["warn", "error"]
