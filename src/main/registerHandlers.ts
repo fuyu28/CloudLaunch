@@ -2,6 +2,7 @@ import { registerChapterHandlers } from "./ipcHandlers/chapterHandlers"
 import { registerCloudDataHandlers } from "./ipcHandlers/cloudDataHandlers"
 import { registerCredentialHandlers } from "./ipcHandlers/credentialHandlers"
 import { registerDatabaseHandlers } from "./ipcHandlers/databaseHandlers"
+import { registerDataExportHandlers } from "./ipcHandlers/dataExportHandlers"
 import { registerDownloadSaveDataHandler } from "./ipcHandlers/downloadHandler"
 import { registerErrorReportHandlers } from "./ipcHandlers/errorReportHandlers"
 import { registerFileDialogHandlers } from "./ipcHandlers/fileHandlers"
@@ -18,6 +19,7 @@ export function registerAllHandlers(): void {
   registerCloudDataHandlers()
   registerCredentialHandlers()
   registerDatabaseHandlers()
+  registerDataExportHandlers()
   registerDownloadSaveDataHandler()
   registerFileDialogHandlers()
   registerLaunchGameHandlers()

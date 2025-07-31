@@ -6,6 +6,7 @@ import { chapterPreload } from "./api/chapterPreload"
 import { cloudDataApi } from "./api/cloudDataPreload"
 import { credentialAPI } from "./api/credentialPreload"
 import { databaseAPI } from "./api/databasePreload"
+import { dataExportAPI } from "./api/dataExportPreload"
 import { errorReportAPI } from "./api/errorReportPreload"
 import { fileAPI } from "./api/filePreload"
 import { launchGameAPI } from "./api/launchGamePreload"
@@ -29,6 +30,7 @@ const api = {
   cloudData: cloudDataApi,
   credential: credentialAPI,
   database: databaseAPI,
+  dataExport: dataExportAPI,
   loadImage: loadImageAPI,
   game: launchGameAPI,
   processMonitor: processMonitorAPI,

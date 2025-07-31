@@ -1,3 +1,4 @@
+import type { ExportOptions } from "../main/ipcHandlers/dataExportHandlers"
 import type {
   Chapter,
   ChapterStats,
@@ -210,6 +211,19 @@ export type ErrorReportAPI = {
   cleanupLogs(): Promise<ApiResult>
 }
 
+export type DataExportAPI = {
+  exportData(options: ExportOptions): Promise<ApiResult<string>>
+  getExportStats(): Promise<
+    ApiResult<{
+      gamesCount: number
+      playSessionsCount: number
+      uploadsCount: number
+      chaptersCount: number
+      memosCount: number
+    }>
+  >
+}
+
 export type API = {
   file: FileAPI
   window: WindowAPI
@@ -221,6 +235,7 @@ export type API = {
   cloudData: CloudDataAPI
   credential: CredentialAPI
   database: DatabaseAPI
+  dataExport: DataExportAPI
   loadImage: LoadImageAPI
   game: LaunchGameAPI
   processMonitor: ProcessMonitorAPI

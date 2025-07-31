@@ -17,10 +17,11 @@
 
 import { useState } from "react"
 
+import DataExportSettings from "@renderer/components/DataExportSettings"
 import GeneralSettings from "@renderer/components/GeneralSettings"
 import R2S3Settings from "@renderer/components/R2S3Settings"
 
-type TabType = "general" | "r2s3"
+type TabType = "general" | "r2s3" | "export"
 
 /**
  * 設定ページコンポーネント
@@ -50,12 +51,19 @@ export default function Settings(): React.JSX.Element {
         >
           R2/S3 設定
         </button>
+        <button
+          className={`tab tab-lifted ${activeTab === "export" ? "tab-active" : ""}`}
+          onClick={() => setActiveTab("export")}
+        >
+          データエクスポート
+        </button>
       </div>
 
       {/* タブコンテンツ */}
       <div className="bg-base-100 p-6 rounded-lg shadow">
         {activeTab === "general" && <GeneralSettings />}
         {activeTab === "r2s3" && <R2S3Settings />}
+        {activeTab === "export" && <DataExportSettings />}
       </div>
     </div>
   )
