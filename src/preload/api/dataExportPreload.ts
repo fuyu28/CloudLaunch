@@ -5,7 +5,12 @@
 
 import { ipcRenderer } from "electron"
 
-import type { ExportOptions } from "../../main/ipcHandlers/dataExportHandlers"
+import type {
+  ExportOptions,
+  ImportOptions,
+  ImportResult,
+  ImportFormat
+} from "../../main/ipcHandlers/dataExportHandlers"
 import type { ApiResult } from "../../types/result"
 
 export interface ExportStats {
@@ -17,7 +22,7 @@ export interface ExportStats {
 }
 
 /**
- * データエクスポート用のPreload API
+ * データエクスポート/インポート用のPreload API
  */
 export const dataExportAPI = {
   /**
@@ -35,5 +40,40 @@ export const dataExportAPI = {
    */
   getExportStats: (): Promise<ApiResult<ExportStats>> => {
     return ipcRenderer.invoke("get-export-stats")
+  },
+
+  /**
+   * ファイルを選択してインポート（分析 → インポート統合版）
+   * @param options インポートオプション
+   * @returns 分析結果とインポート結果
+   */
+  importData: (
+    options: ImportOptions
+  ): Promise<
+    ApiResult<{
+      analysis: {
+        format: ImportFormat | null
+        recordCounts: Record<string, number>
+        hasValidStructure: boolean
+      }
+      importResult?: ImportResult
+      filePath: string
+    }>
+  > => {
+    return ipcRenderer.invoke("data-import", options)
+  },
+
+  /**
+   * インポートファイルを分析
+   * @returns ファイル分析結果
+   */
+  analyzeImportFile: (): Promise<
+    ApiResult<{
+      format: ImportFormat | null
+      recordCounts: Record<string, number>
+      hasValidStructure: boolean
+    }>
+  > => {
+    return ipcRenderer.invoke("analyze-import-file")
   }
 }

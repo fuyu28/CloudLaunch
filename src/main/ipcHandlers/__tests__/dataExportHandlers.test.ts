@@ -15,13 +15,19 @@ import path from "path"
 import { dialog } from "electron"
 
 import { exportService } from "../../service/exportService"
-import type { ExportOptions } from "../dataExportHandlers"
-import { handleDataExport, handleGetExportStats } from "../dataExportHandlers"
+import type { ExportOptions, ImportOptions } from "../dataExportHandlers"
+import {
+  handleDataExport,
+  handleGetExportStats,
+  handleDataImport,
+  handleAnalyzeImportFile
+} from "../dataExportHandlers"
 
 // モック
 jest.mock("fs", () => ({
   promises: {
-    writeFile: jest.fn()
+    writeFile: jest.fn(),
+    readFile: jest.fn()
   }
 }))
 
@@ -34,7 +40,9 @@ jest.mock("electron", () => ({
 jest.mock("../../service/exportService", () => ({
   exportService: {
     exportData: jest.fn(),
-    getExportStats: jest.fn()
+    getExportStats: jest.fn(),
+    importData: jest.fn(),
+    analyzeImportFile: jest.fn()
   }
 }))
 
@@ -233,6 +241,278 @@ describe("dataExportHandlers", () => {
         expect(result.message).toBe("エクスポートエラー")
       }
       expect(mockFs.writeFile).not.toHaveBeenCalled()
+    })
+  })
+
+  describe("handleDataImport", () => {
+    const mockImportOptions: ImportOptions = {
+      format: "json",
+      mode: "merge",
+      includeGames: true,
+      includePlaySessions: true
+    }
+
+    it("正常にJSONデータをインポートできる", async () => {
+      const mockImportResult = {
+        totalRecords: 5,
+        successfulImports: 4,
+        skippedRecords: 1,
+        errors: []
+      }
+      const mockFilePath = "/mock/import/data.json"
+      const mockFileContent = '{"data": {"games": []}}'
+
+      mockDialog.showOpenDialog.mockResolvedValue({
+        canceled: false,
+        filePaths: [mockFilePath]
+      })
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ;(mockFs.readFile as any).mockResolvedValue(mockFileContent)
+      mockExportService.importData.mockResolvedValue(mockImportResult)
+
+      const result = await handleDataImport(mockEvent, mockImportOptions)
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data).toEqual(mockImportResult)
+      }
+      expect(mockExportService.importData).toHaveBeenCalledWith(mockFileContent, mockImportOptions)
+      expect(mockFs.readFile).toHaveBeenCalledWith(mockFilePath, "utf8")
+    })
+
+    it("CSVデータをインポートできる", async () => {
+      const mockImportOptions: ImportOptions = {
+        format: "csv",
+        mode: "replace",
+        includeGames: true
+      }
+      const mockImportResult = {
+        totalRecords: 3,
+        successfulImports: 3,
+        skippedRecords: 0,
+        errors: []
+      }
+      const mockFilePath = "/mock/import/data.csv"
+      const mockFileContent = "# games\nid,title\n1,Game1"
+
+      mockDialog.showOpenDialog.mockResolvedValue({
+        canceled: false,
+        filePaths: [mockFilePath]
+      })
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ;(mockFs.readFile as any).mockResolvedValue(mockFileContent)
+      mockExportService.importData.mockResolvedValue(mockImportResult)
+
+      const result = await handleDataImport(mockEvent, mockImportOptions)
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data).toEqual(mockImportResult)
+      }
+      expect(mockExportService.importData).toHaveBeenCalledWith(mockFileContent, mockImportOptions)
+    })
+
+    it("ダイアログがキャンセルされた場合にエラーレスポンスを返す", async () => {
+      mockDialog.showOpenDialog.mockResolvedValue({
+        canceled: true,
+        filePaths: []
+      })
+
+      const result = await handleDataImport(mockEvent, mockImportOptions)
+
+      expect(result.success).toBe(false)
+      if (!result.success) {
+        expect(result.message).toBe("ファイルの選択がキャンセルされました")
+      }
+      expect(mockExportService.importData).not.toHaveBeenCalled()
+      expect(mockFs.readFile).not.toHaveBeenCalled()
+    })
+
+    it("ファイル読み込みでエラーが発生した場合にエラーレスポンスを返す", async () => {
+      const mockFilePath = "/mock/import/data.json"
+
+      mockDialog.showOpenDialog.mockResolvedValue({
+        canceled: false,
+        filePaths: [mockFilePath]
+      })
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ;(mockFs.readFile as any).mockRejectedValue(new Error("ファイル読み込みエラー"))
+
+      const result = await handleDataImport(mockEvent, mockImportOptions)
+
+      expect(result.success).toBe(false)
+      if (!result.success) {
+        expect(result.message).toBe("ファイル読み込みエラー")
+      }
+      expect(mockExportService.importData).not.toHaveBeenCalled()
+    })
+
+    it("インポートサービスでエラーが発生した場合にエラーレスポンスを返す", async () => {
+      const mockFilePath = "/mock/import/data.json"
+      const mockFileContent = '{"data": {}}'
+
+      mockDialog.showOpenDialog.mockResolvedValue({
+        canceled: false,
+        filePaths: [mockFilePath]
+      })
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ;(mockFs.readFile as any).mockResolvedValue(mockFileContent)
+      mockExportService.importData.mockRejectedValue(new Error("インポートエラー"))
+
+      const result = await handleDataImport(mockEvent, mockImportOptions)
+
+      expect(result.success).toBe(false)
+      if (!result.success) {
+        expect(result.message).toBe("インポートエラー")
+      }
+    })
+  })
+
+  describe("handleAnalyzeImportFile", () => {
+    it("正常にファイルを分析できる", async () => {
+      const mockAnalysisResult = {
+        format: "json" as const,
+        recordCounts: { games: 5, playSessions: 10 },
+        hasValidStructure: true
+      }
+      const mockFilePath = "/mock/import/data.json"
+      const mockFileContent = '{"data": {"games": [], "playSessions": []}}'
+
+      mockDialog.showOpenDialog.mockResolvedValue({
+        canceled: false,
+        filePaths: [mockFilePath]
+      })
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ;(mockFs.readFile as any).mockResolvedValue(mockFileContent)
+      mockExportService.analyzeImportFile.mockResolvedValue(mockAnalysisResult)
+
+      const result = await handleAnalyzeImportFile()
+
+      expect(result.success).toBe(true)
+      if (result.success && result.data) {
+        expect(result.data.format).toBe("json")
+        expect(result.data.recordCounts).toEqual({ games: 5, playSessions: 10 })
+        expect(result.data.hasValidStructure).toBe(true)
+      }
+      expect(mockExportService.analyzeImportFile).toHaveBeenCalledWith(mockFileContent, "json")
+    })
+
+    it("ファイル拡張子からCSV形式を判定する", async () => {
+      const mockAnalysisResult = {
+        recordCounts: { games: 3 },
+        hasValidStructure: true
+      }
+      const mockFilePath = "/mock/import/data.csv"
+      const mockFileContent = "# games\nid,title\n1,Game1"
+
+      mockDialog.showOpenDialog.mockResolvedValue({
+        canceled: false,
+        filePaths: [mockFilePath]
+      })
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ;(mockFs.readFile as any).mockResolvedValue(mockFileContent)
+      mockExportService.analyzeImportFile.mockResolvedValue(mockAnalysisResult)
+
+      const result = await handleAnalyzeImportFile()
+
+      expect(result.success).toBe(true)
+      if (result.success && result.data) {
+        expect(result.data.format).toBe("csv")
+      }
+      expect(mockExportService.analyzeImportFile).toHaveBeenCalledWith(mockFileContent, "csv")
+    })
+
+    it("ファイル拡張子からSQL形式を判定する", async () => {
+      const mockAnalysisResult = {
+        recordCounts: { games: 2 },
+        hasValidStructure: true
+      }
+      const mockFilePath = "/mock/import/data.sql"
+      const mockFileContent = "INSERT INTO games (id) VALUES (1);"
+
+      mockDialog.showOpenDialog.mockResolvedValue({
+        canceled: false,
+        filePaths: [mockFilePath]
+      })
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ;(mockFs.readFile as any).mockResolvedValue(mockFileContent)
+      mockExportService.analyzeImportFile.mockResolvedValue(mockAnalysisResult)
+
+      const result = await handleAnalyzeImportFile()
+
+      expect(result.success).toBe(true)
+      if (result.success && result.data) {
+        expect(result.data.format).toBe("sql")
+      }
+      expect(mockExportService.analyzeImportFile).toHaveBeenCalledWith(mockFileContent, "sql")
+    })
+
+    it("内容からJSON形式を推測する", async () => {
+      const mockAnalysisResult = {
+        recordCounts: { games: 1 },
+        hasValidStructure: true
+      }
+      const mockFilePath = "/mock/import/data.txt"
+      const mockFileContent = '{"data": {"games": []}}'
+
+      mockDialog.showOpenDialog.mockResolvedValue({
+        canceled: false,
+        filePaths: [mockFilePath]
+      })
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ;(mockFs.readFile as any).mockResolvedValue(mockFileContent)
+      mockExportService.analyzeImportFile.mockResolvedValue(mockAnalysisResult)
+
+      const result = await handleAnalyzeImportFile()
+
+      expect(result.success).toBe(true)
+      if (result.success && result.data) {
+        expect(result.data.format).toBe("json")
+      }
+    })
+
+    it("ダイアログがキャンセルされた場合にエラーレスポンスを返す", async () => {
+      mockDialog.showOpenDialog.mockResolvedValue({
+        canceled: true,
+        filePaths: []
+      })
+
+      const result = await handleAnalyzeImportFile()
+
+      expect(result.success).toBe(false)
+      if (!result.success) {
+        expect(result.message).toBe("ファイルの選択がキャンセルされました")
+      }
+      expect(mockExportService.analyzeImportFile).not.toHaveBeenCalled()
+    })
+
+    it("ファイル分析でエラーが発生した場合にエラーレスポンスを返す", async () => {
+      const mockFilePath = "/mock/import/data.json"
+      const mockFileContent = '{"invalid": json}'
+
+      mockDialog.showOpenDialog.mockResolvedValue({
+        canceled: false,
+        filePaths: [mockFilePath]
+      })
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ;(mockFs.readFile as any).mockResolvedValue(mockFileContent)
+      mockExportService.analyzeImportFile.mockRejectedValue(new Error("分析エラー"))
+
+      const result = await handleAnalyzeImportFile()
+
+      expect(result.success).toBe(false)
+      if (!result.success) {
+        expect(result.message).toBe("分析エラー")
+      }
     })
   })
 })

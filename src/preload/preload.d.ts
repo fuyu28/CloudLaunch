@@ -1,4 +1,9 @@
-import type { ExportOptions } from "../main/ipcHandlers/dataExportHandlers"
+import type {
+  ExportOptions,
+  ImportOptions,
+  ImportResult,
+  ImportFormat
+} from "../main/ipcHandlers/dataExportHandlers"
 import type {
   Chapter,
   ChapterStats,
@@ -220,6 +225,24 @@ export type DataExportAPI = {
       uploadsCount: number
       chaptersCount: number
       memosCount: number
+    }>
+  >
+  importData(options: ImportOptions): Promise<
+    ApiResult<{
+      analysis: {
+        format: ImportFormat | null
+        recordCounts: Record<string, number>
+        hasValidStructure: boolean
+      }
+      importResult?: ImportResult
+      filePath: string
+    }>
+  >
+  analyzeImportFile(): Promise<
+    ApiResult<{
+      format: ImportFormat | null
+      recordCounts: Record<string, number>
+      hasValidStructure: boolean
     }>
   >
 }
