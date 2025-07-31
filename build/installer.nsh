@@ -9,10 +9,10 @@
     IDYES delete_userdata IDNO skip_userdata
 
   delete_userdata:
-    ; AppDataフォルダのCloudLaunchディレクトリを削除
-    RMDir /r "$APPDATA\CloudLaunch"
+    ; AppDataフォルダのcloud_launchディレクトリを削除
+    RMDir /r "$APPDATA\cloud_launch"
     ; ログファイルなどが保存されている可能性のあるLocalフォルダも削除
-    RMDir /r "$LOCALAPPDATA\CloudLaunch"
+    RMDir /r "$LOCALAPPDATA\cloud_launch"
     DetailPrint "ユーザーデータを削除しました"
     Goto done_userdata
 
