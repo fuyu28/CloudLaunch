@@ -1,6 +1,7 @@
 # CLAUDE.md
 
 必ず日本語で出力してください。
+serenaを活用し、効率的に作業を行ってください。
 
 タスクを終了する前に`npx run format`, `npm run typecheck`, `npm run lint`を行ってください。ただし、この操作には時間がかかるため別々で実行することを推奨します。
 `npm run build`を行う必要はありません。

@@ -20,6 +20,8 @@
 import { useAtom } from "jotai"
 import toast from "react-hot-toast"
 
+import { logger } from "@renderer/utils/logger"
+
 import { DAISYUI_THEMES } from "../constants/themes"
 import {
   themeAtom,
@@ -90,7 +92,11 @@ export default function GeneralSettings(): React.JSX.Element {
         toast.error("設定の更新に失敗しました")
       }
     } catch (error) {
-      console.error("自動ゲーム検出設定の更新エラー:", error)
+      logger.error("自動ゲーム検出設定の更新エラー:", {
+        component: "GeneralSettings",
+        function: "unknown",
+        data: error
+      })
       toast.error("設定の更新に失敗しました")
     }
   }

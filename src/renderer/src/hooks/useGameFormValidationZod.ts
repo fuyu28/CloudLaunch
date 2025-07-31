@@ -19,6 +19,8 @@
 import { useMemo, useState, useCallback, useEffect } from "react"
 import { ZodError } from "zod"
 
+import { logger } from "@renderer/utils/logger"
+
 import { gameFormSchema } from "../../../schemas/game"
 import type { InputGameData } from "../../../types/game"
 import {
@@ -154,7 +156,12 @@ export function useGameFormValidationZod(gameData: InputGameData): GameFormValid
           return newErrors
         })
       } catch (error) {
-        console.warn(`ファイル存在チェックエラー (${fieldName}):`, error)
+        logger.warn(`ファイル存在チェックエラー (${fieldName}):`, {
+          component: "useGameFormValidationZod",
+          function: "checkFileExists",
+          error: error instanceof Error ? error : new Error(String(error)),
+          data: { fieldName }
+        })
       }
     },
     [gameData]

@@ -1,3 +1,5 @@
+import { logger } from "@renderer/utils/logger"
+
 /**
  * @fileoverview ファイルパス検証ユーティリティ
  *
@@ -70,7 +72,11 @@ export async function checkFileExists(filePath: string): Promise<boolean> {
     const exists = await window.api.file.checkFileExists(filePath)
     return exists
   } catch (error) {
-    console.error("ファイル存在チェックエラー:", error)
+    logger.error("ファイル存在チェックエラー:", {
+      component: "fileValidation",
+      function: "unknown",
+      data: error
+    })
     return false
   }
 }
@@ -90,7 +96,11 @@ export async function checkDirectoryExists(dirPath: string): Promise<boolean> {
     const exists = await window.api.file.checkDirectoryExists(dirPath)
     return exists
   } catch (error) {
-    console.warn("ディレクトリ存在チェックエラー:", error)
+    logger.warn("ディレクトリ存在チェックエラー:", {
+      component: "fileValidation",
+      function: "unknown",
+      data: error
+    })
     return false
   }
 }

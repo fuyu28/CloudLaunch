@@ -10,6 +10,8 @@ import { FaChartBar } from "react-icons/fa"
 
 import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
 
+import { logger } from "@renderer/utils/logger"
+
 import type { ChapterStats } from "../../../types/chapter"
 
 type ChapterBarChartProps = {
@@ -89,14 +91,23 @@ const ChapterBarChart = memo(function ChapterBarChart({
         if (result.success && result.data) {
           setChapterStats(result.data)
         } else {
-          console.error(
-            "章別統計データの取得に失敗:",
-            result.success ? "データが空です" : result.message
-          )
+          logger.error("章別統計データの取得に失敗", {
+            component: "ChapterBarChart",
+            function: "loadChapterStats",
+            data: {
+              gameId,
+              result: result.success ? "データが空です" : result.message
+            }
+          })
           setChapterStats([])
         }
       } catch (error) {
-        console.error("章別統計データの取得に失敗:", error)
+        logger.error("章別統計データの取得に失敗", {
+          component: "ChapterBarChart",
+          function: "loadChapterStats",
+          error: error instanceof Error ? error : new Error(String(error)),
+          data: { gameId }
+        })
         setChapterStats([])
       } finally {
         setIsLoading(false)

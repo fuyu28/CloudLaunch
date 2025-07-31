@@ -6,6 +6,7 @@ import { chapterPreload } from "./api/chapterPreload"
 import { cloudDataApi } from "./api/cloudDataPreload"
 import { credentialAPI } from "./api/credentialPreload"
 import { databaseAPI } from "./api/databasePreload"
+import { errorReportAPI } from "./api/errorReportPreload"
 import { fileAPI } from "./api/filePreload"
 import { launchGameAPI } from "./api/launchGamePreload"
 import { loadImageAPI } from "./api/loadImagePreload"
@@ -33,7 +34,8 @@ const api = {
   processMonitor: processMonitorAPI,
   chapter: chapterPreload,
   settings: settingsPreloadApi,
-  memo: memoApi
+  memo: memoApi,
+  errorReport: errorReportAPI
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to
@@ -44,7 +46,8 @@ if (process.contextIsolated) {
     contextBridge.exposeInMainWorld("electron", electronAPI)
     contextBridge.exposeInMainWorld("api", api)
   } catch (error) {
-    console.error(error)
+    // preloadスクリプトではloggerが利用できないため、console.errorを維持
+    console.error("Context bridge API exposure failed:", error)
   }
 } else {
   // @ts-ignore (define in dts)

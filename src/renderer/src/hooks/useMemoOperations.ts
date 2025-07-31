@@ -7,6 +7,8 @@
 
 import { useNavigate } from "react-router-dom"
 
+import { logger } from "@renderer/utils/logger"
+
 import { useToastHandler } from "./useToastHandler"
 
 type UseMemoOperationsProps = {
@@ -57,7 +59,11 @@ export function useMemoOperations({
         showToast("メモの削除に失敗しました", "error")
       }
     } catch (error) {
-      console.error("メモ削除エラー:", error)
+      logger.error("メモ削除エラー:", {
+        component: "useMemoOperations",
+        function: "unknown",
+        data: error
+      })
       showToast("メモの削除中にエラーが発生しました", "error")
     }
   }
@@ -102,7 +108,11 @@ export function useMemoOperations({
     try {
       const result = await window.api.memo.syncMemosFromCloud(gameId)
       if (result.success && result.data) {
-        console.log("同期結果:", result.data) // デバッグ用ログ
+        logger.debug("同期結果:", {
+          component: "useMemoOperations",
+          function: "unknown",
+          data: result.data
+        }) // デバッグ用ログ
         const { uploaded, created, localOverwritten, cloudOverwritten, skipped } = result.data
         showToast(
           `同期完了: 新規アップロード${uploaded ?? 0}件、作成${created}件、ローカル更新${localOverwritten}件、クラウド更新${cloudOverwritten}件、スキップ${skipped}件`,
@@ -113,7 +123,11 @@ export function useMemoOperations({
         showToast("メモの同期に失敗しました", "error")
       }
     } catch (error) {
-      console.error("メモ同期エラー:", error)
+      logger.error("メモ同期エラー:", {
+        component: "useMemoOperations",
+        function: "unknown",
+        data: error
+      })
       showToast("メモの同期中にエラーが発生しました", "error")
     }
   }

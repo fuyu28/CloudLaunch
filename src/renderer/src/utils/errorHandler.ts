@@ -10,6 +10,8 @@
 
 import toast from "react-hot-toast"
 
+import { logger } from "@renderer/utils/logger"
+
 import type { ApiResult } from "../../../types/result"
 
 /**
@@ -49,7 +51,12 @@ export function handleUnexpectedError(error: unknown, context: string, toastId?:
   // デバッグ時のみコンソールにログ出力
   const isDev = process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test"
   if (isDev) {
-    console.error(`予期しないエラー (${context}):`, error)
+    logger.error(`予期しないエラー (${context}):`, {
+      component: "errorHandler",
+      function: "handleUnexpectedError",
+      error: error instanceof Error ? error : new Error(String(error)),
+      data: { context }
+    })
   }
 
   const message = "予期しないエラーが発生しました"

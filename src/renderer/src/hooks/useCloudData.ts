@@ -7,6 +7,8 @@
 import { useState, useCallback, useRef, useMemo } from "react"
 import { toast } from "react-hot-toast"
 
+import { logger } from "@renderer/utils/logger"
+
 import type { CloudDirectoryNode } from "../../../utils/cloudUtils"
 import { getNodesByPath } from "../../../utils/cloudUtils"
 
@@ -105,7 +107,10 @@ export function useCloudData(): UseCloudDataReturn {
       // ツリービュー用のデータ処理
       const directoryTree = treeResult.success && treeResult.data ? treeResult.data : []
       if (!treeResult.success) {
-        console.warn("ディレクトリツリーの取得に失敗しました")
+        logger.warn("ディレクトリツリーの取得に失敗しました", {
+          component: "useCloudData",
+          function: "unknown"
+        })
       }
 
       // キャッシュクリアと状態更新
@@ -117,7 +122,11 @@ export function useCloudData(): UseCloudDataReturn {
         currentPath: []
       })
     } catch (error) {
-      console.error("クラウドデータ取得エラー:", error)
+      logger.error("クラウドデータ取得エラー:", {
+        component: "useCloudData",
+        function: "unknown",
+        data: error
+      })
       toast.error("クラウドデータの取得に失敗しました")
       setState({
         cloudData: [],
@@ -202,7 +211,7 @@ export function useCloudData(): UseCloudDataReturn {
         navigationCacheRef.current.clear()
         fetchCloudData()
       } catch (error) {
-        console.error("削除エラー:", error)
+        logger.error("削除エラー:", { component: "useCloudData", function: "unknown", data: error })
         toast.error("削除に失敗しました")
       }
     },

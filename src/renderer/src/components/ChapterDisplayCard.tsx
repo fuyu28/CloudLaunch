@@ -8,6 +8,8 @@
 import { useState, useEffect, useCallback } from "react"
 import { FaBook, FaChevronLeft, FaChevronRight, FaPlus, FaCog } from "react-icons/fa"
 
+import { logger } from "@renderer/utils/logger"
+
 import type { Chapter } from "../../../types/chapter"
 
 type ChapterDisplayCardProps = {
@@ -65,12 +67,20 @@ export default function ChapterDisplayCard({
             setCurrentChapter(sortedChapters.length > 0 ? sortedChapters[0] : undefined)
           }
         } else {
-          console.error("章データの取得に失敗:", result.success ? "データが空です" : result.message)
+          logger.error("章データの取得に失敗:", {
+            component: "ChapterDisplayCard",
+            function: "unknown",
+            data: result.success ? "データが空です" : result.message
+          })
           setChapters([])
           setCurrentChapter(undefined)
         }
       } catch (error) {
-        console.error("章データの取得に失敗:", error)
+        logger.error("章データの取得に失敗:", {
+          component: "ChapterDisplayCard",
+          function: "unknown",
+          data: error
+        })
         setChapters([])
         setCurrentChapter(undefined)
       } finally {
@@ -96,10 +106,18 @@ export default function ChapterDisplayCard({
           setCurrentChapter(previousChapter)
           onChapterChange?.()
         } else {
-          console.error("章の変更に失敗:", result.message)
+          logger.error("章の変更に失敗:", {
+            component: "ChapterDisplayCard",
+            function: "unknown",
+            data: result.message
+          })
         }
       } catch (error) {
-        console.error("章の変更に失敗:", error)
+        logger.error("章の変更に失敗:", {
+          component: "ChapterDisplayCard",
+          function: "unknown",
+          data: error
+        })
       }
     }
   }, [currentChapter, chapters, gameId, onChapterChange])
@@ -119,10 +137,18 @@ export default function ChapterDisplayCard({
           setCurrentChapter(nextChapter)
           onChapterChange?.()
         } else {
-          console.error("章の変更に失敗:", result.message)
+          logger.error("章の変更に失敗:", {
+            component: "ChapterDisplayCard",
+            function: "unknown",
+            data: result.message
+          })
         }
       } catch (error) {
-        console.error("章の変更に失敗:", error)
+        logger.error("章の変更に失敗:", {
+          component: "ChapterDisplayCard",
+          function: "unknown",
+          data: error
+        })
       }
     }
   }, [currentChapter, chapters, gameId, onChapterChange])
@@ -137,10 +163,18 @@ export default function ChapterDisplayCard({
           setCurrentChapter(chapter)
           onChapterChange?.()
         } else {
-          console.error("章の変更に失敗:", result.message)
+          logger.error("章の変更に失敗:", {
+            component: "ChapterDisplayCard",
+            function: "unknown",
+            data: result.message
+          })
         }
       } catch (error) {
-        console.error("章の変更に失敗:", error)
+        logger.error("章の変更に失敗:", {
+          component: "ChapterDisplayCard",
+          function: "unknown",
+          data: error
+        })
       }
     },
     [gameId, onChapterChange]

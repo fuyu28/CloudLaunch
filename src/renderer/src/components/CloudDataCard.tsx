@@ -11,6 +11,7 @@ import { FaUpload, FaDownload, FaCloud, FaCloudDownloadAlt, FaFile } from "react
 import { useOfflineMode } from "@renderer/hooks/useOfflineMode"
 import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
 
+import { logger } from "@renderer/utils/logger"
 import { getOfflineDisabledClasses } from "@renderer/utils/offlineUtils"
 
 type CloudDataInfo = {
@@ -113,7 +114,11 @@ function CloudDataCard({
           setLastFetchedGameId(gameId)
         }
       } catch (error) {
-        console.error("ファイル詳細情報の取得に失敗:", error)
+        logger.error("ファイル詳細情報の取得に失敗:", {
+          component: "CloudDataCard",
+          function: "unknown",
+          data: error
+        })
         setFileDetails({ exists: false, totalSize: 0, files: [] })
         setCloudData({ exists: false })
         setLastFetchedGameId(gameId)

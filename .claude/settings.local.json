@@ -30,12 +30,12 @@
       "mcp__serena__replace_regex",
       "mcp__serena__find_file",
       "mcp__serena__list_dir",
-      "mcp__serena__initial_instructions"
+      "mcp__serena__initial_instructions",
+      "mcp__serena__insert_after_symbol",
+      "mcp__serena__think_about_collected_information"
     ],
     "deny": []
   },
   "enableAllProjectMcpServers": true,
-  "enabledMcpjsonServers": [
-    "serena"
-  ]
+  "enabledMcpjsonServers": ["serena"]
 }

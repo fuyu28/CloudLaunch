@@ -12,6 +12,8 @@ import { Link } from "react-router-dom"
 import { useDropdownMenu } from "@renderer/hooks/useDropdownMenu"
 import { useMemoOperations } from "@renderer/hooks/useMemoOperations"
 
+import { logger } from "@renderer/utils/logger"
+
 import ConfirmModal from "./ConfirmModal"
 import MemoCardBase from "./MemoCardBase"
 import type { MemoType } from "src/types/memo"
@@ -55,7 +57,7 @@ export default function MemoCard({ gameId }: MemoCardProps): React.JSX.Element {
         setMemos(result.data)
       }
     } catch (error) {
-      console.error("メモ取得エラー:", error)
+      logger.error("メモ取得エラー:", { component: "MemoCard", function: "unknown", data: error })
     } finally {
       setIsLoading(false)
     }

@@ -28,6 +28,8 @@ import { useState, useEffect, useMemo, useCallback } from "react"
 import toast from "react-hot-toast"
 import { ZodError } from "zod"
 
+import { logger } from "@renderer/utils/logger"
+
 import { credsSchema } from "../../../schemas/credentials"
 import type { Creds } from "../../../types/creds"
 import type { ApiResult } from "../../../types/result"
@@ -86,6 +88,8 @@ export type SettingsFormResult = {
   resetForm: () => void
   /** 特定フィールドのバリデーション */
   validateField: (fieldName: keyof SettingsFormData) => string | undefined
+  /** 接続テスト成功状態 */
+  isConnectionSuccessful: boolean | null
 }
 
 /**
@@ -111,6 +115,27 @@ export function useSettingsFormZod(): SettingsFormResult {
   const [isLoading, setIsLoading] = useState(true)
   const [isTesting, setIsTesting] = useState(false)
 
+  // 接続テスト成功状態と最後にテストしたデータ
+  const [isConnectionSuccessful, setIsConnectionSuccessful] = useState<boolean | null>(null)
+  const [lastTestedData, setLastTestedData] = useState<SettingsFormData | null>(null)
+
+  /**
+   * フォームデータが変更されているかチェック
+   */
+  const isDataChanged = useCallback(
+    (data1: SettingsFormData, data2: SettingsFormData | null): boolean => {
+      if (!data2) return true
+      return (
+        data1.bucketName !== data2.bucketName ||
+        data1.endpoint !== data2.endpoint ||
+        data1.region !== data2.region ||
+        data1.accessKeyId !== data2.accessKeyId ||
+        data1.secretAccessKey !== data2.secretAccessKey
+      )
+    },
+    []
+  )
+
   /**
    * 初期データの読み込み
    */
@@ -130,7 +155,11 @@ export function useSettingsFormZod(): SettingsFormResult {
           })
         }
       } catch (error) {
-        console.error("初期データの読み込みに失敗しました:", error)
+        logger.error("初期データの読み込みに失敗しました:", {
+          component: "useSettingsFormZod",
+          function: "unknown",
+          data: error
+        })
         toast.error("設定の読み込みに失敗しました")
       } finally {
         setIsLoading(false)
@@ -143,22 +172,46 @@ export function useSettingsFormZod(): SettingsFormResult {
   /**
    * フィールド単体の更新
    */
-  const updateField = useCallback((field: keyof SettingsFormData, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value
-    }))
-  }, [])
+  const updateField = useCallback(
+    (field: keyof SettingsFormData, value: string) => {
+      setFormData((prev) => {
+        const newData = {
+          ...prev,
+          [field]: value
+        }
+
+        // データが変更されたら接続テスト状態をリセット
+        if (lastTestedData && isDataChanged(newData, lastTestedData)) {
+          setIsConnectionSuccessful(null)
+        }
+
+        return newData
+      })
+    },
+    [lastTestedData, isDataChanged]
+  )
 
   /**
    * フォームデータの部分更新
    */
-  const updateFormData = useCallback((data: Partial<SettingsFormData>) => {
-    setFormData((prev) => ({
-      ...prev,
-      ...data
-    }))
-  }, [])
+  const updateFormData = useCallback(
+    (data: Partial<SettingsFormData>) => {
+      setFormData((prev) => {
+        const newData = {
+          ...prev,
+          ...data
+        }
+
+        // データが変更されたら接続テスト状態をリセット
+        if (lastTestedData && isDataChanged(newData, lastTestedData)) {
+          setIsConnectionSuccessful(null)
+        }
+
+        return newData
+      })
+    },
+    [lastTestedData, isDataChanged]
+  )
 
   /**
    * Zodスキーマを使用したフィールドバリデーション
@@ -246,7 +299,7 @@ export function useSettingsFormZod(): SettingsFormResult {
   }, [validateAllFields, isSaving, isTesting])
 
   /**
-   * 設定保存処理
+   * 設定保存処理（接続テスト込み）
    */
   const handleSave = useCallback(async () => {
     if (!canSubmit) {
@@ -256,6 +309,26 @@ export function useSettingsFormZod(): SettingsFormResult {
 
     setIsSaving(true)
     try {
+      // データが変更されている場合、または接続テストが未実行の場合は接続テストを実行
+      const needsConnectionTest =
+        isDataChanged(formData, lastTestedData) || isConnectionSuccessful !== true
+
+      if (needsConnectionTest) {
+        // 接続テストを実行
+        const testResult: ApiResult = await window.api.credential.validateCredential(formData)
+
+        if (!testResult.success) {
+          toast.error(testResult.message || "接続テストに失敗しました。設定を確認してください。")
+          setIsConnectionSuccessful(false)
+          return
+        }
+
+        // 接続テスト成功
+        setIsConnectionSuccessful(true)
+        setLastTestedData({ ...formData })
+      }
+
+      // 設定を保存
       const result: ApiResult = await window.api.credential.upsertCredential(formData)
 
       if (result.success) {
@@ -264,15 +337,19 @@ export function useSettingsFormZod(): SettingsFormResult {
         toast.error(result.message || "設定の保存に失敗しました")
       }
     } catch (error) {
-      console.error("設定保存エラー:", error)
+      logger.error("設定保存エラー:", {
+        component: "useSettingsFormZod",
+        function: "handleSave",
+        data: error
+      })
       toast.error("設定の保存中にエラーが発生しました")
     } finally {
       setIsSaving(false)
     }
-  }, [formData, canSubmit])
+  }, [formData, canSubmit, isDataChanged, lastTestedData, isConnectionSuccessful])
 
   /**
-   * 接続テスト処理
+   * 手動接続テスト処理（明示的に実行する場合）
    */
   const testConnection = useCallback(async () => {
     if (!canSubmit) {
@@ -286,12 +363,20 @@ export function useSettingsFormZod(): SettingsFormResult {
 
       if (result.success) {
         toast.success("接続テストに成功しました")
+        setIsConnectionSuccessful(true)
+        setLastTestedData({ ...formData })
       } else {
         toast.error(result.message || "接続テストに失敗しました")
+        setIsConnectionSuccessful(false)
       }
     } catch (error) {
-      console.error("接続テストエラー:", error)
+      logger.error("接続テストエラー:", {
+        component: "useSettingsFormZod",
+        function: "testConnection",
+        data: error
+      })
       toast.error("接続テスト中にエラーが発生しました")
+      setIsConnectionSuccessful(false)
     } finally {
       setIsTesting(false)
     }
@@ -324,7 +409,8 @@ export function useSettingsFormZod(): SettingsFormResult {
     handleSave,
     testConnection,
     resetForm,
-    validateField
+    validateField,
+    isConnectionSuccessful
   }
 }
 

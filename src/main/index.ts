@@ -6,6 +6,7 @@ import { app, shell, BrowserWindow, ipcMain } from "electron"
 import { registerWindowHandler } from "./ipcHandlers/windowsHandler"
 import { registerAllHandlers } from "./registerHandlers"
 import { ProcessMonitorService } from "./service/processMonitorService"
+import { setupGlobalErrorHandlers } from "./utils/errorHandler"
 import { logger } from "./utils/logger"
 import icon from "../../build/icon.ico?asset"
 
@@ -51,6 +52,9 @@ function createWindow(): void {
 app.whenReady().then(() => {
   // Set app user model id for windows
   electronApp.setAppUserModelId("com.electron")
+
+  // Setup global error handlers
+  setupGlobalErrorHandlers()
 
   // Default open or close DevTools by F12 in development
   // and ignore CommandOrControl + R in production.

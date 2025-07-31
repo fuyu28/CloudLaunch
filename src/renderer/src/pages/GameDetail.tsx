@@ -23,6 +23,8 @@ import { useOfflineMode } from "@renderer/hooks/useOfflineMode"
 import { useToastHandler } from "@renderer/hooks/useToastHandler"
 import { useValidateCreds } from "@renderer/hooks/useValidCreds"
 
+import { logger } from "@renderer/utils/logger"
+
 import type { GameType } from "src/types/game"
 
 export default function GameDetail(): React.JSX.Element {
@@ -76,7 +78,12 @@ export default function GameDetail(): React.JSX.Element {
           setGame(undefined)
         }
       } catch (error) {
-        console.error("ゲームデータの取得に失敗:", error)
+        logger.error("ゲームデータの取得に失敗", {
+          component: "GameDetail",
+          function: "loadGame",
+          error: error instanceof Error ? error : new Error(String(error)),
+          data: { gameId: id }
+        })
         setGame(undefined)
       } finally {
         setIsLoadingGame(false)
@@ -182,7 +189,12 @@ export default function GameDetail(): React.JSX.Element {
       // リフレッシュキーを更新してコンポーネントの再レンダリングを促す
       setRefreshKey((prev) => prev + 1)
     } catch (error) {
-      console.error("ゲームデータの更新に失敗:", error)
+      logger.error("ゲームデータの更新に失敗", {
+        component: "GameDetail",
+        function: "refreshGameData",
+        error: error instanceof Error ? error : new Error(String(error)),
+        data: { gameId: game?.id }
+      })
     }
   }, [game?.id, setVisibleGames])
 
@@ -238,7 +250,12 @@ export default function GameDetail(): React.JSX.Element {
           showToast(result.message || "プレイステータスの更新に失敗しました", "error")
         }
       } catch (error) {
-        console.error("プレイステータスの更新エラー:", error)
+        logger.error("プレイステータスの更新エラー", {
+          component: "GameDetail",
+          function: "handleStatusChange",
+          error: error instanceof Error ? error : new Error(String(error)),
+          data: { gameId: game.id, newStatus }
+        })
         showToast("プレイステータスの更新に失敗しました", "error")
       } finally {
         setIsUpdatingStatus(false)
