@@ -564,6 +564,70 @@ INSERT INTO games (id, title, publisher, imagePath) VALUES ('test-game-1', 'Test
         expect(result.errors[0].table).toBe("unknown")
       })
 
+      it("バリデーションエラーでインポートを拒否する", async () => {
+        const jsonDataWithInvalidGame = JSON.stringify({
+          data: {
+            games: [
+              {
+                id: "test-game-1",
+                // title が不足（必須フィールド）
+                exePath: "/path/to/game.exe",
+                totalPlayTime: -100 // 負の値（無効）
+              }
+            ]
+          }
+        })
+
+        mockDb.$transaction.mockImplementation((callback) => callback(mockDb))
+
+        const options: ImportOptions = {
+          format: "json",
+          mode: "merge",
+          includeGames: true
+        }
+
+        const result = await exportService.importData(jsonDataWithInvalidGame, options)
+
+        expect(result.successfulImports).toBe(0)
+        expect(result.errors).toHaveLength(1)
+        expect(result.errors[0].error).toContain("バリデーションエラー")
+      })
+
+      it("一部レコードのバリデーションエラーで他のレコードは処理を継続する", async () => {
+        const jsonDataWithMixedValidity = JSON.stringify({
+          data: {
+            games: [
+              {
+                id: "valid-game",
+                title: "Valid Game",
+                exePath: "/path/to/valid.exe"
+              },
+              {
+                id: "invalid-game",
+                // title が不足
+                exePath: "/path/to/invalid.exe"
+              }
+            ]
+          }
+        })
+
+        mockDb.$transaction.mockImplementation((callback) => callback(mockDb))
+        mockDb.game.findUnique.mockResolvedValue(null)
+        mockDb.game.create.mockResolvedValue({})
+
+        const options: ImportOptions = {
+          format: "json",
+          mode: "merge",
+          includeGames: true
+        }
+
+        const result = await exportService.importData(jsonDataWithMixedValidity, options)
+
+        expect(result.successfulImports).toBe(1)
+        expect(result.errors).toHaveLength(1)
+        expect(result.errors[0].error).toContain("バリデーションエラー")
+      })
+
       it("関連するゲームが存在しない場合にエラーを記録する", async () => {
         const jsonData = JSON.stringify({
           data: {

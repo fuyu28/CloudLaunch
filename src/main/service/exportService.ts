@@ -10,6 +10,24 @@ import type {
   ImportResult,
   ImportFormat
 } from "../ipcHandlers/dataExportHandlers"
+import {
+  ExportGameRecordSchema,
+  ExportPlaySessionRecordSchema,
+  ExportUploadRecordSchema,
+  ExportChapterRecordSchema,
+  ExportMemoRecordSchema
+} from "./validation/exportSchemas"
+import {
+  validateRecord,
+  validateJsonImportData,
+  getSchemaForRecordType,
+  GameRecordSchema,
+  PlaySessionRecordSchema,
+  UploadRecordSchema,
+  ChapterRecordSchema,
+  MemoRecordSchema
+} from "./validation/importSchemas"
+import type { ZodSchema } from "zod"
 
 export class ExportService {
   /**
@@ -62,39 +80,116 @@ export class ExportService {
   }
 
   /**
-   * エクスポート対象のデータを取得
+   * エクスポート対象のデータを取得（zodバリデーション付き）
+   * データベースから取得したデータの整合性をチェックし、不正なデータはログに記録する
    */
   private async fetchDataForExport(options: ExportOptions): Promise<Record<string, unknown[]>> {
     const data: Record<string, unknown[]> = {}
 
     if (options.includeGames !== false) {
-      data.games = await db.game.findMany({
+      const rawGames = await db.game.findMany({
         orderBy: { createdAt: "asc" }
       })
+      data.games = this.validateExportData("games", rawGames, ExportGameRecordSchema)
     }
 
     if (options.includePlaySessions !== false) {
-      data.playSessions = await db.playSession.findMany({
+      const rawPlaySessions = await db.playSession.findMany({
         orderBy: { playedAt: "asc" }
       })
+      data.playSessions = this.validateExportData(
+        "playSessions",
+        rawPlaySessions,
+        ExportPlaySessionRecordSchema
+      )
     }
 
     if (options.includeUploads !== false) {
-      data.uploads = await db.upload.findMany({
+      const rawUploads = await db.upload.findMany({
         orderBy: { createdAt: "asc" }
       })
+      data.uploads = this.validateExportData("uploads", rawUploads, ExportUploadRecordSchema)
     }
 
     if (options.includeChapters !== false) {
-      data.chapters = await db.chapter.findMany({
+      const rawChapters = await db.chapter.findMany({
         orderBy: [{ gameId: "asc" }, { order: "asc" }]
       })
+      data.chapters = this.validateExportData("chapters", rawChapters, ExportChapterRecordSchema)
     }
 
     if (options.includeMemos !== false) {
-      data.memos = await db.memo.findMany({
+      const rawMemos = await db.memo.findMany({
         orderBy: { createdAt: "asc" }
       })
+      data.memos = this.validateExportData("memos", rawMemos, ExportMemoRecordSchema)
+    }
+
+    return data
+  }
+
+  /**
+   * エクスポートデータのバリデーション
+   * @param tableName テーブル名（ログ出力用）
+   * @param records バリデーション対象のレコード配列
+   * @param schema zodスキーマ
+   * @returns バリデーション済みの有効なレコード配列
+   */
+  private validateExportData(tableName: string, records: unknown[], schema: ZodSchema): unknown[] {
+    const validRecords: unknown[] = []
+    const invalidRecords: { record: unknown; errors: string[] }[] = []
+
+    for (let i = 0; i < records.length; i++) {
+      const record = records[i]
+      const result = schema.safeParse(record)
+
+      if (result.success) {
+        // Date型フィールドをISO文字列に変換してエクスポート用に整形
+        const exportRecord = this.convertDatesToStrings(result.data)
+        validRecords.push(exportRecord)
+      } else {
+        const errors = result.error.issues.map((err) => `${err.path.join(".")}: ${err.message}`)
+        invalidRecords.push({ record, errors })
+        console.warn(`エクスポート時バリデーションエラー [${tableName}][${i}]:`, errors.join(", "))
+      }
+    }
+
+    if (invalidRecords.length > 0) {
+      console.warn(
+        `${tableName}テーブルで${invalidRecords.length}件の不正なレコードを検出しました。` +
+          `有効レコード数: ${validRecords.length}/${records.length}`
+      )
+    } else {
+      console.log(`${tableName}テーブル: 全${records.length}件のレコードが有効です`)
+    }
+
+    return validRecords
+  }
+
+  /**
+   * Date型フィールドをISO文字列に変換
+   * @param data バリデーション済みのデータ
+   * @returns Date型フィールドが文字列に変換されたデータ
+   */
+  private convertDatesToStrings(data: unknown): unknown {
+    if (data === null || data === undefined) {
+      return data
+    }
+
+    if (data instanceof Date) {
+      return data.toISOString()
+    }
+
+    if (Array.isArray(data)) {
+      return data.map((item) => this.convertDatesToStrings(item))
+    }
+
+    if (typeof data === "object") {
+      const converted: Record<string, unknown> = {}
+      for (const [key, value] of Object.entries(data as Record<string, unknown>)) {
+        converted[key] = this.convertDatesToStrings(value)
+      }
+      return converted
     }
 
     return data
@@ -140,12 +235,9 @@ export class ExportService {
    * JSON形式でエクスポート
    */
   private exportToJSON(data: Record<string, unknown[]>): string {
-    // 日本標準時（JST）でエクスポート日時を記録
-    const now = new Date()
-    const jstOffset = 9 * 60 * 60 * 1000 // JST は UTC+9
-    const jstDate = new Date(now.getTime() + jstOffset)
+    // ISO 8601標準形式でエクスポート日時を記録
     const exportData = {
-      exportedAt: jstDate.toISOString() + " (JST)",
+      exportedAt: new Date().toISOString(),
       version: "1.0",
       data
     }
@@ -299,6 +391,13 @@ export class ExportService {
   private parseJSONImport(fileContent: string): Record<string, unknown[]> {
     const parsed = JSON.parse(fileContent)
 
+    // 全体構造のバリデーション
+    const validation = validateJsonImportData(parsed)
+    if (!validation.isValid) {
+      const errorMessage = validation.errors.map((err) => `${err.path}: ${err.message}`).join(", ")
+      throw new Error(`JSON構造のバリデーションエラー: ${errorMessage}`)
+    }
+
     // CloudLaunchエクスポート形式を検出
     if (parsed.data && typeof parsed.data === "object") {
       return parsed.data as Record<string, unknown[]>
@@ -348,6 +447,20 @@ export class ExportService {
             const value = values[index]
             record[header] = value === "" ? null : value
           })
+
+          // 各レコードをバリデーション
+          const schema = getSchemaForRecordType(currentTable)
+          if (schema) {
+            const validation = validateRecord(record, schema, currentTable)
+            if (!validation.isValid) {
+              const errorMessage = validation.errors
+                .map((err) => `${err.path}: ${err.message}`)
+                .join(", ")
+              console.warn(`CSVレコードのバリデーション警告 (${currentTable}): ${errorMessage}`)
+              // 警告として記録するが、処理は継続
+            }
+          }
+
           data[currentTable].push(record)
         }
       }
@@ -428,6 +541,20 @@ export class ExportService {
           columns.forEach((column, index) => {
             record[column] = values[index]
           })
+
+          // 各レコードをバリデーション
+          const schema = getSchemaForRecordType(tableName)
+          if (schema) {
+            const validation = validateRecord(record, schema, tableName)
+            if (!validation.isValid) {
+              const errorMessage = validation.errors
+                .map((err) => `${err.path}: ${err.message}`)
+                .join(", ")
+              console.warn(`SQLレコードのバリデーション警告 (${tableName}): ${errorMessage}`)
+              // 警告として記録するが、処理は継続
+            }
+          }
+
           data[tableName].push(record)
         }
       }
@@ -624,7 +751,16 @@ export class ExportService {
     record: Record<string, unknown>,
     options: ImportOptions
   ): Promise<boolean> {
-    const id = String(record.id)
+    // バリデーション実行
+    const validation = validateRecord(record, GameRecordSchema, "game")
+    if (!validation.isValid) {
+      const errorMessage = validation.errors.map((err) => `${err.path}: ${err.message}`).join(", ")
+      throw new Error(`ゲームデータのバリデーションエラー: ${errorMessage}`)
+    }
+
+    // バリデーション済みデータを使用
+    const validatedRecord = validation.data as Record<string, unknown>
+    const id = String(validatedRecord.id)
 
     // 既存レコードをチェック
     const existing = await tx.game.findUnique({ where: { id } })
@@ -632,40 +768,30 @@ export class ExportService {
     if (existing) {
       if (options.mode === "skip") {
         return false
-      } else if (options.mode === "replace") {
+      } else if (options.mode === "replace" || options.mode === "merge") {
+        // replaceとmergeモードの場合は既存データを更新
         await tx.game.update({
           where: { id },
           data: {
-            title: String(record.title || ""),
-            publisher: String(record.publisher || ""),
-            imagePath: record.imagePath ? String(record.imagePath) : null,
-            exePath: String(record.exePath || ""),
-            saveFolderPath: record.saveFolderPath ? String(record.saveFolderPath) : null,
+            title: String(validatedRecord.title || ""),
+            publisher: validatedRecord.publisher ? String(validatedRecord.publisher) : null,
+            imagePath: validatedRecord.imagePath ? String(validatedRecord.imagePath) : null,
+            exePath: String(validatedRecord.exePath || ""),
+            saveFolderPath: validatedRecord.saveFolderPath
+              ? String(validatedRecord.saveFolderPath)
+              : null,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            playStatus: (record.playStatus as any) || "unplayed",
-            totalPlayTime: Number(record.totalPlayTime) || 0,
-            lastPlayed: record.lastPlayed ? new Date(String(record.lastPlayed)) : null,
-            clearedAt: record.clearedAt ? new Date(String(record.clearedAt)) : null,
-            currentChapter: record.currentChapter ? String(record.currentChapter) : null
-          }
-        })
-        return true
-      } else if (options.mode === "merge") {
-        // mergeモードの場合は既存データを更新
-        await tx.game.update({
-          where: { id },
-          data: {
-            title: String(record.title || ""),
-            publisher: String(record.publisher || ""),
-            imagePath: record.imagePath ? String(record.imagePath) : null,
-            exePath: String(record.exePath || ""),
-            saveFolderPath: record.saveFolderPath ? String(record.saveFolderPath) : null,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            playStatus: (record.playStatus as any) || "unplayed",
-            totalPlayTime: Number(record.totalPlayTime) || 0,
-            lastPlayed: record.lastPlayed ? new Date(String(record.lastPlayed)) : null,
-            clearedAt: record.clearedAt ? new Date(String(record.clearedAt)) : null,
-            currentChapter: record.currentChapter ? String(record.currentChapter) : null
+            playStatus: (validatedRecord.playStatus as any) || "unplayed",
+            totalPlayTime: Number(validatedRecord.totalPlayTime) || 0,
+            lastPlayed: validatedRecord.lastPlayed
+              ? new Date(String(validatedRecord.lastPlayed))
+              : null,
+            clearedAt: validatedRecord.clearedAt
+              ? new Date(String(validatedRecord.clearedAt))
+              : null,
+            currentChapter: validatedRecord.currentChapter
+              ? String(validatedRecord.currentChapter)
+              : null
           }
         })
         return true
@@ -676,18 +802,26 @@ export class ExportService {
     await tx.game.create({
       data: {
         id,
-        title: String(record.title || ""),
-        publisher: String(record.publisher || ""),
-        imagePath: record.imagePath ? String(record.imagePath) : null,
-        exePath: String(record.exePath || ""),
-        saveFolderPath: record.saveFolderPath ? String(record.saveFolderPath) : null,
-        createdAt: record.createdAt ? new Date(String(record.createdAt)) : new Date(),
+        title: String(validatedRecord.title || ""),
+        publisher: validatedRecord.publisher ? String(validatedRecord.publisher) : null,
+        imagePath: validatedRecord.imagePath ? String(validatedRecord.imagePath) : null,
+        exePath: String(validatedRecord.exePath || ""),
+        saveFolderPath: validatedRecord.saveFolderPath
+          ? String(validatedRecord.saveFolderPath)
+          : null,
+        createdAt: validatedRecord.createdAt
+          ? new Date(String(validatedRecord.createdAt))
+          : new Date(),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        playStatus: (record.playStatus as any) || "unplayed",
-        totalPlayTime: Number(record.totalPlayTime) || 0,
-        lastPlayed: record.lastPlayed ? new Date(String(record.lastPlayed)) : null,
-        clearedAt: record.clearedAt ? new Date(String(record.clearedAt)) : null,
-        currentChapter: record.currentChapter ? String(record.currentChapter) : null
+        playStatus: (validatedRecord.playStatus as any) || "unplayed",
+        totalPlayTime: Number(validatedRecord.totalPlayTime) || 0,
+        lastPlayed: validatedRecord.lastPlayed
+          ? new Date(String(validatedRecord.lastPlayed))
+          : null,
+        clearedAt: validatedRecord.clearedAt ? new Date(String(validatedRecord.clearedAt)) : null,
+        currentChapter: validatedRecord.currentChapter
+          ? String(validatedRecord.currentChapter)
+          : null
       }
     })
 
@@ -703,8 +837,17 @@ export class ExportService {
     record: Record<string, unknown>,
     options: ImportOptions
   ): Promise<boolean> {
-    const id = String(record.id)
-    const gameId = String(record.gameId)
+    // バリデーション実行
+    const validation = validateRecord(record, PlaySessionRecordSchema, "playSession")
+    if (!validation.isValid) {
+      const errorMessage = validation.errors.map((err) => `${err.path}: ${err.message}`).join(", ")
+      throw new Error(`プレイセッションデータのバリデーションエラー: ${errorMessage}`)
+    }
+
+    // バリデーション済みデータを使用
+    const validatedRecord = validation.data as Record<string, unknown>
+    const id = String(validatedRecord.id)
+    const gameId = String(validatedRecord.gameId)
 
     // ゲームが存在するかチェック
     const gameExists = await tx.game.findUnique({ where: { id: gameId } })
@@ -724,11 +867,13 @@ export class ExportService {
           where: { id },
           data: {
             gameId,
-            playedAt: record.playedAt ? new Date(String(record.playedAt)) : new Date(),
-            duration: Number(record.duration) || 0,
-            sessionName: record.sessionName ? String(record.sessionName) : null,
-            chapterId: record.chapterId ? String(record.chapterId) : null,
-            uploadId: record.uploadId ? String(record.uploadId) : null
+            playedAt: validatedRecord.playedAt
+              ? new Date(String(validatedRecord.playedAt))
+              : new Date(),
+            duration: Number(validatedRecord.duration) || 0,
+            sessionName: validatedRecord.sessionName ? String(validatedRecord.sessionName) : null,
+            chapterId: validatedRecord.chapterId ? String(validatedRecord.chapterId) : null,
+            uploadId: validatedRecord.uploadId ? String(validatedRecord.uploadId) : null
           }
         })
         return true
@@ -740,11 +885,13 @@ export class ExportService {
       data: {
         id,
         gameId,
-        playedAt: record.playedAt ? new Date(String(record.playedAt)) : new Date(),
-        duration: Number(record.duration) || 0,
-        sessionName: record.sessionName ? String(record.sessionName) : null,
-        chapterId: record.chapterId ? String(record.chapterId) : null,
-        uploadId: record.uploadId ? String(record.uploadId) : null
+        playedAt: validatedRecord.playedAt
+          ? new Date(String(validatedRecord.playedAt))
+          : new Date(),
+        duration: Number(validatedRecord.duration) || 0,
+        sessionName: validatedRecord.sessionName ? String(validatedRecord.sessionName) : null,
+        chapterId: validatedRecord.chapterId ? String(validatedRecord.chapterId) : null,
+        uploadId: validatedRecord.uploadId ? String(validatedRecord.uploadId) : null
       }
     })
 
@@ -760,8 +907,17 @@ export class ExportService {
     record: Record<string, unknown>,
     options: ImportOptions
   ): Promise<boolean> {
-    const id = String(record.id)
-    const gameId = String(record.gameId)
+    // バリデーション実行
+    const validation = validateRecord(record, UploadRecordSchema, "upload")
+    if (!validation.isValid) {
+      const errorMessage = validation.errors.map((err) => `${err.path}: ${err.message}`).join(", ")
+      throw new Error(`アップロードデータのバリデーションエラー: ${errorMessage}`)
+    }
+
+    // バリデーション済みデータを使用
+    const validatedRecord = validation.data as Record<string, unknown>
+    const id = String(validatedRecord.id)
+    const gameId = String(validatedRecord.gameId)
 
     // ゲームが存在するかチェック
     const gameExists = await tx.game.findUnique({ where: { id: gameId } })
@@ -781,9 +937,11 @@ export class ExportService {
           where: { id },
           data: {
             gameId,
-            clientId: record.clientId ? String(record.clientId) : null,
-            comment: String(record.comment || ""),
-            createdAt: record.createdAt ? new Date(String(record.createdAt)) : new Date()
+            clientId: validatedRecord.clientId ? String(validatedRecord.clientId) : null,
+            comment: String(validatedRecord.comment || ""),
+            createdAt: validatedRecord.createdAt
+              ? new Date(String(validatedRecord.createdAt))
+              : new Date()
           }
         })
         return true
@@ -795,9 +953,11 @@ export class ExportService {
       data: {
         id,
         gameId,
-        clientId: record.clientId ? String(record.clientId) : null,
-        comment: String(record.comment || ""),
-        createdAt: record.createdAt ? new Date(String(record.createdAt)) : new Date()
+        clientId: validatedRecord.clientId ? String(validatedRecord.clientId) : null,
+        comment: String(validatedRecord.comment || ""),
+        createdAt: validatedRecord.createdAt
+          ? new Date(String(validatedRecord.createdAt))
+          : new Date()
       }
     })
 
@@ -813,8 +973,17 @@ export class ExportService {
     record: Record<string, unknown>,
     options: ImportOptions
   ): Promise<boolean> {
-    const id = String(record.id)
-    const gameId = String(record.gameId)
+    // バリデーション実行
+    const validation = validateRecord(record, ChapterRecordSchema, "chapter")
+    if (!validation.isValid) {
+      const errorMessage = validation.errors.map((err) => `${err.path}: ${err.message}`).join(", ")
+      throw new Error(`チャプターデータのバリデーションエラー: ${errorMessage}`)
+    }
+
+    // バリデーション済みデータを使用
+    const validatedRecord = validation.data as Record<string, unknown>
+    const id = String(validatedRecord.id)
+    const gameId = String(validatedRecord.gameId)
 
     // ゲームが存在するかチェック
     const gameExists = await tx.game.findUnique({ where: { id: gameId } })
@@ -834,9 +1003,11 @@ export class ExportService {
           where: { id },
           data: {
             gameId,
-            name: String(record.name || ""),
-            order: Number(record.order) || 0,
-            createdAt: record.createdAt ? new Date(String(record.createdAt)) : new Date()
+            name: String(validatedRecord.name || ""),
+            order: Number(validatedRecord.order) || 0,
+            createdAt: validatedRecord.createdAt
+              ? new Date(String(validatedRecord.createdAt))
+              : new Date()
           }
         })
         return true
@@ -848,9 +1019,11 @@ export class ExportService {
       data: {
         id,
         gameId,
-        name: String(record.name || ""),
-        order: Number(record.order) || 0,
-        createdAt: record.createdAt ? new Date(String(record.createdAt)) : new Date()
+        name: String(validatedRecord.name || ""),
+        order: Number(validatedRecord.order) || 0,
+        createdAt: validatedRecord.createdAt
+          ? new Date(String(validatedRecord.createdAt))
+          : new Date()
       }
     })
 
@@ -866,8 +1039,17 @@ export class ExportService {
     record: Record<string, unknown>,
     options: ImportOptions
   ): Promise<boolean> {
-    const id = String(record.id)
-    const gameId = String(record.gameId)
+    // バリデーション実行
+    const validation = validateRecord(record, MemoRecordSchema, "memo")
+    if (!validation.isValid) {
+      const errorMessage = validation.errors.map((err) => `${err.path}: ${err.message}`).join(", ")
+      throw new Error(`メモデータのバリデーションエラー: ${errorMessage}`)
+    }
+
+    // バリデーション済みデータを使用
+    const validatedRecord = validation.data as Record<string, unknown>
+    const id = String(validatedRecord.id)
+    const gameId = String(validatedRecord.gameId)
 
     // ゲームが存在するかチェック
     const gameExists = await tx.game.findUnique({ where: { id: gameId } })
@@ -887,10 +1069,14 @@ export class ExportService {
           where: { id },
           data: {
             gameId,
-            title: String(record.title || ""),
-            content: String(record.content || ""),
-            createdAt: record.createdAt ? new Date(String(record.createdAt)) : new Date(),
-            updatedAt: record.updatedAt ? new Date(String(record.updatedAt)) : new Date()
+            title: String(validatedRecord.title || ""),
+            content: String(validatedRecord.content || ""),
+            createdAt: validatedRecord.createdAt
+              ? new Date(String(validatedRecord.createdAt))
+              : new Date(),
+            updatedAt: validatedRecord.updatedAt
+              ? new Date(String(validatedRecord.updatedAt))
+              : new Date()
           }
         })
         return true
@@ -902,10 +1088,14 @@ export class ExportService {
       data: {
         id,
         gameId,
-        title: String(record.title || ""),
-        content: String(record.content || ""),
-        createdAt: record.createdAt ? new Date(String(record.createdAt)) : new Date(),
-        updatedAt: record.updatedAt ? new Date(String(record.updatedAt)) : new Date()
+        title: String(validatedRecord.title || ""),
+        content: String(validatedRecord.content || ""),
+        createdAt: validatedRecord.createdAt
+          ? new Date(String(validatedRecord.createdAt))
+          : new Date(),
+        updatedAt: validatedRecord.updatedAt
+          ? new Date(String(validatedRecord.updatedAt))
+          : new Date()
       }
     })
 
