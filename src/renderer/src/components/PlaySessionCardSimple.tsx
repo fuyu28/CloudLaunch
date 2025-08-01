@@ -5,8 +5,8 @@
  * タイトルやカード装飾を除去し、統合されたレイアウトに適合します。
  */
 
-import { useState, useCallback, useEffect, useMemo, memo } from "react"
 import { subWeeks } from "date-fns"
+import { useState, useCallback, useEffect, useMemo, memo } from "react"
 import { FaPlus, FaCog, FaGamepad, FaClock, FaChartLine, FaCalendarWeek } from "react-icons/fa"
 
 import { useTimeFormat } from "@renderer/hooks/useTimeFormat"

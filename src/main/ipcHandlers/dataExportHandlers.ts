@@ -9,7 +9,9 @@ import path from "path"
 import { ipcMain, dialog } from "electron"
 
 import type { ApiResult } from "../../types/result"
+import { dataParserService } from "../service/dataParserService"
 import { exportService } from "../service/exportService"
+import { importService } from "../service/importService"
 import { generateExportTimestamp } from "../service/validation/commonSchemas"
 import { showNotification } from "../utils/notification"
 
@@ -167,36 +169,11 @@ export const handleDataImport = async (
     const filePath = result.filePaths[0]
     const fileContent = await fs.readFile(filePath, "utf8")
 
-    // ファイル形式を判定
-    const fileExtension = path.extname(filePath).toLowerCase()
-    let format: ImportFormat | null = null
-
-    switch (fileExtension) {
-      case ".json":
-        format = "json"
-        break
-      case ".csv":
-        format = "csv"
-        break
-      case ".sql":
-        format = "sql"
-        break
-      default:
-        // 内容から推測
-        try {
-          JSON.parse(fileContent)
-          format = "json"
-        } catch {
-          if (fileContent.includes("INSERT INTO")) {
-            format = "sql"
-          } else if (fileContent.includes(",")) {
-            format = "csv"
-          }
-        }
-    }
+    // ファイル形式を自動判定
+    const format = dataParserService.detectFormat(filePath, fileContent)
 
     // ファイル内容を分析
-    const analysis = await exportService.analyzeImportFile(fileContent, format)
+    const analysis = await dataParserService.analyzeFile(fileContent, format)
 
     // フォーマットが判定できない場合は分析結果のみ返す
     if (!format || !analysis.hasValidStructure) {
@@ -213,9 +190,12 @@ export const handleDataImport = async (
       }
     }
 
-    // インポート処理を実行（フォーマットを分析結果で上書き）
+    // ファイルをパース
+    const parsedData = await dataParserService.parseFile(fileContent, format)
+
+    // インポート処理を実行
     const finalOptions = { ...options, format }
-    const importResult = await exportService.importData(fileContent, finalOptions)
+    const importResult = await importService.importData(parsedData, finalOptions)
 
     // 完了通知
     showNotification(
@@ -277,36 +257,11 @@ export const handleAnalyzeImportFile = async (): Promise<
     const filePath = result.filePaths[0]
     const fileContent = await fs.readFile(filePath, "utf8")
 
-    // ファイル形式を判定
-    const fileExtension = path.extname(filePath).toLowerCase()
-    let format: ImportFormat | null = null
-
-    switch (fileExtension) {
-      case ".json":
-        format = "json"
-        break
-      case ".csv":
-        format = "csv"
-        break
-      case ".sql":
-        format = "sql"
-        break
-      default:
-        // 内容から推測
-        try {
-          JSON.parse(fileContent)
-          format = "json"
-        } catch {
-          if (fileContent.includes("INSERT INTO")) {
-            format = "sql"
-          } else if (fileContent.includes(",")) {
-            format = "csv"
-          }
-        }
-    }
+    // ファイル形式を自動判定
+    const format = dataParserService.detectFormat(filePath, fileContent)
 
     // ファイル内容を分析
-    const analysis = await exportService.analyzeImportFile(fileContent, format)
+    const analysis = await dataParserService.analyzeFile(fileContent, format)
 
     return {
       success: true,

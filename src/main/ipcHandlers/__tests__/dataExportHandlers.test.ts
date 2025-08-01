@@ -1,10 +1,12 @@
 /**
- * @fileoverview dataExportHandlers.tsのテスト
+ * @fileoverview dataExportHandlers.tsのテスト（リファクタリング済み）
  *
  * データエクスポート機能のIPCハンドラーの動作をテストします。
  * - エクスポート統計の取得
  * - データエクスポート（CSV、JSON、SQL形式）
  * - ファイル保存の確認
+ * - インポート処理（新しいサービス構成）
+ * - ファイル分析処理（新しいサービス構成）
  */
 
 /// <reference types="jest" />
@@ -14,7 +16,9 @@ import path from "path"
 
 import { dialog } from "electron"
 
+import { dataParserService } from "../../service/dataParserService"
 import { exportService } from "../../service/exportService"
+import { importService } from "../../service/importService"
 import type { ExportOptions, ImportOptions } from "../dataExportHandlers"
 import {
   handleDataExport,
@@ -40,9 +44,21 @@ jest.mock("electron", () => ({
 jest.mock("../../service/exportService", () => ({
   exportService: {
     exportData: jest.fn(),
-    getExportStats: jest.fn(),
-    importData: jest.fn(),
-    analyzeImportFile: jest.fn()
+    getExportStats: jest.fn()
+  }
+}))
+
+jest.mock("../../service/importService", () => ({
+  importService: {
+    importData: jest.fn()
+  }
+}))
+
+jest.mock("../../service/dataParserService", () => ({
+  dataParserService: {
+    detectFormat: jest.fn(),
+    analyzeFile: jest.fn(),
+    parseFile: jest.fn()
   }
 }))
 
@@ -53,6 +69,8 @@ jest.mock("../../utils/notification", () => ({
 const mockFs = fs as jest.Mocked<typeof fs>
 const mockDialog = dialog as jest.Mocked<typeof dialog>
 const mockExportService = exportService as jest.Mocked<typeof exportService>
+const mockImportService = importService as jest.Mocked<typeof importService>
+const mockDataParserService = dataParserService as jest.Mocked<typeof dataParserService>
 
 describe("dataExportHandlers", () => {
   // モックイベント
@@ -90,9 +108,7 @@ describe("dataExportHandlers", () => {
       const result = await handleGetExportStats()
 
       expect(result.success).toBe(false)
-      if (!result.success) {
-        expect(result.message).toBe("統計取得エラー")
-      }
+      expect((result as { success: false; message: string }).message).toBe("統計取得エラー")
     })
   })
 
@@ -197,9 +213,9 @@ describe("dataExportHandlers", () => {
       const result = await handleDataExport(mockEvent, mockExportOptions)
 
       expect(result.success).toBe(false)
-      if (!result.success) {
-        expect(result.message).toBe("フォルダの選択がキャンセルされました")
-      }
+      expect((result as { success: false; message: string }).message).toBe(
+        "フォルダの選択がキャンセルされました"
+      )
       expect(mockExportService.exportData).not.toHaveBeenCalled()
       expect(mockFs.writeFile).not.toHaveBeenCalled()
     })
@@ -219,9 +235,7 @@ describe("dataExportHandlers", () => {
       const result = await handleDataExport(mockEvent, mockExportOptions)
 
       expect(result.success).toBe(false)
-      if (!result.success) {
-        expect(result.message).toBe("書き込みエラー")
-      }
+      expect((result as { success: false; message: string }).message).toBe("書き込みエラー")
     })
 
     it("エクスポートサービスでエラーが発生した場合にエラーレスポンスを返す", async () => {
@@ -237,9 +251,7 @@ describe("dataExportHandlers", () => {
       const result = await handleDataExport(mockEvent, mockExportOptions)
 
       expect(result.success).toBe(false)
-      if (!result.success) {
-        expect(result.message).toBe("エクスポートエラー")
-      }
+      expect((result as { success: false; message: string }).message).toBe("エクスポートエラー")
       expect(mockFs.writeFile).not.toHaveBeenCalled()
     })
   })
@@ -269,15 +281,30 @@ describe("dataExportHandlers", () => {
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ;(mockFs.readFile as any).mockResolvedValue(mockFileContent)
-      mockExportService.importData.mockResolvedValue(mockImportResult)
+      mockDataParserService.detectFormat.mockReturnValue("json")
+      mockDataParserService.analyzeFile.mockResolvedValue({
+        format: "json",
+        recordCounts: { games: 1 },
+        hasValidStructure: true
+      })
+      mockDataParserService.parseFile.mockResolvedValue({
+        format: "json",
+        data: { games: [{ id: "test-game-1" }] }
+      })
+      mockImportService.importData.mockResolvedValue(mockImportResult)
 
       const result = await handleDataImport(mockEvent, mockImportOptions)
 
       expect(result.success).toBe(true)
-      if (result.success) {
-        expect(result.data).toEqual(mockImportResult)
+      if (result.success && result.data) {
+        expect(result.data.importResult).toEqual(mockImportResult)
+        expect(result.data.analysis.format).toBe("json")
+        expect(result.data.filePath).toBe(mockFilePath)
       }
-      expect(mockExportService.importData).toHaveBeenCalledWith(mockFileContent, mockImportOptions)
+      expect(mockImportService.importData).toHaveBeenCalledWith(
+        { format: "json", data: { games: [{ id: "test-game-1" }] } },
+        { ...mockImportOptions, format: "json" }
+      )
       expect(mockFs.readFile).toHaveBeenCalledWith(mockFilePath, "utf8")
     })
 
@@ -303,15 +330,28 @@ describe("dataExportHandlers", () => {
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ;(mockFs.readFile as any).mockResolvedValue(mockFileContent)
-      mockExportService.importData.mockResolvedValue(mockImportResult)
+      mockDataParserService.detectFormat.mockReturnValue("csv")
+      mockDataParserService.analyzeFile.mockResolvedValue({
+        format: "csv",
+        recordCounts: { games: 3 },
+        hasValidStructure: true
+      })
+      mockDataParserService.parseFile.mockResolvedValue({
+        format: "csv",
+        data: { games: [{ id: "1", title: "Game1" }] }
+      })
+      mockImportService.importData.mockResolvedValue(mockImportResult)
 
       const result = await handleDataImport(mockEvent, mockImportOptions)
 
       expect(result.success).toBe(true)
-      if (result.success) {
-        expect(result.data).toEqual(mockImportResult)
+      if (result.success && result.data) {
+        expect(result.data.importResult).toEqual(mockImportResult)
       }
-      expect(mockExportService.importData).toHaveBeenCalledWith(mockFileContent, mockImportOptions)
+      expect(mockImportService.importData).toHaveBeenCalledWith(
+        { format: "csv", data: { games: [{ id: "1", title: "Game1" }] } },
+        { ...mockImportOptions, format: "csv" }
+      )
     })
 
     it("ダイアログがキャンセルされた場合にエラーレスポンスを返す", async () => {
@@ -323,10 +363,10 @@ describe("dataExportHandlers", () => {
       const result = await handleDataImport(mockEvent, mockImportOptions)
 
       expect(result.success).toBe(false)
-      if (!result.success) {
-        expect(result.message).toBe("ファイルの選択がキャンセルされました")
-      }
-      expect(mockExportService.importData).not.toHaveBeenCalled()
+      expect((result as { success: false; message: string }).message).toBe(
+        "ファイルの選択がキャンセルされました"
+      )
+      expect(mockImportService.importData).not.toHaveBeenCalled()
       expect(mockFs.readFile).not.toHaveBeenCalled()
     })
 
@@ -344,10 +384,8 @@ describe("dataExportHandlers", () => {
       const result = await handleDataImport(mockEvent, mockImportOptions)
 
       expect(result.success).toBe(false)
-      if (!result.success) {
-        expect(result.message).toBe("ファイル読み込みエラー")
-      }
-      expect(mockExportService.importData).not.toHaveBeenCalled()
+      expect((result as { success: false; message: string }).message).toBe("ファイル読み込みエラー")
+      expect(mockImportService.importData).not.toHaveBeenCalled()
     })
 
     it("インポートサービスでエラーが発生した場合にエラーレスポンスを返す", async () => {
@@ -361,14 +399,22 @@ describe("dataExportHandlers", () => {
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ;(mockFs.readFile as any).mockResolvedValue(mockFileContent)
-      mockExportService.importData.mockRejectedValue(new Error("インポートエラー"))
+      mockDataParserService.detectFormat.mockReturnValue("json")
+      mockDataParserService.analyzeFile.mockResolvedValue({
+        format: "json",
+        recordCounts: {},
+        hasValidStructure: true
+      })
+      mockDataParserService.parseFile.mockResolvedValue({
+        format: "json",
+        data: {}
+      })
+      mockImportService.importData.mockRejectedValue(new Error("インポートエラー"))
 
       const result = await handleDataImport(mockEvent, mockImportOptions)
 
       expect(result.success).toBe(false)
-      if (!result.success) {
-        expect(result.message).toBe("インポートエラー")
-      }
+      expect((result as { success: false; message: string }).message).toBe("インポートエラー")
     })
   })
 
@@ -389,7 +435,8 @@ describe("dataExportHandlers", () => {
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ;(mockFs.readFile as any).mockResolvedValue(mockFileContent)
-      mockExportService.analyzeImportFile.mockResolvedValue(mockAnalysisResult)
+      mockDataParserService.detectFormat.mockReturnValue("json")
+      mockDataParserService.analyzeFile.mockResolvedValue(mockAnalysisResult)
 
       const result = await handleAnalyzeImportFile()
 
@@ -399,11 +446,12 @@ describe("dataExportHandlers", () => {
         expect(result.data.recordCounts).toEqual({ games: 5, playSessions: 10 })
         expect(result.data.hasValidStructure).toBe(true)
       }
-      expect(mockExportService.analyzeImportFile).toHaveBeenCalledWith(mockFileContent, "json")
+      expect(mockDataParserService.analyzeFile).toHaveBeenCalledWith(mockFileContent, "json")
     })
 
     it("ファイル拡張子からCSV形式を判定する", async () => {
       const mockAnalysisResult = {
+        format: "csv" as const,
         recordCounts: { games: 3 },
         hasValidStructure: true
       }
@@ -417,7 +465,8 @@ describe("dataExportHandlers", () => {
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ;(mockFs.readFile as any).mockResolvedValue(mockFileContent)
-      mockExportService.analyzeImportFile.mockResolvedValue(mockAnalysisResult)
+      mockDataParserService.detectFormat.mockReturnValue("csv")
+      mockDataParserService.analyzeFile.mockResolvedValue(mockAnalysisResult)
 
       const result = await handleAnalyzeImportFile()
 
@@ -425,11 +474,12 @@ describe("dataExportHandlers", () => {
       if (result.success && result.data) {
         expect(result.data.format).toBe("csv")
       }
-      expect(mockExportService.analyzeImportFile).toHaveBeenCalledWith(mockFileContent, "csv")
+      expect(mockDataParserService.analyzeFile).toHaveBeenCalledWith(mockFileContent, "csv")
     })
 
     it("ファイル拡張子からSQL形式を判定する", async () => {
       const mockAnalysisResult = {
+        format: "sql" as const,
         recordCounts: { games: 2 },
         hasValidStructure: true
       }
@@ -443,7 +493,8 @@ describe("dataExportHandlers", () => {
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ;(mockFs.readFile as any).mockResolvedValue(mockFileContent)
-      mockExportService.analyzeImportFile.mockResolvedValue(mockAnalysisResult)
+      mockDataParserService.detectFormat.mockReturnValue("sql")
+      mockDataParserService.analyzeFile.mockResolvedValue(mockAnalysisResult)
 
       const result = await handleAnalyzeImportFile()
 
@@ -451,11 +502,12 @@ describe("dataExportHandlers", () => {
       if (result.success && result.data) {
         expect(result.data.format).toBe("sql")
       }
-      expect(mockExportService.analyzeImportFile).toHaveBeenCalledWith(mockFileContent, "sql")
+      expect(mockDataParserService.analyzeFile).toHaveBeenCalledWith(mockFileContent, "sql")
     })
 
     it("内容からJSON形式を推測する", async () => {
       const mockAnalysisResult = {
+        format: "json" as const,
         recordCounts: { games: 1 },
         hasValidStructure: true
       }
@@ -469,7 +521,8 @@ describe("dataExportHandlers", () => {
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ;(mockFs.readFile as any).mockResolvedValue(mockFileContent)
-      mockExportService.analyzeImportFile.mockResolvedValue(mockAnalysisResult)
+      mockDataParserService.detectFormat.mockReturnValue("json")
+      mockDataParserService.analyzeFile.mockResolvedValue(mockAnalysisResult)
 
       const result = await handleAnalyzeImportFile()
 
@@ -488,10 +541,10 @@ describe("dataExportHandlers", () => {
       const result = await handleAnalyzeImportFile()
 
       expect(result.success).toBe(false)
-      if (!result.success) {
-        expect(result.message).toBe("ファイルの選択がキャンセルされました")
-      }
-      expect(mockExportService.analyzeImportFile).not.toHaveBeenCalled()
+      expect((result as { success: false; message: string }).message).toBe(
+        "ファイルの選択がキャンセルされました"
+      )
+      expect(mockDataParserService.analyzeFile).not.toHaveBeenCalled()
     })
 
     it("ファイル分析でエラーが発生した場合にエラーレスポンスを返す", async () => {
@@ -505,14 +558,13 @@ describe("dataExportHandlers", () => {
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ;(mockFs.readFile as any).mockResolvedValue(mockFileContent)
-      mockExportService.analyzeImportFile.mockRejectedValue(new Error("分析エラー"))
+      mockDataParserService.detectFormat.mockReturnValue("json")
+      mockDataParserService.analyzeFile.mockRejectedValue(new Error("分析エラー"))
 
       const result = await handleAnalyzeImportFile()
 
       expect(result.success).toBe(false)
-      if (!result.success) {
-        expect(result.message).toBe("分析エラー")
-      }
+      expect((result as { success: false; message: string }).message).toBe("分析エラー")
     })
   })
 })
