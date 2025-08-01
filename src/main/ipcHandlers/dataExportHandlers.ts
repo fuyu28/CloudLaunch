@@ -10,6 +10,7 @@ import { ipcMain, dialog } from "electron"
 
 import type { ApiResult } from "../../types/result"
 import { exportService } from "../service/exportService"
+import { generateExportTimestamp } from "../service/validation/commonSchemas"
 import { showNotification } from "../utils/notification"
 
 export type ExportFormat = "csv" | "json" | "sql"
@@ -68,11 +69,8 @@ export const handleDataExport = async (
     }
 
     const exportDir = result.filePaths[0]
-    // 日本標準時（JST）でタイムスタンプを生成
-    const now = new Date()
-    const jstOffset = 9 * 60 * 60 * 1000 // JST は UTC+9
-    const jstDate = new Date(now.getTime() + jstOffset)
-    const timestamp = jstDate.toISOString().replace(/[:.]/g, "-")
+    // タイムスタンプを生成（date-fns使用）
+    const timestamp = generateExportTimestamp()
 
     // エクスポートファイル名を生成
     const fileName = `cloudlaunch_export_${timestamp}.${options.format}`

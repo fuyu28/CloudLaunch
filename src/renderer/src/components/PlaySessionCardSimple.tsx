@@ -6,6 +6,7 @@
  */
 
 import { useState, useCallback, useEffect, useMemo, memo } from "react"
+import { subWeeks } from "date-fns"
 import { FaPlus, FaCog, FaGamepad, FaClock, FaChartLine, FaCalendarWeek } from "react-icons/fa"
 
 import { useTimeFormat } from "@renderer/hooks/useTimeFormat"
@@ -48,7 +49,7 @@ const PlaySessionCardSimple = memo(function PlaySessionCardSimple({
   // 統計情報をメモ化して計算
   const stats = useMemo(() => {
     const now = new Date()
-    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+    const oneWeekAgo = subWeeks(now, 1)
 
     const totalSessions = sessions.length
     const totalTime = sessions.reduce((sum, session) => sum + session.duration, 0)
