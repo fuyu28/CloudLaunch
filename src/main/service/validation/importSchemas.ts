@@ -110,7 +110,7 @@ export interface ValidationResult {
  */
 export function validateRecord(
   record: unknown,
-  schema: z.ZodSchema,
+  schema: z.ZodType,
   recordType: string,
   index?: number
 ): ValidationResult {
@@ -165,7 +165,7 @@ export function validateJsonImportData(data: unknown): ValidationResult {
  */
 export function validateCsvRecords(
   records: unknown[],
-  schema: z.ZodSchema,
+  schema: z.ZodType,
   recordType: string
 ): ValidationResult {
   const errors: ValidationResult["errors"] = []
@@ -190,7 +190,7 @@ export function validateCsvRecords(
 /**
  * レコードタイプに対応するスキーマを取得する関数
  */
-export function getSchemaForRecordType(recordType: string): z.ZodSchema | null {
+export function getSchemaForRecordType(recordType: string): z.ZodType | null {
   switch (recordType.toLowerCase()) {
     case "games":
       return GameRecordSchema

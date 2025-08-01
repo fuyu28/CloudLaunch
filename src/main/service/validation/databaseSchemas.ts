@@ -153,7 +153,7 @@ export type DatabaseValidationResult<T> =
  * @returns バリデーション結果
  */
 export function validateDatabaseInput<T>(
-  schema: z.ZodSchema<T>,
+  schema: z.ZodType<T>,
   data: unknown
 ): DatabaseValidationResult<T> {
   const result = schema.safeParse(data)

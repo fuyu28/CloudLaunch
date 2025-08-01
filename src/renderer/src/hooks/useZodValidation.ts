@@ -33,7 +33,7 @@
 import { useState, useCallback, useMemo } from "react"
 import { ZodError } from "zod"
 
-import type { ZodSchema } from "zod"
+import type { ZodType } from "zod"
 
 /**
  * バリデーション状態の型定義
@@ -81,7 +81,7 @@ export type ZodValidationResult<T> = {
  * @returns バリデーション結果とヘルパー関数
  */
 export function useZodValidation<T extends Record<string, unknown>>(
-  schema: ZodSchema<T>,
+  schema: ZodType<T>,
   data: T,
   options: {
     /** リアルタイムバリデーションを有効にするか（デフォルト: true） */

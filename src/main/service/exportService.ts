@@ -10,6 +10,7 @@ import type {
   ImportResult,
   ImportFormat
 } from "../ipcHandlers/dataExportHandlers"
+import { formatDateInJapanese } from "./validation/commonSchemas"
 import {
   ExportGameRecordSchema,
   ExportPlaySessionRecordSchema,
@@ -27,7 +28,7 @@ import {
   ChapterRecordSchema,
   MemoRecordSchema
 } from "./validation/importSchemas"
-import type { ZodSchema } from "zod"
+import type { ZodType } from "zod"
 
 export class ExportService {
   /**
@@ -135,7 +136,7 @@ export class ExportService {
    * @param schema zodスキーマ
    * @returns バリデーション済みの有効なレコード配列
    */
-  private validateExportData(tableName: string, records: unknown[], schema: ZodSchema): unknown[] {
+  private validateExportData(tableName: string, records: unknown[], schema: ZodType): unknown[] {
     const validRecords: unknown[] = []
     const invalidRecords: { record: unknown; errors: string[] }[] = []
 
@@ -250,11 +251,9 @@ export class ExportService {
    */
   private exportToSQL(data: Record<string, unknown[]>): string {
     let sqlContent = "-- CloudLaunch データエクスポート\n"
-    // 日本標準時（JST）でエクスポート日時を記録
     const now = new Date()
-    const jstOffset = 9 * 60 * 60 * 1000 // JST は UTC+9
-    const jstDate = new Date(now.getTime() + jstOffset)
-    sqlContent += `-- エクスポート日時: ${jstDate.toISOString()} (JST)\n\n`
+    const jstDateString = formatDateInJapanese(now, "yyyy-MM-dd HH:mm:ss")
+    sqlContent += `-- エクスポート日時: ${jstDateString} (JST)\n\n`
 
     for (const [tableName, records] of Object.entries(data)) {
       if (!Array.isArray(records) || records.length === 0) continue
