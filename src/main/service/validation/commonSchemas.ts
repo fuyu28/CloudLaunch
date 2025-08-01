@@ -332,32 +332,3 @@ export function generateExportTimestamp(): string {
 export function generateLogTimestamp(): string {
   return new Date().toISOString()
 }
-
-/**
- * Date型フィールドをISO文字列に変換する関数
- * @param data 変換対象のデータ
- * @returns Date型フィールドがISO文字列に変換されたデータ
- */
-export function convertDatesToISOStrings<T>(data: T): T {
-  if (data === null || data === undefined) {
-    return data
-  }
-
-  if (data instanceof Date) {
-    return data.toISOString() as T
-  }
-
-  if (Array.isArray(data)) {
-    return data.map((item) => convertDatesToISOStrings(item)) as T
-  }
-
-  if (typeof data === "object") {
-    const converted: Record<string, unknown> = {}
-    for (const [key, value] of Object.entries(data as Record<string, unknown>)) {
-      converted[key] = convertDatesToISOStrings(value)
-    }
-    return converted as T
-  }
-
-  return data
-}
